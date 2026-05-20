@@ -1,3 +1,4 @@
+import { prisma } from '@tradeos/database';
 import { DEFAULT_LOW_RISK_ROLES, registerAction } from '@tradeos/policy-core';
 
 export type CreateLeadInput = {
@@ -19,27 +20,44 @@ export type CreateFollowUpTaskInput = {
   dueAt?: string;
 };
 
-export const createLeadAction = registerAction<CreateLeadInput, CreateLeadInput>({
+export const createLeadAction = registerAction<CreateLeadInput, unknown>({
   name: 'crm.createLead',
   description: 'Create a CRM lead from manual input or AI-extracted conversation data.',
   riskLevel: 'LOW',
   allowedRoles: DEFAULT_LOW_RISK_ROLES,
   requiresApprovalForAI: false,
   handler: async (input) => {
-    // Replace with Prisma mutation in implementation phase.
-    return input;
+    return prisma.lead.create({
+      data: {
+        organizationId: input.organizationId,
+        source: input.source,
+        name: input.name,
+        phone: input.phone,
+        email: input.email,
+        need: input.need,
+        aiSummary: input.aiSummary,
+        nextAction: input.nextAction,
+      },
+    });
   },
 });
 
-export const createFollowUpTaskAction = registerAction<CreateFollowUpTaskInput, CreateFollowUpTaskInput>({
+export const createFollowUpTaskAction = registerAction<CreateFollowUpTaskInput, unknown>({
   name: 'crm.createFollowUpTask',
   description: 'Create a follow-up task for a lead or customer.',
   riskLevel: 'LOW',
   allowedRoles: DEFAULT_LOW_RISK_ROLES,
   requiresApprovalForAI: false,
   handler: async (input) => {
-    // Replace with Prisma mutation in implementation phase.
-    return input;
+    return prisma.task.create({
+      data: {
+        organizationId: input.organizationId,
+        leadId: input.leadId,
+        title: input.title,
+        description: input.description,
+        dueAt: input.dueAt ? new Date(input.dueAt) : undefined,
+      },
+    });
   },
 });
 
