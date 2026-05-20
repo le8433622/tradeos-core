@@ -1,9 +1,9 @@
 import { prisma } from '@tradeos/database';
-import { requireDemoSession } from '@tradeos/auth';
+import { requirePageSession } from '../../lib/page-session';
 
 async function createSendQuotationApproval(formData: FormData) {
   'use server';
-  const session = await requireDemoSession();
+  const session = await requirePageSession();
   await prisma.approvalRequest.create({
     data: {
       organizationId: session.organizationId,
@@ -21,7 +21,7 @@ async function createSendQuotationApproval(formData: FormData) {
 
 async function approveApproval(formData: FormData) {
   'use server';
-  const session = await requireDemoSession();
+  const session = await requirePageSession();
   await prisma.approvalRequest.update({
     where: { id: String(formData.get('id')) },
     data: {
@@ -35,7 +35,7 @@ async function approveApproval(formData: FormData) {
 
 async function rejectApproval(formData: FormData) {
   'use server';
-  const session = await requireDemoSession();
+  const session = await requirePageSession();
   await prisma.approvalRequest.update({
     where: { id: String(formData.get('id')) },
     data: {
@@ -48,7 +48,7 @@ async function rejectApproval(formData: FormData) {
 }
 
 export default async function ApprovalsPage() {
-  const session = await requireDemoSession();
+  const session = await requirePageSession();
   const [approvals, quotations] = await Promise.all([
     prisma.approvalRequest.findMany({
       where: { organizationId: session.organizationId },
@@ -66,7 +66,7 @@ export default async function ApprovalsPage() {
     <main style={{ padding: 32, fontFamily: 'Arial, sans-serif' }}>
       <a href="/" style={{ color: '#2563eb' }}>Back</a>
       <h1>Approval Queue</h1>
-      <p>AI or operators can request approval for high-risk actions. Admin reviews before execution.</p>
+      <p>Tenant: {session.organizationId}. AI or operators can request approval for high-risk actions.</p>
 
       <form action={createSendQuotationApproval} style={{ display: 'grid', gap: 8, maxWidth: 520, marginBottom: 24 }}>
         <label>Create approval request for sending quotation</label>
