@@ -1,3 +1,4 @@
+import { prisma } from '@tradeos/database';
 import { DEFAULT_ADMIN_ROLES, DEFAULT_LOW_RISK_ROLES, registerAction } from '@tradeos/policy-core';
 
 export type DraftQuotationInput = {
@@ -16,25 +17,38 @@ export type SuggestPartnerInput = {
   category?: string;
 };
 
-export const draftQuotationAction = registerAction<DraftQuotationInput, DraftQuotationInput & { status: 'DRAFT' }>({
+export const draftQuotationAction = registerAction<DraftQuotationInput, unknown>({
   name: 'trade.draftQuotation',
   description: 'Create a draft quotation. AI may draft, but human must review before sending.',
   riskLevel: 'MEDIUM',
   allowedRoles: DEFAULT_LOW_RISK_ROLES,
   requiresApprovalForAI: false,
   handler: async (input) => {
-    return { ...input, status: 'DRAFT' };
+    return prisma.quotation.create({
+      data: {
+        organizationId: input.organizationId,
+        leadId: input.leadId,
+        title: input.title,
+        content: input.requirements,
+        status: 'DRAFT',
+        totalAmount: input.estimatedAmount,
+        currency: input.currency,
+      },
+    });
   },
 });
 
-export const sendQuotationAction = registerAction<{ quotationId: string }, { quotationId: string; status: 'SENT' }>({
+export const sendQuotationAction = registerAction<{ quotationId: string }, unknown>({
   name: 'trade.sendQuotation',
   description: 'Send a quotation to a customer. AI is not allowed to execute without approval.',
   riskLevel: 'HIGH',
   allowedRoles: DEFAULT_ADMIN_ROLES,
   requiresApprovalForAI: true,
   handler: async (input) => {
-    return { quotationId: input.quotationId, status: 'SENT' };
+    return prisma.quotation.update({
+      where: { id: input.quotationId },
+      data: { status: 'SENT' },
+    });
   },
 });
 
@@ -44,8 +58,17 @@ export const suggestPartnerAction = registerAction<SuggestPartnerInput, { sugges
   riskLevel: 'LOW',
   allowedRoles: DEFAULT_LOW_RISK_ROLES,
   requiresApprovalForAI: false,
-  handler: async () => {
-    return { suggestions: [] };
+  handler: async (input) => {
+    const suggestions = await prisma.company.findMany({
+      where: {
+        organizationId: input.organizationId,
+        ...(input.country ? { country: input.country } : {}),
+        ...(input.category ? { industry: { contains: input.category, mode: 'insensitive' } } : {}),
+      },
+      take: 10,
+      orderBy: { createdAt: 'desc' },
+    });
+    return { suggestions };
   },
 });
 
