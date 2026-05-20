@@ -1,9 +1,4 @@
-const cards = [
-  { title: 'Leads', value: '0', note: 'Inbound trade opportunities' },
-  { title: 'Companies', value: '0', note: 'Buyers, sellers, partners' },
-  { title: 'Quotations', value: '0', note: 'Drafts and sent quotes' },
-  { title: 'Tasks', value: '0', note: 'Follow-up work queue' },
-];
+import { prisma } from '@tradeos/database';
 
 const links = [
   { href: '/leads', label: 'Leads' },
@@ -13,7 +8,22 @@ const links = [
   { href: '/notifications', label: 'Notifications' },
 ];
 
-export default function Page() {
+export default async function Page() {
+  const organizationId = 'demo-org';
+  const [leadCount, companyCount, quotationCount, taskCount] = await Promise.all([
+    prisma.lead.count({ where: { organizationId } }),
+    prisma.company.count({ where: { organizationId } }),
+    prisma.quotation.count({ where: { organizationId } }),
+    prisma.task.count({ where: { organizationId } }),
+  ]);
+
+  const cards = [
+    { title: 'Leads', value: leadCount, note: 'Inbound trade opportunities' },
+    { title: 'Companies', value: companyCount, note: 'Buyers, sellers, partners' },
+    { title: 'Quotations', value: quotationCount, note: 'Drafts and sent quotes' },
+    { title: 'Tasks', value: taskCount, note: 'Follow-up work queue' },
+  ];
+
   return (
     <main style={{ padding: 32, fontFamily: 'Arial, sans-serif' }}>
       <span style={{ borderRadius: 999, background: '#eef2ff', color: '#3730a3', padding: '6px 10px', fontSize: 12, fontWeight: 700 }}>
@@ -21,7 +31,7 @@ export default function Page() {
       </span>
       <h1 style={{ fontSize: 42, marginBottom: 8 }}>AI Operating System for International Trade</h1>
       <p style={{ maxWidth: 760, color: '#4b5563', fontSize: 18 }}>
-        Start with AI Inbox, CRM, follow-up tasks, quotation drafts, and trade association notifications. Marketplace comes later after real data proves repeated matching demand.
+        Dashboard reads real data from Prisma. Seed demo data first, then connect Supabase for production.
       </p>
 
       <nav style={{ display: 'flex', gap: 10, flexWrap: 'wrap', margin: '24px 0' }}>
