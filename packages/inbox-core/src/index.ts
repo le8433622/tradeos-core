@@ -10,46 +10,42 @@ export type IngestInboundMessageInput = {
   metadata?: Record<string, unknown>;
 };
 
-export async function ingestInboundMessage(input: IngestInboundMessageInput) {
-  const conversation = input.externalId
-    ? await prisma.conversation.upsert({
-        where: {
-          id: input.externalId.startsWith('conv_') ? input.externalId : undefined,
-        },
-        update: {
-          title: input.title,
-          aiSummary: input.content.slice(0, 240),
-          metadata: input.metadata,
-        },
-        create: {
-          organizationId: input.organizationId,
-          channel: input.channel,
-          externalId: input.externalId,
-          title: input.title ?? `Inbound ${input.channel} conversation`,
-          aiSummary: input.content.slice(0, 240),
-          metadata: input.metadata,
-        },
-      }).catch(async () => {
-        return prisma.conversation.create({
-          data: {
-            organizationId: input.organizationId,
-            channel: input.channel,
-            externalId: input.externalId,
-            title: input.title ?? `Inbound ${input.channel} conversation`,
-            aiSummary: input.content.slice(0, 240),
-            metadata: input.metadata,
-          },
-        });
-      })
-    : await prisma.conversation.create({
+async function findOrCreateConversation(input: IngestInboundMessageInput) {
+  if (input.externalId) {
+    const existing = await prisma.conversation.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        channel: input.channel,
+        externalId: input.externalId,
+      },
+    });
+
+    if (existing) {
+      return prisma.conversation.update({
+        where: { id: existing.id },
         data: {
-          organizationId: input.organizationId,
-          channel: input.channel,
-          title: input.title ?? `Inbound ${input.channel} conversation`,
+          title: input.title ?? existing.title,
           aiSummary: input.content.slice(0, 240),
           metadata: input.metadata,
         },
       });
+    }
+  }
+
+  return prisma.conversation.create({
+    data: {
+      organizationId: input.organizationId,
+      channel: input.channel,
+      externalId: input.externalId,
+      title: input.title ?? `Inbound ${input.channel} conversation`,
+      aiSummary: input.content.slice(0, 240),
+      metadata: input.metadata,
+    },
+  });
+}
+
+export async function ingestInboundMessage(input: IngestInboundMessageInput) {
+  const conversation = await findOrCreateConversation(input);
 
   const message = await prisma.message.create({
     data: {
