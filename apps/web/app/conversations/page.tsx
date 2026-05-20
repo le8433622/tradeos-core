@@ -1,8 +1,10 @@
 import { prisma } from '@tradeos/database';
+import { requirePageSession } from '../../lib/page-session';
 
 export default async function ConversationsPage() {
+  const session = await requirePageSession();
   const conversations = await prisma.conversation.findMany({
-    where: { organizationId: 'demo-org' },
+    where: { organizationId: session.organizationId },
     include: { messages: { orderBy: { createdAt: 'asc' }, take: 3 } },
     orderBy: { createdAt: 'desc' },
     take: 50,
@@ -12,7 +14,7 @@ export default async function ConversationsPage() {
     <main style={{ padding: 32, fontFamily: 'Arial, sans-serif' }}>
       <a href="/" style={{ color: '#2563eb' }}>Back</a>
       <h1>Conversations</h1>
-      <p>AI Inbox abstraction for web, Zalo, WhatsApp, email, Telegram, and manual intake.</p>
+      <p>Tenant: {session.organizationId}. AI Inbox abstraction for web, Zalo, WhatsApp, email, Telegram, and manual intake.</p>
       {conversations.map((item) => (
         <article key={item.id} style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, marginBottom: 12 }}>
           <strong>{item.title}</strong>
