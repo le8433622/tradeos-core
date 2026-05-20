@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
 import { runTradeAgent } from '@tradeos/ai-core';
+import { requireDemoSession } from '@tradeos/auth';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const session = await requireDemoSession();
+
     const result = await runTradeAgent(
       {
-        organizationId: body.organizationId ?? 'demo-org',
+        organizationId: session.organizationId,
         channel: body.channel ?? 'web',
         text: body.text ?? '',
         customerName: body.customerName,
@@ -14,10 +17,11 @@ export async function POST(request: Request) {
         customerEmail: body.customerEmail,
       },
       {
-        actorUserId: body.actorUserId ?? 'demo-user',
-        organizationId: body.organizationId ?? 'demo-org',
-        role: body.role ?? 'OWNER',
+        actorUserId: session.userId,
+        organizationId: session.organizationId,
+        role: session.role,
         source: 'ai',
+        approved: Boolean(body.approved),
       },
     );
 
