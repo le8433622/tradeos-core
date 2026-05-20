@@ -2,14 +2,27 @@
 
 ## Current Vercel Status
 
-The Vercel connector can list teams/projects but cannot import this GitHub repo directly. It returned the instruction to use Vercel CLI or Git Integration.
-
-Current team:
+Project exists on Vercel:
 
 ```txt
+Project: tradeos-core
+Project ID: prj_3b4Eg8YpEvztpNpCxRMm2sgj8utj
 Team: earthkingdomuniverse-6943's projects
 Team ID: team_9qCkAgCiWrexEBm3eo20Yr5V
-Projects: none at time of setup
+```
+
+First deployment failed during `pnpm install` with registry metadata error:
+
+```txt
+ERR_PNPM_META_FETCH_FAIL
+ERR_INVALID_THIS
+```
+
+Fix applied in repo:
+
+```txt
+Node pinned to 20.x
+pnpm pinned to 10.11.0
 ```
 
 ## Recommended Import Settings
@@ -70,6 +83,16 @@ pnpm install
 pnpm db:generate
 pnpm --filter @tradeos/web build
 ```
+
+## Redeploy After Fix
+
+In Vercel:
+
+```txt
+Project -> Deployments -> failed deployment -> Redeploy
+```
+
+If it fails again, inspect build logs and fix the next real error.
 
 ## After Deploy
 
