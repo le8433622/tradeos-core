@@ -1,10 +1,12 @@
 import { prisma } from '@tradeos/database';
+import { requirePageSession } from '../../lib/page-session';
 
 async function createNotification(formData: FormData) {
   'use server';
+  const session = await requirePageSession();
   await prisma.notification.create({
     data: {
-      organizationId: 'demo-org',
+      organizationId: session.organizationId,
       title: String(formData.get('title') || ''),
       body: String(formData.get('body') || ''),
       audience: String(formData.get('audience') || 'organization'),
@@ -14,8 +16,9 @@ async function createNotification(formData: FormData) {
 }
 
 export default async function NotificationsPage() {
+  const session = await requirePageSession();
   const notifications = await prisma.notification.findMany({
-    where: { organizationId: 'demo-org' },
+    where: { organizationId: session.organizationId },
     orderBy: { createdAt: 'desc' },
     take: 50,
   });
@@ -24,7 +27,7 @@ export default async function NotificationsPage() {
     <main style={{ padding: 32, fontFamily: 'Arial, sans-serif' }}>
       <a href="/" style={{ color: '#2563eb' }}>Back</a>
       <h1>Notifications</h1>
-      <p>Admin can publish trade opportunities, events, market alerts, and system-wide messages.</p>
+      <p>Tenant: {session.organizationId}. Admin can publish trade opportunities, events, market alerts, and system-wide messages.</p>
 
       <form action={createNotification} style={{ display: 'grid', gap: 8, maxWidth: 520, marginBottom: 24 }}>
         <input name="title" placeholder="Notification title" required style={{ padding: 10 }} />
