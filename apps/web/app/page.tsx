@@ -8,18 +8,20 @@ const links = [
   { href: '/quotations', label: 'Quotations' },
   { href: '/notifications', label: 'Notifications' },
   { href: '/approvals', label: 'Approvals' },
+  { href: '/webhook-events', label: 'Webhook Events' },
   { href: '/audit-logs', label: 'Audit Logs' },
 ];
 
 export default async function Page() {
   const session = await requireDemoSession();
   const organizationId = session.organizationId;
-  const [leadCount, companyCount, quotationCount, taskCount, approvalCount] = await Promise.all([
+  const [leadCount, companyCount, quotationCount, taskCount, approvalCount, webhookEventCount] = await Promise.all([
     prisma.lead.count({ where: { organizationId } }),
     prisma.company.count({ where: { organizationId } }),
     prisma.quotation.count({ where: { organizationId } }),
     prisma.task.count({ where: { organizationId } }),
     prisma.approvalRequest.count({ where: { organizationId, status: 'PENDING' } }),
+    prisma.webhookEvent.count({ where: { organizationId } }),
   ]);
 
   const cards = [
@@ -28,6 +30,7 @@ export default async function Page() {
     { title: 'Quotations', value: quotationCount, note: 'Drafts and sent quotes' },
     { title: 'Tasks', value: taskCount, note: 'Follow-up work queue' },
     { title: 'Pending Approvals', value: approvalCount, note: 'High-risk actions waiting for review' },
+    { title: 'Webhook Events', value: webhookEventCount, note: 'Inbound events with idempotency log' },
   ];
 
   return (
