@@ -1,10 +1,12 @@
 import { prisma } from '@tradeos/database';
+import { requirePageSession } from '../../lib/page-session';
 
 async function createLead(formData: FormData) {
   'use server';
+  const session = await requirePageSession();
   await prisma.lead.create({
     data: {
-      organizationId: 'demo-org',
+      organizationId: session.organizationId,
       source: String(formData.get('source') || 'manual'),
       name: String(formData.get('name') || ''),
       email: String(formData.get('email') || ''),
@@ -16,8 +18,9 @@ async function createLead(formData: FormData) {
 }
 
 export default async function LeadsPage() {
+  const session = await requirePageSession();
   const leads = await prisma.lead.findMany({
-    where: { organizationId: 'demo-org' },
+    where: { organizationId: session.organizationId },
     orderBy: { createdAt: 'desc' },
     take: 50,
   });
@@ -26,7 +29,7 @@ export default async function LeadsPage() {
     <main style={{ padding: 32, fontFamily: 'Arial, sans-serif' }}>
       <a href="/" style={{ color: '#2563eb' }}>Back</a>
       <h1>Leads</h1>
-      <p>Inbound trade opportunities from web, Zalo, WhatsApp, email, events, and manual input.</p>
+      <p>Tenant: {session.organizationId}. Inbound trade opportunities from web, Zalo, WhatsApp, email, events, and manual input.</p>
 
       <form action={createLead} style={{ display: 'grid', gap: 8, maxWidth: 520, marginBottom: 24 }}>
         <input name="name" placeholder="Lead name" style={{ padding: 10 }} />
