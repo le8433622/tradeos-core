@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { runTradeAgent } from '@tradeos/ai-core';
-import { requireDemoSession } from '@tradeos/auth';
+import { requireSessionFromRequest } from '@tradeos/auth';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const session = await requireDemoSession();
+    const session = await requireSessionFromRequest(request);
 
     const result = await runTradeAgent(
       {
