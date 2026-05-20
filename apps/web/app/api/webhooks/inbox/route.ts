@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { runTradeAgent } from '@tradeos/ai-core';
-import { requireDemoSession } from '@tradeos/auth';
+import { requireSessionFromRequest } from '@tradeos/auth';
 import { ingestInboundMessage, normalizeChannel } from '@tradeos/inbox-core';
 import {
   buildWebhookEventKey,
@@ -14,7 +14,7 @@ import {
 } from '@tradeos/webhook-core';
 
 export async function POST(request: Request) {
-  const session = await requireDemoSession();
+  const session = await requireSessionFromRequest(request);
   const sourceIp = getSourceIp(request);
   let eventId: string | undefined;
 
