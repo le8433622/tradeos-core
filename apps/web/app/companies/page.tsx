@@ -1,10 +1,12 @@
 import { prisma } from '@tradeos/database';
+import { requirePageSession } from '../../lib/page-session';
 
 async function createCompany(formData: FormData) {
   'use server';
+  const session = await requirePageSession();
   await prisma.company.create({
     data: {
-      organizationId: 'demo-org',
+      organizationId: session.organizationId,
       name: String(formData.get('name') || ''),
       country: String(formData.get('country') || ''),
       industry: String(formData.get('industry') || ''),
@@ -16,8 +18,9 @@ async function createCompany(formData: FormData) {
 }
 
 export default async function CompaniesPage() {
+  const session = await requirePageSession();
   const companies = await prisma.company.findMany({
-    where: { organizationId: 'demo-org' },
+    where: { organizationId: session.organizationId },
     orderBy: { createdAt: 'desc' },
     take: 50,
   });
@@ -26,7 +29,7 @@ export default async function CompaniesPage() {
     <main style={{ padding: 32, fontFamily: 'Arial, sans-serif' }}>
       <a href="/" style={{ color: '#2563eb' }}>Back</a>
       <h1>Companies</h1>
-      <p>Buyer, seller, distributor, logistics, and service partner database.</p>
+      <p>Tenant: {session.organizationId}. Buyer, seller, distributor, logistics, and service partner database.</p>
 
       <form action={createCompany} style={{ display: 'grid', gap: 8, maxWidth: 520, marginBottom: 24 }}>
         <input name="name" placeholder="Company name" required style={{ padding: 10 }} />
