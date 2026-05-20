@@ -1,5 +1,6 @@
 import { prisma } from '@tradeos/database';
 import { requireDemoSession } from '@tradeos/auth';
+import { SignOutButton } from '../components/sign-out-button';
 
 const links = [
   { href: '/leads', label: 'Leads' },
@@ -10,6 +11,7 @@ const links = [
   { href: '/approvals', label: 'Approvals' },
   { href: '/webhook-events', label: 'Webhook Events' },
   { href: '/audit-logs', label: 'Audit Logs' },
+  { href: '/login', label: 'Login' },
 ];
 
 export default async function Page() {
@@ -35,12 +37,15 @@ export default async function Page() {
 
   return (
     <main style={{ padding: 32, fontFamily: 'Arial, sans-serif' }}>
-      <span style={{ borderRadius: 999, background: '#eef2ff', color: '#3730a3', padding: '6px 10px', fontSize: 12, fontWeight: 700 }}>
-        TradeOS Core MVP
-      </span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
+        <span style={{ borderRadius: 999, background: '#eef2ff', color: '#3730a3', padding: '6px 10px', fontSize: 12, fontWeight: 700 }}>
+          TradeOS Core MVP
+        </span>
+        <SignOutButton />
+      </div>
       <h1 style={{ fontSize: 42, marginBottom: 8 }}>AI Operating System for International Trade</h1>
       <p style={{ maxWidth: 760, color: '#4b5563', fontSize: 18 }}>
-        Demo tenant: {organizationId}. Dashboard reads real data from Prisma. Replace demo session with real auth before production.
+        Tenant: {organizationId}. Auth provider: {session.authProvider}. Dashboard reads real data from Prisma.
       </p>
 
       <nav style={{ display: 'flex', gap: 10, flexWrap: 'wrap', margin: '24px 0' }}>
