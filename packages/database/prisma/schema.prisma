@@ -83,6 +83,14 @@ enum ApprovalStatus {
   FAILED
 }
 
+enum WebhookEventStatus {
+  RECEIVED
+  DUPLICATE
+  BLOCKED
+  PROCESSED
+  FAILED
+}
+
 model Organization {
   id        String           @id @default(cuid())
   name      String
@@ -103,6 +111,7 @@ model Organization {
   notifications    Notification[]
   auditLogs        AuditLog[]
   approvalRequests ApprovalRequest[]
+  webhookEvents    WebhookEvent[]
 }
 
 model User {
@@ -321,4 +330,23 @@ model ApprovalRequest {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   requestedBy  User?        @relation("ApprovalRequester", fields: [requestedById], references: [id], onDelete: SetNull)
   reviewedBy   User?        @relation("ApprovalReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+}
+
+model WebhookEvent {
+  id             String             @id @default(cuid())
+  organizationId String
+  channel        ChannelType
+  eventKey       String
+  status         WebhookEventStatus @default(RECEIVED)
+  sourceIp       String?
+  payload        Json?
+  result         Json?
+  error          String?
+  receivedAt     DateTime           @default(now())
+  processedAt    DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, channel, eventKey])
+  @@index([organizationId, channel, receivedAt])
 }
