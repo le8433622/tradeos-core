@@ -1,8 +1,8 @@
 import { prisma } from '@tradeos/database';
-import { requireDemoSession } from '@tradeos/auth';
+import { requirePageSession } from '../../lib/page-session';
 
 export default async function AuditLogsPage() {
-  const session = await requireDemoSession();
+  const session = await requirePageSession();
   const logs = await prisma.auditLog.findMany({
     where: { organizationId: session.organizationId },
     orderBy: { createdAt: 'desc' },
@@ -13,7 +13,7 @@ export default async function AuditLogsPage() {
     <main style={{ padding: 32, fontFamily: 'Arial, sans-serif' }}>
       <a href="/" style={{ color: '#2563eb' }}>Back</a>
       <h1>Audit Logs</h1>
-      <p>Every AI/manual action should leave a trace here.</p>
+      <p>Tenant: {session.organizationId}. Every AI/manual action should leave a trace here.</p>
       {logs.map((log) => (
         <article key={log.id} style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, marginBottom: 12 }}>
           <strong>{log.actionName}</strong>
