@@ -1,1 +1,1 @@
-{"name":"@tradeos/trade-core","version":"0.1.0","private":true,"main":"src/index.ts","scripts":{"typecheck":"tsc --noEmit"},"dependencies":{"@tradeos/policy-core":"workspace:*"},"devDependencies":{"typescript":"^5.7.2"}}
+{"name":"@tradeos/trade-core","version":"0.1.0","private":true,"main":"src/index.ts","scripts":{"typecheck":"tsc --noEmit"},"dependencies":{"@tradeos/database":"workspace:*","@tradeos/policy-core":"workspace:*"},"devDependencies":{"typescript":"^5.7.2"}}
