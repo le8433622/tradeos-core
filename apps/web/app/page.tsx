@@ -1,6 +1,6 @@
 import { prisma } from '@tradeos/database';
-import { requireDemoSession } from '@tradeos/auth';
 import { SignOutButton } from '../components/sign-out-button';
+import { requirePageSession } from '../lib/page-session';
 
 const links = [
   { href: '/leads', label: 'Leads' },
@@ -15,7 +15,7 @@ const links = [
 ];
 
 export default async function Page() {
-  const session = await requireDemoSession();
+  const session = await requirePageSession();
   const organizationId = session.organizationId;
   const [leadCount, companyCount, quotationCount, taskCount, approvalCount, webhookEventCount] = await Promise.all([
     prisma.lead.count({ where: { organizationId } }),
