@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { runTradeAgent } from '@tradeos/ai-core';
-import { requireDemoSession } from '@tradeos/auth';
+import { requireSessionFromRequest } from '@tradeos/auth';
 import { ingestInboundMessage } from '@tradeos/inbox-core';
 
 function extractWhatsAppMessage(body: any) {
@@ -16,7 +16,7 @@ function extractWhatsAppMessage(body: any) {
 
 export async function POST(request: Request) {
   try {
-    const session = await requireDemoSession();
+    const session = await requireSessionFromRequest(request);
     const body = await request.json();
     const parsed = extractWhatsAppMessage(body);
 
