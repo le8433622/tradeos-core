@@ -1,6 +1,6 @@
 {
   "buildCommand": "pnpm --filter @tradeos/web build",
-  "installCommand": "pnpm install",
+  "installCommand": "npm install -g pnpm@10.11.0 && pnpm install --registry=https://registry.npmjs.org/",
   "framework": "nextjs",
   "outputDirectory": "apps/web/.next"
 }
