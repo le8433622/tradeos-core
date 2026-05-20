@@ -1,31 +1,19 @@
 import { NextResponse } from 'next/server';
 import { runTradeAgent } from '@tradeos/ai-core';
-import { requireDemoSession } from '@tradeos/auth';
+import { requireSessionFromRequest } from '@tradeos/auth';
 import { ingestInboundMessage } from '@tradeos/inbox-core';
 
 function extractZaloText(body: any) {
-  return String(
-    body?.message?.text ??
-    body?.text ??
-    body?.message ??
-    body?.event_name ??
-    ''
-  );
+  return String(body?.message?.text ?? body?.text ?? body?.message ?? body?.event_name ?? '');
 }
 
 function extractZaloExternalId(body: any) {
-  return String(
-    body?.sender?.id ??
-    body?.user_id ??
-    body?.oa_id ??
-    body?.thread_id ??
-    ''
-  );
+  return String(body?.sender?.id ?? body?.user_id ?? body?.oa_id ?? body?.thread_id ?? '');
 }
 
 export async function POST(request: Request) {
   try {
-    const session = await requireDemoSession();
+    const session = await requireSessionFromRequest(request);
     const body = await request.json();
     const text = extractZaloText(body);
 
