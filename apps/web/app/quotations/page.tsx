@@ -1,11 +1,13 @@
 import { prisma } from '@tradeos/database';
+import { requirePageSession } from '../../lib/page-session';
 
 async function createQuotation(formData: FormData) {
   'use server';
+  const session = await requirePageSession();
   const amountRaw = String(formData.get('totalAmount') || '');
   await prisma.quotation.create({
     data: {
-      organizationId: 'demo-org',
+      organizationId: session.organizationId,
       title: String(formData.get('title') || ''),
       content: String(formData.get('content') || ''),
       status: 'DRAFT',
@@ -16,8 +18,9 @@ async function createQuotation(formData: FormData) {
 }
 
 export default async function QuotationsPage() {
+  const session = await requirePageSession();
   const quotations = await prisma.quotation.findMany({
-    where: { organizationId: 'demo-org' },
+    where: { organizationId: session.organizationId },
     orderBy: { createdAt: 'desc' },
     take: 50,
   });
@@ -26,7 +29,7 @@ export default async function QuotationsPage() {
     <main style={{ padding: 32, fontFamily: 'Arial, sans-serif' }}>
       <a href="/" style={{ color: '#2563eb' }}>Back</a>
       <h1>Quotations</h1>
-      <p>AI may draft quotations, but humans must review before sending.</p>
+      <p>Tenant: {session.organizationId}. AI may draft quotations, but humans must review before sending.</p>
 
       <form action={createQuotation} style={{ display: 'grid', gap: 8, maxWidth: 520, marginBottom: 24 }}>
         <input name="title" placeholder="Quotation title" required style={{ padding: 10 }} />
