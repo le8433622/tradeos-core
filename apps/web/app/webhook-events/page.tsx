@@ -1,8 +1,8 @@
 import { prisma } from '@tradeos/database';
-import { requireDemoSession } from '@tradeos/auth';
+import { requirePageSession } from '../../lib/page-session';
 
 export default async function WebhookEventsPage() {
-  const session = await requireDemoSession();
+  const session = await requirePageSession();
   const events = await prisma.webhookEvent.findMany({
     where: { organizationId: session.organizationId },
     orderBy: { receivedAt: 'desc' },
@@ -13,7 +13,7 @@ export default async function WebhookEventsPage() {
     <main style={{ padding: 32, fontFamily: 'Arial, sans-serif' }}>
       <a href="/" style={{ color: '#2563eb' }}>Back</a>
       <h1>Webhook Events</h1>
-      <p>Inbound webhook event log with idempotency, status, payload and result.</p>
+      <p>Tenant: {session.organizationId}. Inbound webhook event log with idempotency, status, payload and result.</p>
       {events.map((event) => (
         <article key={event.id} style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, marginBottom: 12 }}>
           <strong>{event.channel} — {event.status}</strong>
