@@ -31,3 +31,7 @@ Do not start with marketplace, social feed, generic dashboard, or full inventory
 ## Unit Economics
 
 Do not use expensive AI work for low-value cases. Cost to serve must stay below the value created and the price paid.
+
+## Paid Checkpoint
+
+Work should be split into billable checkpoints. Each checkpoint needs output, proof, and buyer-visible progress.
