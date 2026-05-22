@@ -23,3 +23,7 @@ Work should leave proof: source data, comparison, quote, note, decision, approva
 ## Human Approval
 
 AI may prepare work. Humans approve final purchase and payment.
+
+## Do Not Build First
+
+Do not start with marketplace, social feed, generic dashboard, or full inventory system.
