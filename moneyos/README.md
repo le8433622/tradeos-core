@@ -15,3 +15,11 @@ This is an AI procurement operator, not a generic dashboard.
 ## Buyer Value
 
 Each feature must improve one concrete buyer decision or remove one concrete buyer loss.
+
+## Evidence
+
+Work should leave proof: source data, comparison, quote, note, decision, approval, or result.
+
+## Human Approval
+
+AI may prepare work. Humans approve final purchase and payment.
