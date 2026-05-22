@@ -43,3 +43,7 @@ AI should handle volume. Humans handle final judgment, exceptions, payment, and 
 ## Platform Independence
 
 Use platforms as tools, not foundations. Prefer buyer data, direct workflow, CLI, web, and operator-owned records.
+
+## Coding Gate
+
+Before changing schema, API, UI, or agent logic, state the buyer value, evidence, approval point, and paid checkpoint.
