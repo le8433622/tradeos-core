@@ -11,3 +11,7 @@ Do not add generic screens before the workflow proves value.
 ## Direction
 
 This is an AI procurement operator, not a generic dashboard.
+
+## Buyer Value
+
+Each feature must improve one concrete buyer decision or remove one concrete buyer loss.
