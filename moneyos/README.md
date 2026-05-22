@@ -39,3 +39,7 @@ Work should be split into billable checkpoints. Each checkpoint needs output, pr
 ## Human Takeover
 
 AI should handle volume. Humans handle final judgment, exceptions, payment, and high-risk decisions.
+
+## Platform Independence
+
+Use platforms as tools, not foundations. Prefer buyer data, direct workflow, CLI, web, and operator-owned records.
