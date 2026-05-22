@@ -47,3 +47,7 @@ Use platforms as tools, not foundations. Prefer buyer data, direct workflow, CLI
 ## Coding Gate
 
 Before changing schema, API, UI, or agent logic, state the buyer value, evidence, approval point, and paid checkpoint.
+
+## AI Work Boundary
+
+AI may source, compare, prepare, negotiate, summarize, and draft. AI must not finalize payment or binding commitment.
