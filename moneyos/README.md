@@ -55,3 +55,7 @@ AI may source, compare, prepare, negotiate, summarize, and draft. AI must not fi
 ## Next Build Target
 
 Start with intake, item extraction, quote collection, comparison report, evidence log, approval, and paid checkpoint.
+
+## Value Magnitude
+
+Do not anchor on customer size. Estimate the economic value created, then target the buyer who can pay for that value.
