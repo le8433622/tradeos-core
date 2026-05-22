@@ -35,3 +35,7 @@ Do not use expensive AI work for low-value cases. Cost to serve must stay below 
 ## Paid Checkpoint
 
 Work should be split into billable checkpoints. Each checkpoint needs output, proof, and buyer-visible progress.
+
+## Human Takeover
+
+AI should handle volume. Humans handle final judgment, exceptions, payment, and high-risk decisions.
