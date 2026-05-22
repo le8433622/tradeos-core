@@ -51,3 +51,7 @@ Before changing schema, API, UI, or agent logic, state the buyer value, evidence
 ## AI Work Boundary
 
 AI may source, compare, prepare, negotiate, summarize, and draft. AI must not finalize payment or binding commitment.
+
+## Next Build Target
+
+Start with intake, item extraction, quote collection, comparison report, evidence log, approval, and paid checkpoint.
