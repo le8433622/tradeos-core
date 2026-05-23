@@ -1,4 +1,38 @@
-import { prisma, type ChannelType, type SenderType } from '@tradeos/database';
+import {
+  prisma,
+  type ChannelType,
+  type Prisma,
+  type SenderType,
+} from "@tradeos/database";
+import {
+  registerAction,
+  executeAction,
+  type ActionContext,
+  type ActorRole,
+} from "@tradeos/policy-core";
+import { z, ZodError } from "zod";
+
+function safeParse<T>(schema: z.ZodSchema<T>, input: unknown): T {
+  try {
+    return schema.parse(input);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      throw new Error("INVALID_REQUEST_BODY");
+    }
+    throw error;
+  }
+}
+
+const DEFAULT_INBOX_ROLES: ActorRole[] = [
+  "OWNER",
+  "ADMIN",
+  "SALES",
+  "OPERATOR",
+];
+
+function db(context: ActionContext) {
+  return (context.prismaTransactionClient ?? prisma) as typeof prisma;
+}
 
 export type IngestInboundMessageInput = {
   organizationId: string;
@@ -7,62 +41,114 @@ export type IngestInboundMessageInput = {
   title?: string;
   senderType?: SenderType;
   content: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Prisma.InputJsonValue;
 };
 
-async function findOrCreateConversation(input: IngestInboundMessageInput) {
-  if (input.externalId) {
-    const existing = await prisma.conversation.findFirst({
-      where: {
-        organizationId: input.organizationId,
-        channel: input.channel,
-        externalId: input.externalId,
-      },
-    });
+export const ingestMessageAction = registerAction<
+  IngestInboundMessageInput,
+  unknown
+>({
+  name: "inbox.ingestMessage",
+  description: "Ingest an inbound message, creating or updating conversation.",
+  riskLevel: "LOW",
+  allowedRoles: DEFAULT_INBOX_ROLES,
+  requiresApprovalForAI: false,
+  handler: async (input: IngestInboundMessageInput, context: ActionContext) => {
+    const parsed = safeParse(ingestInboundMessageSchema, input);
+    const client = db(context);
 
-    if (existing) {
-      return prisma.conversation.update({
-        where: { id: existing.id },
+    let conversation: { id: string; title: string | null };
+
+    if (parsed.externalId) {
+      const existing = await client.conversation.findFirst({
+        where: {
+          organizationId: parsed.organizationId,
+          channel: parsed.channel,
+          externalId: parsed.externalId,
+        },
+      });
+
+      if (existing) {
+        conversation = await client.conversation.update({
+          where: { id: existing.id },
+          data: {
+            title: parsed.title ?? existing.title,
+            aiSummary: parsed.content.slice(0, 240),
+            metadata: parsed.metadata,
+          },
+        });
+      } else {
+        conversation = await client.conversation.create({
+          data: {
+            organizationId: parsed.organizationId,
+            channel: parsed.channel,
+            externalId: parsed.externalId,
+            title: parsed.title ?? `Inbound ${parsed.channel} conversation`,
+            aiSummary: parsed.content.slice(0, 240),
+            metadata: parsed.metadata,
+          },
+        });
+      }
+    } else {
+      conversation = await client.conversation.create({
         data: {
-          title: input.title ?? existing.title,
-          aiSummary: input.content.slice(0, 240),
-          metadata: input.metadata,
+          organizationId: parsed.organizationId,
+          channel: parsed.channel,
+          externalId: parsed.externalId,
+          title: parsed.title ?? `Inbound ${parsed.channel} conversation`,
+          aiSummary: parsed.content.slice(0, 240),
+          metadata: parsed.metadata,
         },
       });
     }
-  }
 
-  return prisma.conversation.create({
-    data: {
-      organizationId: input.organizationId,
-      channel: input.channel,
-      externalId: input.externalId,
-      title: input.title ?? `Inbound ${input.channel} conversation`,
-      aiSummary: input.content.slice(0, 240),
-      metadata: input.metadata,
-    },
-  });
-}
+    const message = await client.message.create({
+      data: {
+        conversationId: conversation.id,
+        senderType: parsed.senderType ?? "CUSTOMER",
+        content: parsed.content,
+        metadata: parsed.metadata,
+      },
+    });
+
+    return { conversation, message };
+  },
+});
 
 export async function ingestInboundMessage(input: IngestInboundMessageInput) {
-  const conversation = await findOrCreateConversation(input);
-
-  const message = await prisma.message.create({
-    data: {
-      conversationId: conversation.id,
-      senderType: input.senderType ?? 'CUSTOMER',
-      content: input.content,
-      metadata: input.metadata,
-    },
-  });
-
-  return { conversation, message };
+  const context: ActionContext = {
+    organizationId: input.organizationId,
+    role: "OPERATOR",
+    source: "system",
+  };
+  return executeAction<IngestInboundMessageInput, unknown>(
+    "inbox.ingestMessage",
+    input,
+    context,
+  ) as Promise<{
+    conversation: { id: string; title: string | null };
+    message: { id: string; conversationId: string };
+  }>;
 }
 
+export const ingestInboundMessageSchema = z
+  .object({
+    organizationId: z.string().min(1),
+    channel: z.enum(["WEB", "ZALO", "WHATSAPP", "EMAIL", "TELEGRAM", "MANUAL"]),
+    externalId: z.string().max(256).optional(),
+    title: z.string().max(512).optional(),
+    senderType: z.enum(["USER", "CUSTOMER", "AI", "SYSTEM"]).optional(),
+    content: z.string().max(16384),
+    metadata: z.any().optional(),
+  })
+  .strict();
+
 export function normalizeChannel(channel?: string): ChannelType {
-  const value = (channel ?? 'WEB').toUpperCase();
-  if (['WEB', 'ZALO', 'WHATSAPP', 'EMAIL', 'TELEGRAM', 'MANUAL'].includes(value)) {
+  const value = (channel ?? "WEB").toUpperCase();
+  if (
+    ["WEB", "ZALO", "WHATSAPP", "EMAIL", "TELEGRAM", "MANUAL"].includes(value)
+  ) {
     return value as ChannelType;
   }
-  return 'WEB';
+  return "WEB";
 }

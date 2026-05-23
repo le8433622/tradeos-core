@@ -1,1 +1,23 @@
-{"name":"@tradeos/ai-core","version":"0.1.0","private":true,"main":"src/index.ts","scripts":{"typecheck":"tsc --noEmit"},"dependencies":{"@tradeos/policy-core":"workspace:*","@tradeos/crm-core":"workspace:*","@tradeos/trade-core":"workspace:*"},"devDependencies":{"typescript":"^5.7.2"}}
+{
+  "name": "@tradeos/ai-core",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "eval": "tsx src/eval/run-eval.ts"
+  },
+  "dependencies": {
+    "@tradeos/approval-core": "workspace:*",
+    "@tradeos/crm-core": "workspace:*",
+    "@tradeos/database": "workspace:*",
+    "@tradeos/policy-core": "workspace:*",
+    "@tradeos/trade-core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.22.3",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.7"
+  }
+}

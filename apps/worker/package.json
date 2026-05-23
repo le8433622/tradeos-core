@@ -1,0 +1,21 @@
+{
+  "name": "@tradeos/worker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tradeos/ai-core": "workspace:*",
+    "@tradeos/database": "workspace:*",
+    "@tradeos/inbox-core": "workspace:*",
+    "@tradeos/job-core": "workspace:*",
+    "@tradeos/webhook-core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.2"
+  }
+}

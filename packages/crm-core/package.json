@@ -1,1 +1,19 @@
-{"name":"@tradeos/crm-core","version":"0.1.0","private":true,"main":"src/index.ts","scripts":{"typecheck":"tsc --noEmit"},"dependencies":{"@tradeos/database":"workspace:*","@tradeos/policy-core":"workspace:*"},"devDependencies":{"typescript":"^5.7.2"}}
+{
+  "name": "@tradeos/crm-core",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tradeos/database": "workspace:*",
+    "@tradeos/policy-core": "workspace:*",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.7"
+  }
+}

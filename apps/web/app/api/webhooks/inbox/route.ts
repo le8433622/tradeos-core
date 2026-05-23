@@ -1,112 +1,75 @@
-import { NextResponse } from 'next/server';
-import { runTradeAgent } from '@tradeos/ai-core';
-import { requireSessionFromRequest } from '@tradeos/auth';
-import { ingestInboundMessage, normalizeChannel } from '@tradeos/inbox-core';
+import { type ChannelType, type UserRole } from "@tradeos/database";
+import { runTradeAgent, type IncomingMessage } from "@tradeos/ai-core";
+import { ingestInboundMessage, normalizeChannel } from "@tradeos/inbox-core";
+import { enqueueJob } from "@tradeos/job-core";
 import {
-  buildWebhookEventKey,
-  checkWebhookRateLimit,
-  getRequestSecret,
-  getSourceIp,
-  markWebhookFailed,
-  markWebhookProcessed,
-  receiveWebhookEvent,
-  verifyWebhookSecret,
-} from '@tradeos/webhook-core';
+  processWebhookRequest,
+  type WebhookPipelineInput,
+} from "@tradeos/webhook-core";
+import { requireWebhookTenant } from "@tradeos/webhook-core";
+
+function getBodyChannel(body: unknown): ChannelType {
+  const b = body as Record<string, unknown>;
+  return normalizeChannel(String(b?.channel ?? "")) as ChannelType;
+}
 
 export async function POST(request: Request) {
-  const session = await requireSessionFromRequest(request);
-  const sourceIp = getSourceIp(request);
-  let eventId: string | undefined;
+  const rawBody = await request
+    .clone()
+    .json()
+    .catch(() => ({}));
+  const channel = getBodyChannel(rawBody);
 
-  try {
-    if (!verifyWebhookSecret({
-      requestSecret: getRequestSecret(request),
-      expectedSecret: process.env.WEBHOOK_SECRET,
-    })) {
-      return NextResponse.json({ error: 'WEBHOOK_SECRET_INVALID' }, { status: 401 });
-    }
-
-    const body = await request.json();
-    const channel = normalizeChannel(body.channel);
-    const text = String(body.text ?? body.message ?? body.content ?? '');
-
-    if (!text) {
-      return NextResponse.json({ error: 'MESSAGE_TEXT_REQUIRED' }, { status: 400 });
-    }
-
-    const rateLimit = await checkWebhookRateLimit({
-      organizationId: session.organizationId,
-      channel,
-      sourceIp,
-      windowSeconds: 60,
-      maxEvents: 60,
-    });
-
-    if (!rateLimit.allowed) {
-      return NextResponse.json({ error: 'RATE_LIMITED', rateLimit }, { status: 429 });
-    }
-
-    const eventKey = buildWebhookEventKey({
-      channel,
-      externalId: body.externalId ?? body.threadId ?? body.conversationId,
-      messageId: body.messageId,
-      text,
-    });
-
-    const received = await receiveWebhookEvent({
-      organizationId: session.organizationId,
-      channel,
-      eventKey,
-      sourceIp,
-      payload: body,
-    });
-
-    eventId = received.event.id;
-
-    if (received.duplicate) {
-      return NextResponse.json({ duplicate: true, event: received.event }, { status: 200 });
-    }
-
-    const inbox = await ingestInboundMessage({
-      organizationId: session.organizationId,
-      channel,
-      externalId: body.externalId ?? body.threadId ?? body.conversationId,
-      title: body.title ?? `Inbound ${channel}`,
-      content: text,
-      metadata: body,
-    });
-
-    const agent = await runTradeAgent(
-      {
-        organizationId: session.organizationId,
-        channel: channel.toLowerCase() as any,
-        text,
-        customerName: body.customerName ?? body.name,
-        customerPhone: body.customerPhone ?? body.phone,
-        customerEmail: body.customerEmail ?? body.email,
+  return processWebhookRequest({
+    request,
+    channel,
+    extractMessage: (body: unknown) => {
+      const b = body as Record<string, unknown>;
+      return {
+        text: String(b.text ?? b.message ?? b.content ?? ""),
+        externalId: String(
+          b.externalId ?? b.threadId ?? b.conversationId ?? "",
+        ),
+        messageId: String(b.messageId ?? ""),
+        customerName: String(b.customerName ?? b.name ?? ""),
+        customerPhone: String(b.customerPhone ?? b.phone ?? ""),
+        customerEmail: String(b.customerEmail ?? b.email ?? ""),
+      };
+    },
+    tenantResolver: async () => {
+      return requireWebhookTenant(request);
+    },
+    adapters: {
+      ingestMessage: (params) =>
+        ingestInboundMessage(
+          params as Parameters<typeof ingestInboundMessage>[0],
+        ),
+      enqueueJob: async (params) => {
+        await enqueueJob(params as Parameters<typeof enqueueJob>[0]);
       },
-      {
-        actorUserId: session.userId,
-        organizationId: session.organizationId,
-        role: session.role,
-        source: 'ai',
-      },
-    );
-
-    await markWebhookProcessed({ eventId, result: { inboxId: inbox.message.id, intent: agent.plan.intent } });
-
-    return NextResponse.json({ inbox, agent });
-  } catch (error) {
-    if (eventId) {
-      await markWebhookFailed({
-        eventId,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
-
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 400 },
-    );
-  }
+      runAgent: async (params) =>
+        runTradeAgent(
+          {
+            organizationId: params.organizationId,
+            channel: channel.toLowerCase() as IncomingMessage["channel"],
+            text: params.text,
+            customerName: params.customerName,
+            customerPhone: params.customerPhone,
+            customerEmail: params.customerEmail,
+          },
+          {
+            actorUserId: "webhook-system",
+            organizationId: params.organizationId,
+            role: "OPERATOR" as UserRole,
+            source: "ai",
+          },
+        ),
+    },
+    buildIngestTitle: (body: unknown, _ch: ChannelType) => {
+      const b = body as Record<string, unknown>;
+      return String(b.title ?? "") || `Inbound ${getBodyChannel(body)}`;
+    },
+    buildAgentChannel: (_ch: ChannelType) =>
+      channel.toLowerCase() as IncomingMessage["channel"],
+  });
 }

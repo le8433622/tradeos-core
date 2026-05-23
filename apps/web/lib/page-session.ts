@@ -1,16 +1,28 @@
-import { redirect } from 'next/navigation';
-import { resolveSessionFromEmail, getDemoSession, allowDemoAuth } from '@tradeos/auth';
-import { createSupabaseServerClient } from './supabase-server';
+import { redirect } from "next/navigation";
+import {
+  resolveSessionFromEmail,
+  getDemoSession,
+  allowDemoAuth,
+  getSessionAal,
+} from "@tradeos/auth";
+import { createSupabaseServerClient } from "./supabase-server";
 
 export async function requirePageSession() {
   const supabase = await createSupabaseServerClient();
-  const { data } = await supabase.auth.getUser();
+  const { data: userData } = await supabase.auth.getUser();
+  const { data: sessionData } = await supabase.auth.getSession();
 
-  if (data.user?.email) {
+  if (userData.user?.email) {
+    const accessToken = sessionData.session?.access_token;
+    const mfaLevel = accessToken ? getSessionAal(accessToken) : "aal1";
     try {
-      return await resolveSessionFromEmail(data.user.email);
+      return await resolveSessionFromEmail(
+        userData.user.email,
+        undefined,
+        mfaLevel,
+      );
     } catch {
-      redirect('/onboarding/pending');
+      redirect("/onboarding/pending");
     }
   }
 
@@ -18,5 +30,13 @@ export async function requirePageSession() {
     return getDemoSession();
   }
 
-  redirect('/login');
+  redirect("/login");
+}
+
+export async function requirePagePermission(requiredPermission: string) {
+  const session = await requirePageSession();
+  if (!session.permissions.includes(requiredPermission)) {
+    redirect("/?error=permission_denied");
+  }
+  return session;
 }

@@ -1,29 +1,79 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@tradeos/database';
+import { NextResponse } from "next/server";
+import { prisma } from "@tradeos/database";
+import { executeAction } from "@tradeos/policy-core";
+import { apiErrorResponse, withApiPermission } from "../../../lib/api-errors";
+import {
+  createQuotationSchema,
+  stripSessionManagedFields,
+} from "../../../lib/validate";
+import { z } from "zod";
+import "@tradeos/trade-core";
 
-const organizationId = 'demo-org';
+export async function GET(request: Request) {
+  try {
+    const auth = await withApiPermission(request, "quotation.draft");
+    if (auth.response) return auth.response;
+    const { session } = auth;
 
-export async function GET() {
-  const quotations = await prisma.quotation.findMany({
-    where: { organizationId },
-    orderBy: { createdAt: 'desc' },
-    take: 50,
-  });
-  return NextResponse.json({ quotations });
+    const quotations = await prisma.quotation.findMany({
+      where: { organizationId: session.organizationId },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+    return NextResponse.json({ quotations });
+  } catch (error) {
+    return apiErrorResponse(request, error);
+  }
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const quotation = await prisma.quotation.create({
-    data: {
-      organizationId,
-      leadId: body.leadId,
-      title: body.title,
-      content: body.content,
-      status: 'DRAFT',
-      totalAmount: body.totalAmount,
-      currency: body.currency ?? 'USD',
-    },
-  });
-  return NextResponse.json({ quotation }, { status: 201 });
+  try {
+    const auth = await withApiPermission(request, "quotation.draft");
+    if (auth.response) return auth.response;
+    const { session } = auth;
+
+    let body: Record<string, unknown>;
+    try {
+      body = createQuotationSchema.parse(
+        await request.json(),
+      ) as unknown as Record<string, unknown>;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return Response.json(
+          {
+            error: "VALIDATION_ERROR",
+            issues: error.issues.map((i) => ({
+              path: i.path.join("."),
+              message: i.message,
+            })),
+          },
+          { status: 400 },
+        );
+      }
+      throw error;
+    }
+
+    body = stripSessionManagedFields(body);
+    const result = await executeAction(
+      "trade.draftQuotation",
+      {
+        organizationId: session.organizationId,
+        leadId: body.leadId as string | undefined,
+        title: body.title as string,
+        requirements: (body.content as string) ?? "",
+        currency: (body.currency as string) ?? "USD",
+        estimatedAmount: body.totalAmount as number | undefined,
+      },
+      {
+        actorUserId: session.userId,
+        organizationId: session.organizationId,
+        role: session.role,
+        source: "manual",
+        mfaLevel: session.mfaLevel,
+      },
+    );
+    return NextResponse.json({ quotation: result }, { status: 201 });
+  } catch (error) {
+    return apiErrorResponse(request, error);
+  }
 }

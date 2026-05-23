@@ -1,1 +1,17 @@
-{"name":"@tradeos/webhook-core","version":"0.1.0","private":true,"main":"src/index.ts","scripts":{"typecheck":"tsc --noEmit"},"dependencies":{"@tradeos/database":"workspace:*"},"devDependencies":{"typescript":"^5.7.2"}}
+{
+  "name": "@tradeos/webhook-core",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tradeos/database": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.7"
+  }
+}

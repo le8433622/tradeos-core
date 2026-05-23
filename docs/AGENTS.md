@@ -60,3 +60,13 @@ type AgentPlan = {
 4. Add human approval queue.
 5. Add audit log writes.
 6. Add latency target under 2 seconds.
+
+## Production 10/10 Plan
+
+For production-readiness tasks, follow `docs/28_PRODUCTION_10_10_TASK_PLAN.md`. This plan addresses ALL known blockers (4 critical, 5 high, 9 medium) documented in `docs/13_CHECKPOINTS.md`.
+
+Before any production operation:
+
+- Read `agent.md` (Production Ops Mode)
+- Read `docs/10_DEPLOYMENT_RUNBOOK.md`
+- Get explicit user approval per command

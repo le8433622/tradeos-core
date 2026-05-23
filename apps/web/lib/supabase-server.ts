@@ -1,5 +1,5 @@
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
+import { cookies } from "next/headers";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
@@ -7,7 +7,7 @@ export async function createSupabaseServerClient() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!url || !key) {
-    throw new Error('NEXT_PUBLIC_SUPABASE_ENV_MISSING');
+    throw new Error("NEXT_PUBLIC_SUPABASE_ENV_MISSING");
   }
 
   return createServerClient(url, key, {
@@ -15,9 +15,13 @@ export async function createSupabaseServerClient() {
       getAll() {
         return cookieStore.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(
+        cookiesToSet: { name: string; value: string; options: CookieOptions }[],
+      ) {
         try {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options),
+          );
         } catch {
           // Server Components cannot always set cookies. Middleware handles refresh.
         }

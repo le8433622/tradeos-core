@@ -6,20 +6,38 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
+    "test": "pnpm -r --if-present test",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "db:generate": "pnpm --filter @tradeos/database db:generate",
     "db:migrate": "pnpm --filter @tradeos/database db:migrate",
-    "db:studio": "pnpm --filter @tradeos/database db:studio"
+    "db:seed": "pnpm --filter @tradeos/database db:seed",
+    "db:studio": "pnpm --filter @tradeos/database db:studio",
+    "dev:worker": "pnpm --filter @tradeos/worker dev",
+    "sbom": "pnpm licenses list --json > sbom.json && echo 'SBOM written to sbom.json'",
+    "license:check": "pnpm licenses list --json | node scripts/check-licenses.mjs",
+    "docs:check": "node scripts/check-docs.mjs",
+    "prepare": "husky"
   },
   "packageManager": "pnpm@10.11.0",
   "devDependencies": {
-    "turbo": "^2.3.3",
-    "typescript": "^5.7.2",
+    "@types/node": "^22.19.19",
     "eslint": "^9.17.0",
-    "prettier": "^3.4.2"
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
   },
   "engines": {
     "node": "20.x"
+  },
+  "lint-staged": {
+    "*": [
+      "prettier --check --ignore-unknown"
+    ]
+  },
+  "dependencies": {
+    "zod": "^3.24.4"
   }
 }

@@ -1,0 +1,19 @@
+{
+  "name": "@tradeos/integration-tests",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tradeos/database": "workspace:*",
+    "@tradeos/policy-core": "workspace:*",
+    "@tradeos/crm-core": "workspace:*",
+    "@tradeos/webhook-core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.7"
+  }
+}

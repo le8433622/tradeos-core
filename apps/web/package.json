@@ -1,1 +1,43 @@
-{"name":"@tradeos/web","version":"0.1.0","private":true,"scripts":{"dev":"next dev","build":"next build","start":"next start","lint":"next lint","typecheck":"tsc --noEmit"},"dependencies":{"next":"^15.1.3","react":"^19.0.0","react-dom":"^19.0.0","@supabase/ssr":"^0.5.2","@tradeos/ai-core":"workspace:*","@tradeos/approval-core":"workspace:*","@tradeos/auth":"workspace:*","@tradeos/database":"workspace:*","@tradeos/inbox-core":"workspace:*","@tradeos/webhook-core":"workspace:*"},"devDependencies":{"@types/node":"^22.10.5","@types/react":"^19.0.2","@types/react-dom":"^19.0.2","typescript":"^5.7.2","tailwindcss":"^3.4.17","postcss":"^8.4.49","autoprefixer":"^10.4.20"}}
+{
+  "name": "@tradeos/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.106.1",
+    "@tradeos/ai-core": "workspace:*",
+    "@tradeos/analytics-core": "workspace:*",
+    "@tradeos/approval-core": "workspace:*",
+    "@tradeos/auth": "workspace:*",
+    "@tradeos/crm-core": "workspace:*",
+    "@tradeos/database": "workspace:*",
+    "@tradeos/inbox-core": "workspace:*",
+    "@tradeos/job-core": "workspace:*",
+    "@tradeos/policy-core": "workspace:*",
+    "@tradeos/trade-core": "workspace:*",
+    "@tradeos/webhook-core": "workspace:*",
+    "next": "^15.1.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.5",
+    "@types/node": "^22.10.5",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9",
+    "eslint-config-next": "^15.5.18",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2"
+  }
+}

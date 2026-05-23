@@ -1,0 +1,12 @@
+echo "=== Pre-commit checks ==="
+
+echo "→ docs:check (action registry parity)"
+pnpm docs:check || exit 1
+
+echo "→ lint-staged (formatting)"
+npx lint-staged || exit 1
+
+echo "→ typecheck (turbo cached)"
+pnpm typecheck || exit 1
+
+echo "=== All checks passed ==="

@@ -1,0 +1,44 @@
+# TradeOS Code Owners
+
+## Ownership Model
+- **Primary Owner**: the team responsible for the package.
+- **Backup Owner**: alternate reviewer for high-risk changes.
+- **Review Required**: all changes to these paths require review from Primary or Backup.
+
+## Root & Config
+/.github/          @tradeos/infra
+/vercel.json       @tradeos/infra
+/turbo.json        @tradeos/infra
+/docker-compose.yml @tradeos/infra
+
+## Apps
+/apps/web/         @tradeos/core-web  # Primary: CTO / Backup: CHRO
+/apps/worker/      @tradeos/core-backend # Primary: CTO / Backup: CISO
+
+## Core Packages
+/packages/policy-core/   @tradeos/core-security  # Primary: CISO / Backup: CTO
+/packages/database/      @tradeos/core-backend   # Primary: CTO / Backup: CISO
+/packages/auth/          @tradeos/core-security  # Primary: CISO / Backup: CTO
+
+## Domain Packages
+/packages/crm-core/      @tradeos/core-domain   # Primary: CCO / Backup: CTO
+/packages/trade-core/    @tradeos/core-domain   # Primary: CCO / Backup: CTO
+/packages/inbox-core/    @tradeos/core-domain   # Primary: CCO / Backup: CTO
+/packages/approval-core/ @tradeos/core-security # Primary: CISO / Backup: CTO
+
+## AI & Observability
+/packages/ai-core/       @tradeos/core-ai       # Primary: CTO / Backup: CCO
+/packages/analytics-core/ @tradeos/core-ai      # Primary: CCO / Backup: CTO
+/packages/webhook-core/  @tradeos/core-backend  # Primary: CTO / Backup: CISO
+/packages/job-core/      @tradeos/core-backend  # Primary: CTO / Backup: CISO
+
+## Documentation
+/docs/                   @tradeos/core-web      # Primary: CHRO / Backup: CTO
+/README.md               @tradeos/core-web      # Primary: CHRO / Backup: CTO
+
+## High-Risk Paths (require CISO or CTO review)
+/packages/policy-core/src/index.ts          @tradeos/core-security
+/packages/database/prisma/schema.prisma     @tradeos/core-backend
+/apps/web/app/api/                          @tradeos/core-security
+/docs/*_DATA_INVENTORY.md                   @tradeos/core-security
+/docs/*_DATA_RETENTION.md                   @tradeos/core-security

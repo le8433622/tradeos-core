@@ -5,7 +5,11 @@ dist
 .env.local
 .env.*.local
 .DS_Store
-pnpm-lock.yaml
+
 coverage
 .vercel
 .turbo
+sbom.json
+eval-output/
+*.tsbuildinfo
+next-env.d.ts

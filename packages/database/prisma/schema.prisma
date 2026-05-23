@@ -79,6 +79,7 @@ enum ApprovalStatus {
   PENDING
   APPROVED
   REJECTED
+  EXECUTING
   EXECUTED
   FAILED
 }
@@ -91,18 +92,60 @@ enum WebhookEventStatus {
   FAILED
 }
 
+enum IntegrationStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum JobType {
+  PROCESS_WEBHOOK_EVENT
+  ARCHIVE_WEBHOOK_PAYLOADS
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum TenantPlan {
+  FREE
+  PILOT
+  TEAM
+  ASSOCIATION
+  ENTERPRISE
+}
+
+enum MemberStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+}
+
 model Organization {
-  id        String           @id @default(cuid())
-  name      String
-  type      OrganizationType @default(OTHER)
-  country   String?
-  website   String?
-  metadata  Json?
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id             String           @id @default(cuid())
+  name           String
+  type           OrganizationType @default(OTHER)
+  plan           TenantPlan       @default(FREE)
+  legalHold      Boolean          @default(false)
+  country        String?
+  website        String?
+  avgDealValue   Decimal?
+  conversionRate Float?
+  aiMonthlyBudget Decimal? @default(0)
+  metadata       Json?
+  introductionsEnabled Boolean @default(false)
+  mfaRequired      Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   users            User[]
+  members          OrganizationMember[]
+  invitations      Invitation[]
   companies        Company[]
+  contacts         Contact[]
   leads            Lead[]
   products         Product[]
   conversations    Conversation[]
@@ -112,6 +155,14 @@ model Organization {
   auditLogs        AuditLog[]
   approvalRequests ApprovalRequest[]
   webhookEvents    WebhookEvent[]
+  webhookIntegrations WebhookIntegration[]
+  jobs                Job[]
+  aiUsageEvents       AiUsageEvent[]
+  reportSnapshots     ReportSnapshot[]
+  proposedIntroductions IntroductionRequest[] @relation("ProposerOrg")
+  targetIntroductions    IntroductionRequest[] @relation("TargetOrg")
+  partnerIntroductions   IntroductionRequest[] @relation("PartnerOrg")
+  deals                  Deal[]
 }
 
 model User {
@@ -128,6 +179,8 @@ model User {
   auditLogs                AuditLog[]
   requestedApprovals       ApprovalRequest[]  @relation("ApprovalRequester")
   reviewedApprovals        ApprovalRequest[]  @relation("ApprovalReviewer")
+  approvedSnapshots        ReportSnapshot[]   @relation("SnapshotApprover")
+  memberships              OrganizationMember[]
 }
 
 model Company {
@@ -150,18 +203,20 @@ model Company {
 }
 
 model Contact {
-  id        String   @id @default(cuid())
-  companyId String?
-  name      String?
-  email     String?
-  phone     String?
-  title     String?
-  country   String?
-  metadata  Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  organizationId String
+  companyId      String?
+  name           String?
+  email          String?
+  phone          String?
+  title          String?
+  country        String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  company      Company?     @relation(fields: [companyId], references: [id], onDelete: SetNull)
 }
 
 model Lead {
@@ -202,23 +257,28 @@ model Product {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization       Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  quotationLineItems QuotationLineItem[]
 }
 
 model Deal {
-  id        String   @id @default(cuid())
-  companyId String?
-  leadId    String?
-  title     String
-  stage     String   @default("new")
-  value     Decimal?
-  currency  String?
-  metadata  Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  organizationId String
+  companyId      String?
+  leadId         String?
+  title          String
+  stage          String   @default("new")
+  value          Decimal?
+  currency       String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  lead    Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  company      Company?     @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
 }
 
 model Conversation {
@@ -262,6 +322,25 @@ model Quotation {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  lineItems    QuotationLineItem[]
+}
+
+model QuotationLineItem {
+  id           String   @id @default(cuid())
+  quotationId  String
+  productId    String?
+  description  String
+  quantity     Decimal
+  unit         String?
+  unitPrice    Decimal
+  currency     String?
+  totalAmount  Decimal?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  quotation Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  product   Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
 }
 
 model Task {
@@ -284,7 +363,7 @@ model Task {
 
 model Notification {
   id             String   @id @default(cuid())
-  organizationId String?
+  organizationId String
   title          String
   body           String
   audience       String   @default("organization")
@@ -293,12 +372,12 @@ model Notification {
   createdAt      DateTime @default(now())
   publishedAt    DateTime?
 
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 }
 
 model AuditLog {
   id             String          @id @default(cuid())
-  organizationId String?
+  organizationId String
   actorUserId    String?
   actionName     String
   riskLevel      ActionRiskLevel @default(LOW)
@@ -307,7 +386,7 @@ model AuditLog {
   approved       Boolean         @default(false)
   createdAt      DateTime        @default(now())
 
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   actor        User?         @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
 }
 
@@ -349,4 +428,187 @@ model WebhookEvent {
 
   @@unique([organizationId, channel, eventKey])
   @@index([organizationId, channel, receivedAt])
+}
+
+model WebhookIntegration {
+  id                String            @id @default(cuid())
+  organizationId    String
+  channel           ChannelType
+  providerAccountId String
+  secretHash        String
+  status            IntegrationStatus @default(ACTIVE)
+  createdAt         DateTime          @default(now())
+  rotatedAt         DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([channel, providerAccountId])
+  @@index([organizationId])
+}
+
+model Job {
+  id             String    @id @default(cuid())
+  organizationId String
+  type           JobType
+  status         JobStatus @default(PENDING)
+  payload        Json?
+  attempts       Int       @default(0)
+  maxAttempts    Int       @default(3)
+  nextRunAt      DateTime  @default(now())
+  lastError      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextRunAt])
+  @@index([organizationId, type, createdAt])
+}
+
+model AiUsageEvent {
+  id             String   @id @default(cuid())
+  organizationId String
+  feature        String
+  provider       String   @default("openai")
+  model          String
+  inputTokens    Int      @default(0)
+  outputTokens   Int      @default(0)
+  estimatedCost  Decimal  @default(0)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  roleId         String?
+  status         MemberStatus @default(INVITED)
+  invitedAt      DateTime?
+  acceptedAt     DateTime?
+  suspendedAt    DateTime?
+  mfaEnrolledAt  DateTime?
+  createdAt      DateTime     @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role         Role?        @relation(fields: [roleId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model Role {
+  id             String            @id @default(cuid())
+  name           String
+  description    String?
+  isSystem       Boolean           @default(false)
+  organizationId String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  memberships OrganizationMember[]
+  permissions  RolePermission[]
+  invitations  Invitation[]
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String?
+  group       String?
+
+  rolePermissions RolePermission[]
+}
+
+model RolePermission {
+  id           String @id @default(cuid())
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+model Invitation {
+  id             String   @id @default(cuid())
+  organizationId String
+  email          String
+  roleId         String?
+  tokenHash      String
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role         Role?        @relation(fields: [roleId], references: [id], onDelete: SetNull)
+
+  @@index([tokenHash])
+  @@index([organizationId, email])
+}
+
+enum ReportSnapshotStatus {
+  DRAFT
+  APPROVED
+  DISTRIBUTED
+}
+
+model ReportSnapshot {
+  id             String                 @id @default(cuid())
+  organizationId String
+  reportType     String                 @default("weekly")
+  periodStart    String
+  periodEnd      String
+  payload        Json
+  status         ReportSnapshotStatus   @default(DRAFT)
+  approvedById   String?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  approvedBy   User?        @relation("SnapshotApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, reportType, createdAt])
+  @@index([organizationId, status])
+}
+
+enum IntroductionStatus {
+  PENDING_BUYER_APPROVAL
+  PENDING_SELLER_APPROVAL
+  APPROVED
+  REJECTED
+  DISPUTED
+}
+
+model IntroductionRequest {
+  id              String              @id @default(cuid())
+  proposerOrgId   String
+  buyerOrgId      String
+  sellerOrgId     String
+  status          IntroductionStatus  @default(PENDING_BUYER_APPROVAL)
+  buyerNote       String?
+  sellerNote      String?
+  disputeReason   String?
+  valueGenerated  String?
+  buyerContactId  String?
+  sellerContactId String?
+  metadata        Json?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  proposerOrg Organization @relation("ProposerOrg", fields: [proposerOrgId], references: [id], onDelete: Cascade)
+  buyerOrg    Organization @relation("TargetOrg", fields: [buyerOrgId], references: [id], onDelete: Cascade)
+  sellerOrg   Organization @relation("PartnerOrg", fields: [sellerOrgId], references: [id], onDelete: Cascade)
+
+  @@index([proposerOrgId])
+  @@index([buyerOrgId])
+  @@index([sellerOrgId])
+  @@index([status])
 }

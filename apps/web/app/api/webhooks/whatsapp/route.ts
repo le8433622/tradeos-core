@@ -1,59 +1,90 @@
-import { NextResponse } from 'next/server';
-import { runTradeAgent } from '@tradeos/ai-core';
-import { requireSessionFromRequest } from '@tradeos/auth';
-import { ingestInboundMessage } from '@tradeos/inbox-core';
+import { type ChannelType, type UserRole } from "@tradeos/database";
+import { runTradeAgent } from "@tradeos/ai-core";
+import { ingestInboundMessage } from "@tradeos/inbox-core";
+import { enqueueJob } from "@tradeos/job-core";
+import {
+  processWebhookRequest,
+  type WebhookPipelineInput,
+} from "@tradeos/webhook-core";
+import {
+  allowDemoAuth,
+  extractWhatsAppProviderAccountId,
+  requireWebhookTenant,
+  resolveWebhookTenantFromIntegration,
+  verifyWhatsAppSignature,
+} from "@tradeos/webhook-core";
 
-function extractWhatsAppMessage(body: any) {
-  const value = body?.entry?.[0]?.changes?.[0]?.value;
-  const message = value?.messages?.[0];
-  return {
-    text: String(message?.text?.body ?? body?.text ?? body?.message ?? ''),
-    externalId: String(message?.from ?? body?.from ?? body?.threadId ?? ''),
-    name: value?.contacts?.[0]?.profile?.name ?? body?.name,
-    phone: message?.from ?? body?.phone,
-  };
-}
+const channel = "WHATSAPP" as ChannelType;
 
 export async function POST(request: Request) {
-  try {
-    const session = await requireSessionFromRequest(request);
-    const body = await request.json();
-    const parsed = extractWhatsAppMessage(body);
-
-    if (!parsed.text) {
-      return NextResponse.json({ error: 'WHATSAPP_MESSAGE_TEXT_REQUIRED' }, { status: 400 });
-    }
-
-    const inbox = await ingestInboundMessage({
-      organizationId: session.organizationId,
-      channel: 'WHATSAPP',
-      externalId: parsed.externalId || undefined,
-      title: 'Inbound WhatsApp conversation',
-      content: parsed.text,
-      metadata: body,
-    });
-
-    const agent = await runTradeAgent(
-      {
-        organizationId: session.organizationId,
-        channel: 'whatsapp',
-        text: parsed.text,
-        customerName: parsed.name,
-        customerPhone: parsed.phone,
+  return processWebhookRequest({
+    request,
+    channel,
+    extractMessage: (body: unknown) => {
+      const b = body as Record<string, unknown>;
+      const entry = (b.entry as Record<string, unknown>[] | undefined)?.[0];
+      const changes = (
+        entry?.changes as Record<string, unknown>[] | undefined
+      )?.[0];
+      const value = changes?.value as Record<string, unknown> | undefined;
+      const messages = value?.messages as Record<string, unknown>[] | undefined;
+      const message = messages?.[0];
+      const msgText = message?.text as Record<string, unknown> | undefined;
+      const contacts = value?.contacts as Record<string, unknown>[] | undefined;
+      const contactProfile = contacts?.[0]?.profile as
+        | Record<string, unknown>
+        | undefined;
+      return {
+        text: String(msgText?.body ?? b.text ?? b.message ?? ""),
+        externalId: String(message?.from ?? b.from ?? b.threadId ?? ""),
+        messageId: String(message?.id ?? b.messageId ?? ""),
+        customerName: String(contactProfile?.name ?? b.name ?? ""),
+        customerPhone: String(message?.from ?? b.phone ?? ""),
+      };
+    },
+    tenantResolver: async () => {
+      const jsonBody = await request.clone().json();
+      const providerAccountId = extractWhatsAppProviderAccountId(jsonBody);
+      if (providerAccountId) {
+        try {
+          return await resolveWebhookTenantFromIntegration(
+            request,
+            channel,
+            providerAccountId,
+          );
+        } catch {
+          if (!allowDemoAuth()) throw new Error("WEBHOOK_UNAUTHORIZED");
+        }
+      }
+      if (!allowDemoAuth()) throw new Error("WEBHOOK_UNAUTHORIZED");
+      await verifyWhatsAppSignature(request);
+      return requireWebhookTenant(request);
+    },
+    adapters: {
+      ingestMessage: (params) =>
+        ingestInboundMessage(
+          params as Parameters<typeof ingestInboundMessage>[0],
+        ),
+      enqueueJob: async (params) => {
+        await enqueueJob(params as Parameters<typeof enqueueJob>[0]);
       },
-      {
-        actorUserId: session.userId,
-        organizationId: session.organizationId,
-        role: session.role,
-        source: 'ai',
-      },
-    );
-
-    return NextResponse.json({ ok: true, inbox, agent });
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 400 },
-    );
-  }
+      runAgent: async (params) =>
+        runTradeAgent(
+          {
+            organizationId: params.organizationId,
+            channel: "whatsapp",
+            text: params.text,
+            customerName: params.customerName,
+            customerPhone: params.customerPhone,
+          },
+          {
+            actorUserId: "webhook-system",
+            organizationId: params.organizationId,
+            role: "OPERATOR" as UserRole,
+            source: "ai",
+          },
+        ),
+    },
+    textRequiredErrorCode: "WHATSAPP_MESSAGE_TEXT_REQUIRED",
+  });
 }
