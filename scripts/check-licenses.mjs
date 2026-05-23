@@ -14,7 +14,11 @@ const blocked = [
   /No license/i,
 ];
 const weakCopyleftNeedsException = [/^LGPL/i];
-const exceptions = new Set(["@img/sharp-libvips-darwin-x64"]);
+const exceptions = new Set([
+  "@img/sharp-libvips-darwin-x64",
+  "@img/sharp-libvips-linux-x64",
+  "@img/sharp-libvips-linuxmusl-x64",
+]);
 
 const issues = [];
 for (const [license, packages] of Object.entries(groups)) {

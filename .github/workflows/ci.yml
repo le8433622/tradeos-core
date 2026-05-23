@@ -44,6 +44,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
       - run: pnpm typecheck
 
   build:
@@ -80,6 +81,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
       - run: pnpm test
 
   lint:
@@ -145,6 +147,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
       - run: pnpm --filter @tradeos/ai-core eval
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

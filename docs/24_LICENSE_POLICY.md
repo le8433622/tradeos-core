@@ -29,7 +29,7 @@
 
 ## Current SBOM
 
-All production and dev dependencies pass the allowed license policy after the approved libvips exception below. No unapproved blocked licenses detected.
+All production and dev dependencies pass the allowed license policy after the approved libvips exceptions below. No unapproved blocked licenses detected.
 
 ### License Count Summary
 
@@ -42,9 +42,9 @@ All production and dev dependencies pass the allowed license policy after the ap
 ### Dependency Audit Results
 
 - **GPL/AGPL**: 0 packages ✅
-- **LGPL**: 1 approved exception (`@img/sharp-libvips-darwin-x64`) ✅
+- **LGPL**: Approved `sharp`/libvips platform binary exceptions only ✅
 - **Unknown license**: 0 packages ✅
-- **License exceptions**: 1 approved package ✅
+- **License exceptions**: 3 approved packages ✅
 
 ## Generating SBOM
 
@@ -70,9 +70,11 @@ To add an exception for a blocked license:
 
 ### Exceptions
 
-| Package                       | License           | Version | Justification                                                                                                                                        | Approved By               | Date       |
-| ----------------------------- | ----------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ---------- |
-| @img/sharp-libvips-darwin-x64 | LGPL-3.0-or-later | 1.2.4   | Transitive prebuilt libvips binary for Sharp/Next image processing; unmodified library, license notice preserved, no static modification in app code | CTO/CISO policy exception | 2026-05-22 |
+| Package                          | License           | Version | Justification                                                                                                                                        | Approved By               | Date       |
+| -------------------------------- | ----------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ---------- |
+| @img/sharp-libvips-darwin-x64    | LGPL-3.0-or-later | 1.2.4   | Transitive prebuilt libvips binary for Sharp/Next image processing; unmodified library, license notice preserved, no static modification in app code | CTO/CISO policy exception | 2026-05-22 |
+| @img/sharp-libvips-linux-x64     | LGPL-3.0-or-later | 1.2.4   | Linux CI/Vercel platform binary for the same unmodified Sharp/libvips dependency; exception is package-specific, not a blanket LGPL allowance        | CTO/CISO policy exception | 2026-05-23 |
+| @img/sharp-libvips-linuxmusl-x64 | LGPL-3.0-or-later | 1.2.4   | Linux musl optional binary reported by pnpm on GitHub runners; exception is package-specific, not a blanket LGPL allowance                           | CTO/CISO policy exception | 2026-05-23 |
 
 ## CI Gate
 
