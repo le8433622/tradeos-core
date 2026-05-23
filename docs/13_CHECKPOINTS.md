@@ -23,21 +23,21 @@ The main failure modes were:
 
 ## Current Verification Evidence
 
-| Date       | Command                                         | Result  | Notes                                                                      |
-| ---------- | ----------------------------------------------- | ------- | -------------------------------------------------------------------------- |
-| 2026-05-23 | `pnpm db:generate`                              | pass    | Prisma client generated after migration/schema work.                       |
-| 2026-05-23 | `pnpm typecheck`                                | pass    | 14/14 workspaces successful after adding integration-tests package.        |
-| 2026-05-23 | `pnpm test`                                     | pass    | Unit suites pass; integration suite is present but skipped without DB env. |
-| 2026-05-23 | `pnpm build`                                    | pass    | Next.js generated 53/53 pages.                                             |
-| 2026-05-23 | `pnpm docs:check`                               | pass    | Action name + metadata parity (risk, roles, AI approval).                  |
-| 2026-05-23 | `pnpm --filter @tradeos/integration-tests test` | skipped | Package added; tests require `RUN_INTEGRATION_TESTS=true` and real DB.     |
-| 2026-05-23 | `pnpm lint`                                     | pass    | Web ESLint passed through turbo.                                           |
-| 2026-05-23 | `pnpm license:check`                            | pass    | No blocked licenses found.                                                 |
-| 2026-05-23 | `git diff --check`                              | pass    | No whitespace errors.                                                      |
+| Date       | Command                                         | Result  | Notes                                                                                                                              |
+| ---------- | ----------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-23 | `pnpm db:generate`                              | pass    | Prisma client generated after migration/schema work.                                                                               |
+| 2026-05-23 | `pnpm typecheck`                                | pass    | 14/14 workspaces successful after adding integration-tests package.                                                                |
+| 2026-05-23 | `pnpm test`                                     | pass    | Unit suites pass; integration suite is present but skipped without DB env.                                                         |
+| 2026-05-23 | `pnpm build`                                    | pass    | Next.js generated 53/53 pages.                                                                                                     |
+| 2026-05-23 | `pnpm docs:check`                               | pass    | Action name + metadata parity (risk, roles, AI approval).                                                                          |
+| 2026-05-23 | `pnpm --filter @tradeos/integration-tests test` | skipped | Package added; tests require `RUN_INTEGRATION_TESTS=true` and real DB.                                                             |
+| 2026-05-23 | `pnpm lint`                                     | pass    | Web ESLint passed through turbo.                                                                                                   |
+| 2026-05-23 | `pnpm license:check`                            | pass    | No blocked licenses found.                                                                                                         |
+| 2026-05-23 | `git diff --check`                              | pass    | No whitespace errors.                                                                                                              |
+| 2026-05-23 | GitHub Actions CI                               | pass    | Run `26336332076` on `main` commit `bd65e50`; final gate green: https://github.com/le8433622/tradeos-core/actions/runs/26336332076 |
 
 Not yet verified:
 
-- Full GitHub Actions CI on remote
 - Supabase staging migration with existing data
 - Vercel preview deploy smoke tests
 
@@ -54,13 +54,13 @@ Not yet verified:
 
 ### P1 — High
 
-| ID  | Issue                                              | Status                             | Evidence                                                                                                               | Remaining Risk                                                                                           |
-| --- | -------------------------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| B5  | Missing Zod schemas on 3 API routes                | Fixed locally                      | `agentExecutionSchema`, `updateLeadStatusSchema`, `introductionActionSchema` added and used.                           | Route tests for invalid payloads still limited.                                                          |
-| B6  | Blocked action audit lacks structured block reason | Fixed locally                      | `executeAction()` writes `result.blockReason` for org mismatch, policy denial, and MFA denial; policy-core tests pass. | Stored in JSON `result`, not a dedicated DB column. Add column only if reporting needs indexed querying. |
-| B7  | Webhook agent failure marked `PROCESSED`           | Fixed locally                      | Pipeline marks webhook `FAILED` when `runAgent` throws; webhook-core regression tests pass.                            | Needs staging webhook smoke.                                                                             |
-| B8  | Missing GitHub Actions CI                          | Fixed locally, not remote-verified | `.github/workflows/ci.yml` exists.                                                                                     | Must push and verify GitHub CI green; branch protection not enabled yet.                                 |
-| B9  | Pre-commit lint-staged non-gating                  | Fixed locally                      | `.husky/pre-commit` and root `lint-staged` config no longer use success fallbacks.                                     | Needs an actual failed lint-staged dry run or hook verification.                                         |
+| ID  | Issue                                              | Status          | Evidence                                                                                                               | Remaining Risk                                                                                           |
+| --- | -------------------------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| B5  | Missing Zod schemas on 3 API routes                | Fixed locally   | `agentExecutionSchema`, `updateLeadStatusSchema`, `introductionActionSchema` added and used.                           | Route tests for invalid payloads still limited.                                                          |
+| B6  | Blocked action audit lacks structured block reason | Fixed locally   | `executeAction()` writes `result.blockReason` for org mismatch, policy denial, and MFA denial; policy-core tests pass. | Stored in JSON `result`, not a dedicated DB column. Add column only if reporting needs indexed querying. |
+| B7  | Webhook agent failure marked `PROCESSED`           | Fixed locally   | Pipeline marks webhook `FAILED` when `runAgent` throws; webhook-core regression tests pass.                            | Needs staging webhook smoke.                                                                             |
+| B8  | Missing GitHub Actions CI                          | Remote verified | `.github/workflows/ci.yml` exists; GitHub Actions run `26336332076` passed on `main` commit `bd65e50`.                 | Branch protection not enabled yet.                                                                       |
+| B9  | Pre-commit lint-staged non-gating                  | Fixed locally   | `.husky/pre-commit` and root `lint-staged` config no longer use success fallbacks.                                     | Needs an actual failed lint-staged dry run or hook verification.                                         |
 
 ### P2 — Medium
 
@@ -96,7 +96,7 @@ Not yet verified:
 | Webhook security        | Improved                    | 8.5/10                             | Signatures/idempotency/rate limiting exist; webhook body size uses actual byte length.                                                               |
 | AI safety               | Improved                    | 8/10                               | AI calls actions through policy; per-step failure isolation is fixed locally.                                                                        |
 | Testing                 | Better but staging unproven | 8/10                               | Unit tests pass; guarded DB integration package added but not run against staging.                                                                   |
-| CI/CD                   | Local only                  | 6/10                               | Workflow exists locally; GitHub CI and branch protection still unverified.                                                                           |
+| CI/CD                   | Remote CI green             | 7/10                               | GitHub Actions final gate passed on `main`; branch protection still unverified.                                                                      |
 | Deployment/staging      | Not production-proven       | 5/10                               | No recorded Supabase staging migration or Vercel preview smoke in this checkpoint.                                                                   |
 | **Overall**             | **Not production-ready**    | **7.5/10 local, ~7/10 production** | Main blockers are B12 staging execution, B13, B24, full verification, GitHub CI/branch protection, Supabase migration proof, and Vercel smoke tests. |
 
@@ -115,10 +115,9 @@ Not yet verified:
 ### Production proof
 
 1. Run full local verification: `pnpm typecheck && pnpm test && pnpm build && pnpm docs:check && pnpm lint && pnpm license:check && git diff --check`.
-2. Push to GitHub and verify CI green.
-3. Enable branch protection.
-4. Apply migrations to Supabase staging with pre-existing data simulation.
-5. Deploy Vercel preview and run smoke tests.
+2. Enable branch protection.
+3. Apply migrations to Supabase staging with pre-existing data simulation.
+4. Deploy Vercel preview and run smoke tests.
 
 ## Checkpoint Update Template
 
