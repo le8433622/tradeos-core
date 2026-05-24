@@ -39,7 +39,7 @@ export async function POST(
         mfaLevel: session.mfaLevel,
       },
     );
-    return NextResponse.json({ status: result.status });
+    return NextResponse.json({ status: (result as { status: string }).status });
   } catch (error) {
     return apiErrorResponse(request, error);
   }
