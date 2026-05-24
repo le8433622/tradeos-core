@@ -1,5 +1,9 @@
 # Production 10/10 Task Plan — Zero Rework Edition
 
+## Status Note — 2026-05-25
+
+PR #3 has been merged and issue #1 has been closed. For all post-PR #3 work, use `docs/29_PERFECTION_TASK_PLAN.md` as the active master plan. This document remains useful for historical blocker context and dependency rationale, but its early status bullets are intentionally superseded by `docs/13_CHECKPOINTS.md` and `docs/29_PERFECTION_TASK_PLAN.md`.
+
 ## Current Truth — 2026-05-23
 
 This plan is the execution map, not proof of production readiness. The project is **not 10/10 yet**.
