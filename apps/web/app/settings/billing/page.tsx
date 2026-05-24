@@ -18,39 +18,198 @@ type BillingMetrics = {
   }[];
 };
 
+type Payment = {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  paidAt: string;
+  provider: string;
+  checkpointId: string;
+  invoiceId: string | null;
+};
+
+function Skeleton() {
+  return (
+    <div style={{ maxWidth: 480 }}>
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          style={{
+            height: 120,
+            background: "#f3f4f6",
+            borderRadius: 16,
+            marginBottom: 24,
+            padding: 24,
+          }}
+        >
+          <div
+            style={{
+              height: 18,
+              width: "40%",
+              background: "#e5e7eb",
+              borderRadius: 4,
+              marginBottom: 12,
+            }}
+          />
+          <div
+            style={{
+              height: 14,
+              width: "70%",
+              background: "#e5e7eb",
+              borderRadius: 4,
+              marginBottom: 8,
+            }}
+          />
+          <div
+            style={{
+              height: 14,
+              width: "50%",
+              background: "#e5e7eb",
+              borderRadius: 4,
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ConfirmDialog({
+  open,
+  currentPlan,
+  newPlan,
+  onConfirm,
+  onCancel,
+  saving,
+}: {
+  open: boolean;
+  currentPlan: string;
+  newPlan: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  saving: boolean;
+}) {
+  if (!open) return null;
+  const isDowngrade =
+    ["FREE", "PILOT", "TEAM", "ASSOCIATION", "ENTERPRISE"].indexOf(newPlan) <
+    ["FREE", "PILOT", "TEAM", "ASSOCIATION", "ENTERPRISE"].indexOf(currentPlan);
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 100,
+      }}
+    >
+      <div
+        style={{
+          background: "white",
+          borderRadius: 16,
+          padding: 24,
+          maxWidth: 400,
+          width: "90%",
+        }}
+      >
+        <h3 style={{ margin: "0 0 12px" }}>
+          {isDowngrade ? "Downgrade plan?" : "Change plan?"}
+        </h3>
+        <p style={{ color: "#6b7280", fontSize: 14, margin: "0 0 20px" }}>
+          {isDowngrade
+            ? `Downgrading from ${currentPlan} to ${newPlan} may reduce available features and limits. This change takes effect immediately.`
+            : `Upgrade from ${currentPlan} to ${newPlan}? Additional charges may apply.`}
+        </p>
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button
+            onClick={onCancel}
+            disabled={saving}
+            style={{
+              padding: "8px 16px",
+              border: "1px solid #d1d5db",
+              borderRadius: 8,
+              background: "white",
+              cursor: "pointer",
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={saving}
+            style={{
+              padding: "8px 16px",
+              border: "none",
+              borderRadius: 8,
+              background: isDowngrade ? "#dc2626" : "#111827",
+              color: "white",
+              cursor: saving ? "wait" : "pointer",
+              opacity: saving ? 0.6 : 1,
+            }}
+          >
+            {saving ? "Saving..." : isDowngrade ? "Downgrade" : "Upgrade"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function BillingSettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [billingMetrics, setBillingMetrics] = useState<BillingMetrics | null>(
     null,
   );
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [plan, setPlan] = useState("");
+  const [pendingPlan, setPendingPlan] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
   const [avgDealValue, setAvgDealValue] = useState("");
   const [conversionRate, setConversionRate] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/organization/settings")
-      .then((r) => r.json())
-      .then((data: Settings) => {
-        setSettings(data);
-        setPlan(data.plan || "FREE");
-        setAvgDealValue(data.avgDealValue?.toString() ?? "");
-        setConversionRate(data.conversionRate?.toString() ?? "");
+    Promise.all([
+      fetch("/api/organization/settings").then((r) => r.json()),
+      fetch("/api/organization/billing").then((r) => r.json()),
+      fetch("/api/organization/billing/payments").then((r) => r.json()),
+    ])
+      .then(([settingsData, billingData, paymentsData]) => {
+        setSettings(settingsData);
+        setPlan(settingsData.plan || "FREE");
+        setAvgDealValue(settingsData.avgDealValue?.toString() ?? "");
+        setConversionRate(settingsData.conversionRate?.toString() ?? "");
+        setBillingMetrics(billingData.metrics);
+        setPayments(paymentsData.payments ?? []);
       })
-      .catch((err) => {
+      .catch(() => {
         setError("Failed to load billing data");
-      });
-    fetch("/api/organization/billing")
-      .then((r) => r.json())
-      .then((data: { metrics: BillingMetrics }) =>
-        setBillingMetrics(data.metrics),
-      )
-      .catch((err) => {
-        setError("Failed to load billing metrics");
-      });
+      })
+      .finally(() => setLoading(false));
   }, []);
+
+  const handlePlanSelect = (value: string) => {
+    setPendingPlan(value);
+    if (value !== plan) {
+      setShowConfirm(true);
+    }
+  };
+
+  const handlePlanConfirm = async () => {
+    setShowConfirm(false);
+    setPlan(pendingPlan);
+  };
+
+  const handlePlanCancel = () => {
+    setShowConfirm(false);
+    setPendingPlan(plan);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -68,18 +227,28 @@ export default function BillingSettingsPage() {
       });
       if (!res.ok) {
         const err = await res.json();
-        setError(err.error || "Failed to save");
+        const msg =
+          err.error === "ENTITLEMENT_EXCEEDED"
+            ? "Your current plan limit has been reached. Contact support to upgrade."
+            : err.error === "PERMISSION_DENIED" || err.error === "ROLE_ACCESS_DENIED"
+              ? "You do not have permission to change billing settings."
+              : err.error === "INVALID_PLAN"
+                ? "The selected plan is not valid."
+                : err.error || "Failed to save";
+        setError(msg);
       } else {
         setSaved("Saved");
         const updated = await res.json();
         setSettings((s) => (s ? { ...s, ...updated } : s));
       }
     } catch {
-      setError("Network error");
+      setError("Network error. Please try again.");
     } finally {
       setSaving(false);
     }
   };
+
+  if (loading) return <Skeleton />;
 
   const dealVal = parseFloat(avgDealValue) || 0;
   const convRate = parseFloat(conversionRate) || 0;
@@ -91,6 +260,15 @@ export default function BillingSettingsPage() {
   return (
     <div>
       <h1 style={{ fontSize: 24, margin: "0 0 24px" }}>Billing</h1>
+
+      <ConfirmDialog
+        open={showConfirm}
+        currentPlan={plan}
+        newPlan={pendingPlan}
+        onConfirm={handlePlanConfirm}
+        onCancel={handlePlanCancel}
+        saving={saving}
+      />
 
       <section
         style={{
@@ -118,7 +296,7 @@ export default function BillingSettingsPage() {
           </label>
           <select
             value={plan}
-            onChange={(e) => setPlan(e.target.value)}
+            onChange={(e) => handlePlanSelect(e.target.value)}
             style={{
               width: "100%",
               padding: "8px 12px",
@@ -133,6 +311,11 @@ export default function BillingSettingsPage() {
             <option value="ASSOCIATION">Association</option>
             <option value="ENTERPRISE">Enterprise</option>
           </select>
+          {pendingPlan && pendingPlan !== plan && (
+            <p style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
+              Plan change to {pendingPlan} is pending confirmation.
+            </p>
+          )}
         </div>
         {billingMetrics && (
           <div>
@@ -195,6 +378,75 @@ export default function BillingSettingsPage() {
             </div>
           </div>
         )}
+      </section>
+
+      <section
+        style={{
+          background: "white",
+          border: "1px solid #e5e7eb",
+          borderRadius: 16,
+          padding: 24,
+          marginBottom: 24,
+          maxWidth: 480,
+        }}
+      >
+        <h2 style={{ fontSize: 18, marginTop: 0 }}>Payment History</h2>
+        {payments.length === 0 ? (
+          <p style={{ color: "#9ca3af", fontSize: 14 }}>
+            No payments recorded yet.
+          </p>
+        ) : (
+          <div style={{ fontSize: 14 }}>
+            {payments.map((p) => (
+              <div
+                key={p.id}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "12px 0",
+                  borderBottom: "1px solid #f3f4f6",
+                }}
+              >
+                <div>
+                  <strong>
+                    {p.currency} {Number(p.amount).toLocaleString()}
+                  </strong>
+                  <p style={{ margin: 0, color: "#6b7280", fontSize: 12 }}>
+                    {new Date(p.paidAt).toLocaleDateString()} &middot;{" "}
+                    {p.provider}
+                  </p>
+                </div>
+                <span
+                  style={{
+                    color: p.status === "COMPLETED" ? "#059669" : "#d97706",
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  {p.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section
+        style={{
+          background: "white",
+          border: "1px solid #e5e7eb",
+          borderRadius: 16,
+          padding: 24,
+          marginBottom: 24,
+          maxWidth: 480,
+        }}
+      >
+        <h2 style={{ fontSize: 18, marginTop: 0 }}>Invoices</h2>
+        <p style={{ color: "#9ca3af", fontSize: 14 }}>
+          Invoice history will be available here once billing is processed
+          through a payment provider.
+        </p>
       </section>
 
       <section
@@ -436,9 +688,19 @@ export default function BillingSettingsPage() {
           </span>
         )}
         {error && (
-          <span style={{ color: "#dc2626", marginLeft: 12, fontSize: 14 }}>
+          <div
+            style={{
+              color: "#dc2626",
+              marginTop: 8,
+              fontSize: 14,
+              background: "#fef2f2",
+              border: "1px solid #fecaca",
+              borderRadius: 8,
+              padding: "8px 12px",
+            }}
+          >
             {error}
-          </span>
+          </div>
         )}
       </div>
     </div>
