@@ -373,6 +373,9 @@ importers:
       '@tradeos/database':
         specifier: workspace:*
         version: link:../database
+      '@tradeos/plan-core':
+        specifier: workspace:*
+        version: link:../plan-core
       '@tradeos/policy-core':
         specifier: workspace:*
         version: link:../policy-core

@@ -174,30 +174,3 @@ export const getPlanAction = registerAction<
     };
   },
 });
-
-export const updatePlanSchema = z
-  .object({
-    organizationId: z.string().min(1),
-    plan: z.enum(["FREE", "PILOT", "TEAM", "ASSOCIATION", "ENTERPRISE"]),
-  })
-  .strict();
-
-export const updatePlanAction = registerAction<
-  z.infer<typeof updatePlanSchema>,
-  { plan: string }
->({
-  name: "plan.updatePlan",
-  description:
-    "Update the plan for an organization. Only OWNER can execute.",
-  riskLevel: "HIGH",
-  allowedRoles: ["OWNER"],
-  requiresApprovalForAI: true,
-  handler: async (input) => {
-    const updated = await prisma.organization.update({
-      where: { id: input.organizationId },
-      data: { plan: input.plan },
-      select: { plan: true },
-    });
-    return { plan: updated.plan };
-  },
-});

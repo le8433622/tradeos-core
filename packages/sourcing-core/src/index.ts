@@ -6,6 +6,7 @@ import {
   validateRecordBelongsToOrg,
 } from "@tradeos/policy-core";
 import type { ActionContext } from "@tradeos/policy-core";
+import { checkEntitlement } from "@tradeos/plan-core";
 import { z } from "zod";
 
 export const createSourcingRunSchema = z
@@ -35,6 +36,13 @@ export const createSourcingRunAction = registerAction<
   requiresApprovalForAI: false,
   handler: async (input, context) => {
     const parsed = createSourcingRunSchema.parse(input);
+    const entitlement = await checkEntitlement(
+      parsed.organizationId,
+      "sourcing_runs",
+    );
+    if (!entitlement.allowed) {
+      throw new Error("ENTITLEMENT_EXCEEDED");
+    }
     const run = await prisma.sourcingRun.create({
       data: {
         organizationId: parsed.organizationId,
@@ -328,6 +336,13 @@ export const createCheckpointAction = registerAction<
   requiresApprovalForAI: false,
   handler: async (input, context) => {
     const parsed = createCheckpointSchema.parse(input);
+    const entitlement = await checkEntitlement(
+      parsed.organizationId,
+      "checkpoints",
+    );
+    if (!entitlement.allowed) {
+      throw new Error("ENTITLEMENT_EXCEEDED");
+    }
     const cp = await prisma.workCheckpoint.create({
       data: {
         organizationId: parsed.organizationId,
@@ -683,5 +698,55 @@ export const markAsBilledAction = registerAction<
     ]);
 
     return { status: updated.status, paymentId: payment.id };
+  },
+});
+
+export const recordPaymentSchema = z
+  .object({
+    organizationId: z.string().min(1),
+    checkpointId: z.string().min(1),
+    invoiceId: z.string().max(256).optional(),
+    amount: z.number().min(0),
+    currency: z.string().max(8).optional(),
+    provider: z.string().max(64).optional(),
+    externalPaymentId: z.string().max(256).optional(),
+    metadata: z.any().optional(),
+  })
+  .strict();
+
+export const recordPaymentAction = registerAction<
+  z.infer<typeof recordPaymentSchema>,
+  { paymentId: string }
+>({
+  name: "checkpoint.recordPayment",
+  description:
+    "Record a payment for an already-billed checkpoint (e.g. from Stripe webhook callback). Only OWNER can execute.",
+  riskLevel: "HIGH",
+  allowedRoles: ["OWNER"],
+  requiresApprovalForAI: true,
+  handler: async (input, context) => {
+    const parsed = recordPaymentSchema.parse(input);
+    const cp = await prisma.workCheckpoint.findUnique({
+      where: { id: parsed.checkpointId },
+      select: { organizationId: true, status: true },
+    });
+    validateRecordBelongsToOrg(cp, parsed.organizationId, "CHECKPOINT");
+    if (cp?.status !== "BILLED") throw new Error("CHECKPOINT_NOT_BILLED");
+
+    const payment = await prisma.payment.create({
+      data: {
+        organizationId: parsed.organizationId,
+        checkpointId: parsed.checkpointId,
+        invoiceId: parsed.invoiceId,
+        amount: parsed.amount,
+        currency: parsed.currency ?? "USD",
+        provider: parsed.provider ?? "external",
+        status: "COMPLETED",
+        metadata: parsed.metadata,
+      },
+      select: { id: true },
+    });
+
+    return { paymentId: payment.id };
   },
 });

@@ -108,11 +108,11 @@ Irreversible, legal, financial, or security-sensitive action. (None currently re
 | `checkpoint.markDelivered`            | sourcing-core  | MEDIUM | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 | `checkpoint.approveForBilling`        | sourcing-core  | HIGH   | OWNER                         | No         | Yes for AI        | Yes            |
 | `checkpoint.markAsBilled`             | sourcing-core  | HIGH   | OWNER                         | No         | Yes for AI        | Yes            |
+| `checkpoint.recordPayment`            | sourcing-core  | HIGH   | OWNER                         | No         | Yes for AI        | Yes            |
 | `handover.create`                     | sourcing-core  | MEDIUM | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
 | `handover.resolve`                    | sourcing-core  | HIGH   | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 | `plan.checkEntitlement`                | plan-core      | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
 | `plan.getPlan`                         | plan-core      | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
-| `plan.updatePlan`                      | plan-core      | HIGH   | OWNER                         | No         | Yes for AI        | Yes            |
 
 **Total: 54 registered actions** (LOW: 19, MEDIUM: 15, HIGH: 16, CRITICAL: 0)
 

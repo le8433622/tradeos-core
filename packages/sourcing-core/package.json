@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@tradeos/database": "workspace:*",
+    "@tradeos/plan-core": "workspace:*",
     "@tradeos/policy-core": "workspace:*",
     "zod": "^3.24.4"
   },
