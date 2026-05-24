@@ -163,6 +163,7 @@ model Organization {
   targetIntroductions    IntroductionRequest[] @relation("TargetOrg")
   partnerIntroductions   IntroductionRequest[] @relation("PartnerOrg")
   deals                  Deal[]
+  sourcingRuns           SourcingRun[]
 }
 
 model User {
@@ -241,6 +242,7 @@ model Lead {
   deals        Deal[]
   tasks        Task[]
   quotations   Quotation[]
+  sourcingRuns SourcingRun[]
 }
 
 model Product {
@@ -611,4 +613,226 @@ model IntroductionRequest {
   @@index([buyerOrgId])
   @@index([sellerOrgId])
   @@index([status])
+}
+
+enum SourcingRunStatus {
+  DRAFT
+  ACTIVE
+  SUPPLIER_SHORTLISTED
+  QUOTES_COLLECTED
+  COMPARED
+  READY_FOR_REVIEW
+  REPORT_DELIVERED
+  CANCELLED
+}
+
+enum SupplierStatus {
+  DISCOVERED
+  CONTACTED
+  QUOTED
+  SELECTED
+  REJECTED
+}
+
+enum EvidenceType {
+  SUPPLIER_MESSAGE
+  CALL_NOTE
+  QUOTE_SCREENSHOT
+  QUOTE_FILE
+  INVOICE
+  PAYMENT_PROOF
+  APPROVAL_RECORD
+  DELIVERY_CONFIRMATION
+  COMPARISON_TABLE
+  BUYER_DECISION
+  SYSTEM_LOG
+}
+
+enum CheckpointStatus {
+  PENDING
+  IN_PROGRESS
+  DELIVERED
+  APPROVED
+  REJECTED
+  BILLED
+}
+
+enum CheckpointType {
+  PAID_SOURCING_REQUEST
+  SUPPLIER_SHORTLIST
+  QUOTE_COLLECTION
+  QUOTE_COMPARISON
+  NEGOTIATION_RUN
+  BUYER_DECISION_REPORT
+  INTRODUCTION
+  DEAL_SUCCESS
+}
+
+enum HandoverStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CANCELLED
+}
+
+enum HandoverReason {
+  PRICE_THRESHOLD
+  ABNORMAL_SUPPLIER
+  UNCLEAR_PAYMENT
+  LEGAL_AMBIGUITY
+  SHIPPING_AMBIGUITY
+  BUYER_PREFERENCE_CONFLICT
+  LOW_CONFIDENCE
+  MONEY_MOVEMENT
+  FINAL_ORDER
+  OTHER
+}
+
+model SourcingRun {
+  id              String            @id @default(cuid())
+  organizationId  String
+  leadId          String?
+  title           String
+  requirement     String
+  status          SourcingRunStatus @default(DRAFT)
+  targetCountry   String?
+  sourceCountry   String?
+  productCategory String?
+  quantity        String?
+  budget          String?
+  currency        String?
+  riskLevel       String            @default("MEDIUM")
+  createdById     String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  organization     Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead             Lead?               @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  supplierCandidates SupplierCandidate[]
+  supplierQuotes    SupplierQuote[]
+  evidenceItems     EvidenceItem[]
+  checkpoints       WorkCheckpoint[]
+  handovers         HumanHandover[]
+
+  @@index([organizationId, status])
+  @@index([leadId])
+}
+
+model SupplierCandidate {
+  id               String         @id @default(cuid())
+  organizationId   String
+  sourcingRunId    String
+  name             String
+  source           String?
+  website          String?
+  platform         String?
+  country          String?
+  contactInfo      Json?
+  reliabilityScore Int?
+  riskFlags        Json?
+  status           SupplierStatus @default(DISCOVERED)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  sourcingRun SourcingRun   @relation(fields: [sourcingRunId], references: [id], onDelete: Cascade)
+  quotes      SupplierQuote[]
+
+  @@index([organizationId, sourcingRunId])
+}
+
+model SupplierQuote {
+  id                  String       @id @default(cuid())
+  organizationId      String
+  sourcingRunId       String
+  supplierCandidateId String?
+  productDescription  String
+  quantity            Decimal?
+  unit                String?
+  unitPrice           Decimal?
+  totalAmount         Decimal?
+  currency            String?
+  moq                 String?
+  leadTime            String?
+  shippingTerm        String?
+  paymentTerm         String?
+  warranty            String?
+  riskScore           Int?
+  comparisonRank      Int?
+  status              String       @default("COLLECTED")
+  rawData             Json?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  sourcingRun       SourcingRun        @relation(fields: [sourcingRunId], references: [id], onDelete: Cascade)
+  supplierCandidate SupplierCandidate? @relation(fields: [supplierCandidateId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, sourcingRunId])
+}
+
+model EvidenceItem {
+  id             String   @id @default(cuid())
+  organizationId String
+  sourcingRunId  String?
+  relatedType    String
+  relatedId      String?
+  evidenceType   EvidenceType
+  title          String
+  description    String?
+  content        String?
+  fileUrl        String?
+  externalUrl    String?
+  hash           String?
+  metadata       Json?
+  capturedBy     String?
+  capturedAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  sourcingRun SourcingRun? @relation(fields: [sourcingRunId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, relatedType, relatedId])
+  @@index([sourcingRunId])
+}
+
+model WorkCheckpoint {
+  id             String           @id @default(cuid())
+  organizationId String
+  sourcingRunId  String?
+  title          String
+  description    String?
+  checkpointType CheckpointType
+  status         CheckpointStatus @default(PENDING)
+  price          Decimal?
+  currency       String?
+  payerOrgId     String?
+  evidenceCount  Int              @default(0)
+  approvedById   String?
+  approvedAt     DateTime?
+  deliveredAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  sourcingRun SourcingRun? @relation(fields: [sourcingRunId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@index([sourcingRunId])
+}
+
+model HumanHandover {
+  id                    String         @id @default(cuid())
+  organizationId        String
+  sourcingRunId         String?
+  reason                HandoverReason
+  riskLevel             String
+  context               Json
+  recommendedNextAction String?
+  status                HandoverStatus @default(OPEN)
+  assignedToId          String?
+  resolvedById          String?
+  resolvedAt            DateTime?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  sourcingRun SourcingRun? @relation(fields: [sourcingRunId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
 }
