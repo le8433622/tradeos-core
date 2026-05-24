@@ -11,26 +11,17 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const auth = await withApiPermission(request, "sourcing.deliverReport");
+    const auth = await withApiPermission(request, "sourcing.manage");
     if (auth.response) return auth.response;
     const { session } = auth;
     const { id } = await params;
 
-    const { searchParams } = new URL(request.url);
-    const body = {
-      organizationId: session.organizationId,
-      sourcingRunId: id,
-      summary: searchParams.get("summary") ?? "Buyer decision report",
-      recommendedSupplierName: searchParams.get("recommendedSupplierName") ?? undefined,
-      expectedSavings: searchParams.get("expectedSavings")
-        ? Number(searchParams.get("expectedSavings"))
-        : undefined,
-      currency: searchParams.get("currency") ?? undefined,
-    };
-
     const result = await executeAction(
-      "sourcing.deliverBuyerReport",
-      body,
+      "sourcing.generateBuyerReport",
+      {
+        organizationId: session.organizationId,
+        sourcingRunId: id,
+      },
       {
         actorUserId: session.userId,
         organizationId: session.organizationId,
@@ -39,7 +30,7 @@ export async function POST(
         mfaLevel: session.mfaLevel,
       },
     );
-    return NextResponse.json({ status: result.status });
+    return NextResponse.json({ report: result });
   } catch (error) {
     return apiErrorResponse(request, error);
   }

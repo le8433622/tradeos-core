@@ -6,6 +6,7 @@ const {
   mockSourcingUpdate,
   mockCandidateFindMany,
   mockCandidateCreate,
+  mockCandidateFindUnique,
   mockQuoteCreate,
   mockQuoteFindMany,
   mockQuoteUpdate,
@@ -17,6 +18,8 @@ const {
   mockHandoverFindUnique,
   mockHandoverUpdate,
   mockPaymentCreate,
+  mockPaymentFindUnique,
+  mockLeadFindUnique,
   mockAuditCreate,
   mockOrgFindUnique,
 } = vi.hoisted(() => {
@@ -25,6 +28,7 @@ const {
   const mockSourcingUpdate = vi.fn();
   const mockCandidateFindMany = vi.fn();
   const mockCandidateCreate = vi.fn();
+  const mockCandidateFindUnique = vi.fn();
   const mockQuoteCreate = vi.fn();
   const mockQuoteFindMany = vi.fn();
   const mockQuoteUpdate = vi.fn();
@@ -36,6 +40,8 @@ const {
   const mockHandoverFindUnique = vi.fn();
   const mockHandoverUpdate = vi.fn();
   const mockPaymentCreate = vi.fn();
+  const mockPaymentFindUnique = vi.fn();
+  const mockLeadFindUnique = vi.fn();
   const mockAuditCreate = vi.fn().mockResolvedValue({ id: "audit-1" });
   const mockOrgFindUnique = vi.fn();
   const tx = {
@@ -49,6 +55,7 @@ const {
     supplierCandidate: {
       create: mockCandidateCreate,
       findMany: mockCandidateFindMany,
+      findUnique: mockCandidateFindUnique,
     },
     supplierQuote: {
       create: mockQuoteCreate,
@@ -70,6 +77,10 @@ const {
     },
     payment: {
       create: mockPaymentCreate,
+      findUnique: mockPaymentFindUnique,
+    },
+    lead: {
+      findUnique: mockLeadFindUnique,
     },
   };
   return {
@@ -78,6 +89,7 @@ const {
     mockSourcingUpdate,
     mockCandidateFindMany,
     mockCandidateCreate,
+    mockCandidateFindUnique,
     mockQuoteCreate,
     mockQuoteFindMany,
     mockQuoteUpdate,
@@ -89,6 +101,8 @@ const {
     mockHandoverFindUnique,
     mockHandoverUpdate,
     mockPaymentCreate,
+    mockPaymentFindUnique,
+    mockLeadFindUnique,
     mockAuditCreate,
     mockOrgFindUnique,
     tx,
@@ -107,6 +121,7 @@ vi.mock("@tradeos/database", () => ({
     supplierCandidate: {
       create: mockCandidateCreate,
       findMany: mockCandidateFindMany,
+      findUnique: mockCandidateFindUnique,
     },
     supplierQuote: {
       create: mockQuoteCreate,
@@ -128,6 +143,10 @@ vi.mock("@tradeos/database", () => ({
     },
     payment: {
       create: mockPaymentCreate,
+      findUnique: mockPaymentFindUnique,
+    },
+    lead: {
+      findUnique: mockLeadFindUnique,
     },
     $transaction: vi.fn(
       async (arg: unknown) => {
@@ -142,6 +161,7 @@ vi.mock("@tradeos/database", () => ({
           supplierCandidate: {
             create: mockCandidateCreate,
             findMany: mockCandidateFindMany,
+            findUnique: mockCandidateFindUnique,
           },
           supplierQuote: {
             create: mockQuoteCreate,
@@ -163,6 +183,10 @@ vi.mock("@tradeos/database", () => ({
           },
           payment: {
             create: mockPaymentCreate,
+            findUnique: mockPaymentFindUnique,
+          },
+          lead: {
+            findUnique: mockLeadFindUnique,
           },
         };
         if (typeof arg === "function") {
@@ -216,13 +240,16 @@ beforeEach(() => {
   mockQuoteCreate.mockResolvedValue({ id: "quote-1" });
   mockQuoteFindMany.mockResolvedValue([]);
   mockEvidenceFindMany.mockResolvedValue([]);
-  mockCheckpointFindUnique.mockResolvedValue({ id: "cp-1", organizationId: "org-1", status: "DELIVERED" });
+  mockCheckpointFindUnique.mockResolvedValue({ id: "cp-1", organizationId: "org-1", status: "DELIVERED", evidenceCount: 5 });
   mockCheckpointCreate.mockResolvedValue({ id: "cp-1", status: "PENDING" });
   mockCheckpointUpdate.mockResolvedValue({ status: "DELIVERED" });
   mockHandoverCreate.mockResolvedValue({ id: "handover-1", status: "OPEN" });
   mockHandoverFindUnique.mockResolvedValue({ id: "handover-1", organizationId: "org-1" });
   mockHandoverUpdate.mockResolvedValue({ status: "RESOLVED" });
   mockPaymentCreate.mockResolvedValue({ id: "payment-1" });
+  mockPaymentFindUnique.mockResolvedValue(null);
+  mockLeadFindUnique.mockResolvedValue({ id: "lead-1", organizationId: "org-1" });
+  mockCandidateFindUnique.mockResolvedValue({ id: "candidate-1", organizationId: "org-1", sourcingRunId: "run-1" });
 });
 
 describe("sourcing.createRun", () => {
@@ -386,37 +413,6 @@ describe("checkpoint.markDelivered", () => {
   });
 });
 
-describe("checkpoint.approveForBilling", () => {
-  it("approves a delivered checkpoint for billing", async () => {
-    mockCheckpointFindUnique.mockResolvedValue({
-      id: "cp-1",
-      organizationId: "org-1",
-      status: "DELIVERED",
-    });
-    mockCheckpointUpdate.mockResolvedValue({ status: "APPROVED" });
-    const result = await executeAction(
-      "checkpoint.approveForBilling",
-      { organizationId: "org-1", checkpointId: "cp-1" },
-      ownerContext,
-    );
-    expect(result).toEqual({ status: "APPROVED" });
-  });
-
-  it("rejects when checkpoint is not delivered", async () => {
-    mockCheckpointFindUnique.mockResolvedValue({
-      id: "cp-1",
-      organizationId: "org-1",
-      status: "PENDING",
-    });
-    await expect(
-      executeAction(
-        "checkpoint.approveForBilling",
-        { organizationId: "org-1", checkpointId: "cp-1" },
-        ownerContext,
-      ),
-    ).rejects.toThrow("CHECKPOINT_NOT_DELIVERED");
-  });
-});
 
 describe("checkpoint.markAsBilled", () => {
   it("marks approved checkpoint as billed and creates payment record", async () => {
@@ -503,6 +499,214 @@ describe("checkpoint.recordPayment", () => {
         ownerContext,
       ),
     ).rejects.toThrow("CHECKPOINT_NOT_BILLED");
+  });
+
+  it("returns existing payment id on duplicate externalPaymentId", async () => {
+    mockCheckpointFindUnique.mockResolvedValue({
+      id: "cp-1",
+      organizationId: "org-1",
+      status: "BILLED",
+    });
+    mockPaymentFindUnique.mockResolvedValue({ id: "payment-existing" });
+    const result = await executeAction(
+      "checkpoint.recordPayment",
+      {
+        organizationId: "org-1",
+        checkpointId: "cp-1",
+        amount: 1500,
+        provider: "stripe",
+        externalPaymentId: "pi_123",
+      },
+      ownerContext,
+    );
+    expect(result).toEqual({ paymentId: "payment-existing" });
+    expect(mockPaymentCreate).not.toHaveBeenCalled();
+  });
+});
+
+describe("checkpoint.approveForBilling", () => {
+  it("rejects when checkpoint has no evidence", async () => {
+    mockCheckpointFindUnique.mockResolvedValue({
+      id: "cp-1",
+      organizationId: "org-1",
+      status: "DELIVERED",
+      evidenceCount: 0,
+    });
+    await expect(
+      executeAction(
+        "checkpoint.approveForBilling",
+        { organizationId: "org-1", checkpointId: "cp-1" },
+        ownerContext,
+      ),
+    ).rejects.toThrow("CHECKPOINT_EVIDENCE_REQUIRED");
+  });
+
+  it("approves checkpoint with evidence present", async () => {
+    mockCheckpointFindUnique.mockResolvedValue({
+      id: "cp-1",
+      organizationId: "org-1",
+      status: "DELIVERED",
+      evidenceCount: 3,
+    });
+    mockCheckpointUpdate.mockResolvedValue({ status: "APPROVED" });
+    const result = await executeAction(
+      "checkpoint.approveForBilling",
+      { organizationId: "org-1", checkpointId: "cp-1" },
+      ownerContext,
+    );
+    expect(result).toEqual({ status: "APPROVED" });
+  });
+});
+
+describe("sourcing.createRun — cross-tenant validation", () => {
+  it("rejects when leadId belongs to another org", async () => {
+    mockLeadFindUnique.mockResolvedValue({ id: "lead-1", organizationId: "org-2" });
+    await expect(
+      executeAction(
+        "sourcing.createRun",
+        {
+          organizationId: "org-1",
+          title: "Find suppliers",
+          requirement: "Need parts",
+          leadId: "lead-1",
+        },
+        context,
+      ),
+    ).rejects.toThrow();
+  });
+});
+
+describe("sourcing.addSupplierQuote — cross-tenant validation", () => {
+  it("rejects when supplierCandidateId belongs to another org", async () => {
+    mockCandidateFindUnique.mockResolvedValue({
+      id: "candidate-1",
+      organizationId: "org-2",
+      sourcingRunId: "run-1",
+    });
+    await expect(
+      executeAction(
+        "sourcing.addSupplierQuote",
+        {
+          organizationId: "org-1",
+          sourcingRunId: "run-1",
+          productDescription: "Steel",
+          supplierCandidateId: "candidate-1",
+        },
+        context,
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("rejects when supplierCandidateId belongs to a different run", async () => {
+    mockCandidateFindUnique.mockResolvedValue({
+      id: "candidate-1",
+      organizationId: "org-1",
+      sourcingRunId: "run-other",
+    });
+    await expect(
+      executeAction(
+        "sourcing.addSupplierQuote",
+        {
+          organizationId: "org-1",
+          sourcingRunId: "run-1",
+          productDescription: "Steel",
+          supplierCandidateId: "candidate-1",
+        },
+        context,
+      ),
+    ).rejects.toThrow("SUPPLIER_CANDIDATE_RUN_MISMATCH");
+  });
+});
+
+describe("checkpoint.create — tenant validation", () => {
+  it("accepts checkpoint with valid sourcingRunId", async () => {
+    mockSourcingFindUnique.mockResolvedValue({ id: "run-1", organizationId: "org-1" });
+    const result = await executeAction(
+      "checkpoint.create",
+      {
+        organizationId: "org-1",
+        title: "Quote Collection",
+        checkpointType: "QUOTE_COLLECTION",
+        sourcingRunId: "run-1",
+      },
+      context,
+    );
+    expect(result).toEqual({ id: "cp-1", status: "PENDING" });
+  });
+
+  it("rejects when sourcingRunId belongs to another org", async () => {
+    mockSourcingFindUnique.mockResolvedValue({ id: "run-1", organizationId: "org-2" });
+    await expect(
+      executeAction(
+        "checkpoint.create",
+        {
+          organizationId: "org-1",
+          title: "Quote Collection",
+          checkpointType: "QUOTE_COLLECTION",
+          sourcingRunId: "run-1",
+        },
+        context,
+      ),
+    ).rejects.toThrow();
+  });
+});
+
+describe("handover.create — tenant validation", () => {
+  it("accepts handover with valid sourcingRunId", async () => {
+    mockSourcingFindUnique.mockResolvedValue({ id: "run-1", organizationId: "org-1" });
+    const result = await executeAction(
+      "handover.create",
+      {
+        organizationId: "org-1",
+        reason: "PRICE_THRESHOLD",
+        riskLevel: "MEDIUM",
+        context: { price: 50000 },
+        sourcingRunId: "run-1",
+      },
+      context,
+    );
+    expect(result).toEqual({ id: "handover-1", status: "OPEN" });
+  });
+
+  it("rejects when sourcingRunId belongs to another org", async () => {
+    mockSourcingFindUnique.mockResolvedValue({ id: "run-1", organizationId: "org-2" });
+    await expect(
+      executeAction(
+        "handover.create",
+        {
+          organizationId: "org-1",
+          reason: "PRICE_THRESHOLD",
+          riskLevel: "MEDIUM",
+          context: { price: 50000 },
+          sourcingRunId: "run-1",
+        },
+        context,
+      ),
+    ).rejects.toThrow();
+  });
+});
+
+describe("generateBuyerReport — risk logic", () => {
+  it("does not flag COMPARED status as risk", async () => {
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-1",
+      organizationId: "org-1",
+      title: "Test",
+      requirement: "N/A",
+      status: "COMPARED",
+      currency: "USD",
+    });
+    mockQuoteFindMany.mockResolvedValue([
+      { id: "q1", supplierCandidate: { name: "A" }, totalAmount: 1000, riskScore: 10, comparisonRank: 1, moq: "1", leadTime: "10", shippingTerm: "FOB", paymentTerm: "TT" },
+    ]);
+    mockEvidenceFindMany.mockResolvedValue([]);
+    const result = await executeAction(
+      "sourcing.generateBuyerReport",
+      { organizationId: "org-1", sourcingRunId: "run-1" },
+      context,
+    ) as any;
+    const riskMessages = result.risks.map((r: string) => r);
+    expect(riskMessages).not.toContain("Sourcing run has not been delivered as complete");
   });
 });
 

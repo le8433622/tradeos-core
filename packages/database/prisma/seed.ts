@@ -311,6 +311,37 @@ const PERMISSIONS: {
     description: "Create, update, and complete tasks",
     group: "task",
   },
+  // Sourcing
+  {
+    key: "sourcing.list",
+    name: "List sourcing runs",
+    description: "View list of sourcing runs",
+    group: "sourcing",
+  },
+  {
+    key: "sourcing.view",
+    name: "View sourcing runs",
+    description: "View sourcing run details",
+    group: "sourcing",
+  },
+  {
+    key: "sourcing.create",
+    name: "Create sourcing runs",
+    description: "Create new sourcing runs",
+    group: "sourcing",
+  },
+  {
+    key: "sourcing.manage",
+    name: "Manage sourcing runs",
+    description: "Update, add suppliers, quotes, compare, and manage sourcing runs",
+    group: "sourcing",
+  },
+  {
+    key: "sourcing.deliverReport",
+    name: "Deliver buyer report",
+    description: "Generate and deliver buyer decision report",
+    group: "sourcing",
+  },
 ];
 
 type RoleDef = {
@@ -361,6 +392,10 @@ const ROLES: RoleDef[] = [
       "task.write",
       "report.generate",
       "ai.use",
+      "sourcing.list",
+      "sourcing.view",
+      "sourcing.create",
+      "sourcing.manage",
     ],
   },
   {
@@ -383,6 +418,8 @@ const ROLES: RoleDef[] = [
       "notification.manage",
       "report.generate",
       "ai.use",
+      "sourcing.list",
+      "sourcing.view",
     ],
   },
   {
@@ -396,6 +433,8 @@ const ROLES: RoleDef[] = [
       "message.read",
       "task.read",
       "report.generate",
+      "sourcing.list",
+      "sourcing.view",
     ],
   },
 ];

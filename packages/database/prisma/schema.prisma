@@ -842,24 +842,26 @@ model HumanHandover {
 }
 
 model Payment {
-  id             String   @id @default(cuid())
-  organizationId String
-  checkpointId   String
-  invoiceId      String?
-  amount         Decimal
-  currency       String   @default("USD")
-  paidAt         DateTime @default(now())
-  provider       String   @default("manual")
-  status         PaymentStatus @default(COMPLETED)
-  metadata       Json?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                 String         @id @default(cuid())
+  organizationId     String
+  checkpointId       String
+  invoiceId          String?
+  amount             Decimal
+  currency           String         @default("USD")
+  externalPaymentId   String?
+  provider           String         @default("manual")
+  status             PaymentStatus  @default(COMPLETED)
+  paidAt             DateTime       @default(now())
+  metadata           Json?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 
-  checkpoint WorkCheckpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  checkpoint   WorkCheckpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, checkpointId])
   @@index([organizationId, paidAt])
+  @@unique([provider, externalPaymentId])
 }
 
 enum PaymentStatus {

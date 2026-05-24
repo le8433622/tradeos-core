@@ -43,6 +43,13 @@ export const createSourcingRunAction = registerAction<
     if (!entitlement.allowed) {
       throw new Error("ENTITLEMENT_EXCEEDED");
     }
+    if (parsed.leadId) {
+      const lead = await prisma.lead.findUnique({
+        where: { id: parsed.leadId },
+        select: { organizationId: true },
+      });
+      validateRecordBelongsToOrg(lead, parsed.organizationId, "LEAD");
+    }
     const run = await prisma.sourcingRun.create({
       data: {
         organizationId: parsed.organizationId,
@@ -151,6 +158,16 @@ export const addSupplierQuoteAction = registerAction<
       select: { organizationId: true },
     });
     validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+    if (parsed.supplierCandidateId) {
+      const candidate = await prisma.supplierCandidate.findUnique({
+        where: { id: parsed.supplierCandidateId },
+        select: { organizationId: true, sourcingRunId: true },
+      });
+      validateRecordBelongsToOrg(candidate, parsed.organizationId, "SUPPLIER_CANDIDATE");
+      if (candidate!.sourcingRunId !== parsed.sourcingRunId) {
+        throw new Error("SUPPLIER_CANDIDATE_RUN_MISMATCH");
+      }
+    }
     const quote = await prisma.supplierQuote.create({
       data: {
         organizationId: parsed.organizationId,
@@ -343,6 +360,13 @@ export const createCheckpointAction = registerAction<
     if (!entitlement.allowed) {
       throw new Error("ENTITLEMENT_EXCEEDED");
     }
+    if (parsed.sourcingRunId) {
+      const run = await prisma.sourcingRun.findUnique({
+        where: { id: parsed.sourcingRunId },
+        select: { organizationId: true },
+      });
+      validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+    }
     const cp = await prisma.workCheckpoint.create({
       data: {
         organizationId: parsed.organizationId,
@@ -413,10 +437,13 @@ export const checkpointApproveForBillingAction = registerAction<
     const parsed = checkpointApproveForBillingSchema.parse(input);
     const cp = await prisma.workCheckpoint.findUnique({
       where: { id: parsed.checkpointId },
-      select: { organizationId: true, status: true },
+      select: { organizationId: true, status: true, evidenceCount: true },
     });
     validateRecordBelongsToOrg(cp, parsed.organizationId, "CHECKPOINT");
     if (cp?.status !== "DELIVERED") throw new Error("CHECKPOINT_NOT_DELIVERED");
+    if ((cp?.evidenceCount ?? 0) <= 0) {
+      throw new Error("CHECKPOINT_EVIDENCE_REQUIRED");
+    }
     const updated = await prisma.workCheckpoint.update({
       where: { id: parsed.checkpointId },
       data: {
@@ -453,6 +480,13 @@ export const handoverCreateAction = registerAction<
   requiresApprovalForAI: false,
   handler: async (input, context) => {
     const parsed = handoverCreateSchema.parse(input);
+    if (parsed.sourcingRunId) {
+      const run = await prisma.sourcingRun.findUnique({
+        where: { id: parsed.sourcingRunId },
+        select: { organizationId: true },
+      });
+      validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+    }
     const h = await prisma.humanHandover.create({
       data: {
         organizationId: parsed.organizationId,
@@ -596,7 +630,7 @@ export const generateBuyerReportAction = registerAction<
       .sort((a, b) => (a.riskScore ?? 50) - (b.riskScore ?? 50))[0];
 
     const risks: string[] = [];
-    if (run?.status !== "REPORT_DELIVERED") {
+    if (!["COMPARED", "READY_FOR_REVIEW", "REPORT_DELIVERED"].includes(run?.status ?? "")) {
       risks.push("Sourcing run has not been delivered as complete");
     }
     const quotesWithHighRisk = quotes.filter((q) => (q.riskScore ?? 0) > 70);
@@ -620,8 +654,8 @@ export const generateBuyerReportAction = registerAction<
       recommendedSupplierName: bestPrice?.supplierCandidate?.name,
       expectedSavings: bestPrice?.totalAmount
         ? quotes.length > 1
-          ? Number(quotes[quotes.length - 1].totalAmount ?? 0) -
-            Number(bestPrice.totalAmount)
+          ? Math.max(...quotes.filter((q) => q.totalAmount).map((q) => Number(q.totalAmount))) -
+            Math.min(...quotes.filter((q) => q.totalAmount).map((q) => Number(q.totalAmount)))
           : undefined
         : undefined,
       currency: run?.currency ?? "USD",
@@ -652,6 +686,7 @@ export const markAsBilledSchema = z
     amount: z.number().min(0),
     currency: z.string().max(8).optional(),
     provider: z.string().max(64).optional(),
+    externalPaymentId: z.string().max(256).optional(),
   })
   .strict();
 
@@ -691,6 +726,7 @@ export const markAsBilledAction = registerAction<
           amount: parsed.amount,
           currency: parsed.currency ?? "USD",
           provider: parsed.provider ?? "manual",
+          externalPaymentId: parsed.externalPaymentId,
           status: "COMPLETED",
         },
         select: { id: true },
@@ -733,6 +769,21 @@ export const recordPaymentAction = registerAction<
     validateRecordBelongsToOrg(cp, parsed.organizationId, "CHECKPOINT");
     if (cp?.status !== "BILLED") throw new Error("CHECKPOINT_NOT_BILLED");
 
+    if (parsed.externalPaymentId && parsed.provider) {
+      const existing = await prisma.payment.findUnique({
+        where: {
+          provider_externalPaymentId: {
+            provider: parsed.provider,
+            externalPaymentId: parsed.externalPaymentId,
+          },
+        },
+        select: { id: true },
+      });
+      if (existing) {
+        return { paymentId: existing.id };
+      }
+    }
+
     const payment = await prisma.payment.create({
       data: {
         organizationId: parsed.organizationId,
@@ -741,6 +792,7 @@ export const recordPaymentAction = registerAction<
         amount: parsed.amount,
         currency: parsed.currency ?? "USD",
         provider: parsed.provider ?? "external",
+        externalPaymentId: parsed.externalPaymentId,
         status: "COMPLETED",
         metadata: parsed.metadata,
       },
