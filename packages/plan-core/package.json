@@ -4,11 +4,16 @@
   "private": true,
   "main": "./src/index.ts",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@tradeos/database": "workspace:*",
     "@tradeos/policy-core": "workspace:*",
     "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.7"
   }
 }

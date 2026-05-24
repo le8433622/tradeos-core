@@ -67,8 +67,11 @@ export async function checkEntitlement(
   if (!org) throw new Error("ORGANIZATION_NOT_FOUND");
 
   const planKey = org.plan as string;
+  const planLimits = FEATURE_LIMITS[planKey];
   const limit =
-    FEATURE_LIMITS[planKey]?.[feature] ?? FEATURE_LIMITS.FREE[feature];
+    planLimits && feature in planLimits
+      ? planLimits[feature]
+      : FEATURE_LIMITS.FREE[feature];
 
   if (limit === null) return { allowed: true, limit: null, current: 0 };
 
