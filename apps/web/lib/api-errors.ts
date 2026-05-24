@@ -150,6 +150,30 @@ const ERROR_MESSAGES: Record<string, { en: string; vi: string }> = {
     en: "Quotation item price must be zero or greater.",
     vi: "Đơn giá dòng báo giá phải lớn hơn hoặc bằng 0.",
   },
+  ENTITLEMENT_EXCEEDED: {
+    en: "Your current plan limit has been reached. Please upgrade your plan or contact support.",
+    vi: "Gói hiện tại đã đạt giới hạn sử dụng. Vui lòng nâng cấp gói hoặc liên hệ hỗ trợ.",
+  },
+  CHECKPOINT_EVIDENCE_REQUIRED: {
+    en: "Evidence is required before this checkpoint can be approved for billing.",
+    vi: "Cần có bằng chứng trước khi phê duyệt checkpoint để tính tiền.",
+  },
+  CHECKPOINT_NOT_DELIVERED: {
+    en: "Checkpoint must be delivered before approval.",
+    vi: "Checkpoint phải được bàn giao trước khi phê duyệt.",
+  },
+  CHECKPOINT_NOT_APPROVED: {
+    en: "Checkpoint must be approved before billing.",
+    vi: "Checkpoint phải được phê duyệt trước khi ghi nhận tính tiền.",
+  },
+  CHECKPOINT_NOT_BILLED: {
+    en: "Checkpoint must be billed before recording payment.",
+    vi: "Checkpoint phải được ghi nhận tính tiền trước khi ghi nhận thanh toán.",
+  },
+  SUPPLIER_CANDIDATE_RUN_MISMATCH: {
+    en: "Supplier candidate does not belong to this sourcing run.",
+    vi: "Nhà cung cấp không thuộc về đợt sourcing này.",
+  },
 };
 
 const DEFAULT_MESSAGE = {
@@ -246,6 +270,18 @@ function classifyApiError(error: unknown): ClassifiedApiError {
     return { status: 400, publicCode: "UNKNOWN_ACTION", logCode: code };
   }
 
+  if (code === "ENTITLEMENT_EXCEEDED") {
+    return { status: 402, publicCode: "ENTITLEMENT_EXCEEDED", logCode: code };
+  }
+
+  if (code === "SUPPLIER_CANDIDATE_RUN_MISMATCH") {
+    return {
+      status: 403,
+      publicCode: "ORGANIZATION_ACCESS_DENIED",
+      logCode: code,
+    };
+  }
+
   if (
     code === "WEBHOOK_UNAUTHORIZED" ||
     code === "WEBHOOK_TENANT_HEADER_DISABLED"
@@ -265,6 +301,7 @@ function classifyApiError(error: unknown): ClassifiedApiError {
     code === "ORGANIZATION_ACCESS_DENIED" ||
     code === "USER_NOT_MAPPED_TO_TENANT" ||
     code.endsWith("_ACCESS_DENIED") ||
+    code.endsWith("_BELONGS_TO_ANOTHER_ORGANIZATION") ||
     code.endsWith("_ORG_MISMATCH")
   ) {
     return {
@@ -284,6 +321,10 @@ function classifyApiError(error: unknown): ClassifiedApiError {
       code.endsWith("_INVALID") ||
       code.endsWith("_MISSING"))
   ) {
+    return { status: 400, publicCode: code, logCode: code };
+  }
+
+  if (isSafeErrorCode(code) && code.startsWith("CHECKPOINT_")) {
     return { status: 400, publicCode: code, logCode: code };
   }
 
