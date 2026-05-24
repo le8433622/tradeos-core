@@ -18,6 +18,7 @@ export type TradeIntent =
   | "CREATE_FOLLOW_UP"
   | "DRAFT_QUOTATION"
   | "SUGGEST_PARTNER"
+  | "RUN_SOURCING"
   | "SUMMARIZE"
   | "REQUEST_MISSING_INFO"
   | "UNKNOWN";
@@ -148,6 +149,17 @@ export function detectTradeIntent(message: IncomingMessage): TradeIntent {
     text.includes("seller")
   )
     return "SUGGEST_PARTNER";
+  if (
+    text.includes("sourcing") ||
+    text.includes("procurement") ||
+    text.includes("tìm nguồn") ||
+    text.includes("tìm nhà cung cấp") ||
+    text.includes("supplier") ||
+    text.includes("nhà cung cấp") ||
+    text.includes("so sánh giá") ||
+    text.includes("compare supplier")
+  )
+    return "RUN_SOURCING";
 
   const hasContact = Boolean(message.customerEmail || message.customerPhone);
   const hasKeyword = TRADE_KEYWORDS.some((kw) => text.includes(kw));
@@ -298,6 +310,36 @@ export function planTradeAgent(message: IncomingMessage): AgentPlan {
           input: {
             organizationId: message.organizationId,
             need: message.text,
+          },
+        },
+      ],
+    };
+  }
+
+  if (intent === "RUN_SOURCING") {
+    return {
+      intent,
+      confidence: CONFIDENCE_HIGH,
+      summary: baseSummary,
+      requiresHumanReview: false,
+      extractedFields,
+      missingFields: ["targetCountry", "productCategory"],
+      steps: [
+        {
+          action: "sourcing.createRun",
+          riskLevel: "MEDIUM",
+          reason:
+            "Message requests supplier sourcing or procurement assistance. Creating sourcing run for AI-driven supplier discovery.",
+          input: {
+            organizationId: message.organizationId,
+            title: `Sourcing run from ${message.channel}`,
+            requirement: message.text,
+            targetCountry: extractedFields.originCountry,
+            sourceCountry: extractedFields.destinationCountry,
+            productCategory: extractedFields.productCategory,
+            quantity: extractedFields.quantity,
+            budget: extractedFields.budget,
+            currency: extractedFields.currency,
           },
         },
       ],

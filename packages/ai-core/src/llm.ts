@@ -59,6 +59,14 @@ const ALLOWED_ACTIONS = [
   "crm.createFollowUpTask",
   "trade.draftQuotation",
   "trade.suggestPartner",
+  "sourcing.createRun",
+  "sourcing.addSupplierCandidate",
+  "sourcing.addSupplierQuote",
+  "sourcing.compareQuotes",
+  "evidence.createItem",
+  "evidence.attachToRun",
+  "checkpoint.create",
+  "handover.create",
 ];
 
 const BLOCKED_ACTIONS = [
@@ -66,6 +74,11 @@ const BLOCKED_ACTIONS = [
   "notification.sendBulk",
   "crm.deleteLead",
   "crm.deleteCompany",
+  "sourcing.deliverBuyerReport",
+  "sourcing.markRunReadyForReview",
+  "checkpoint.approveForBilling",
+  "checkpoint.markDelivered",
+  "handover.resolve",
 ];
 
 const SYSTEM_PROMPT = `You are a trade intelligence agent for an international trade operating system.
@@ -87,8 +100,8 @@ ${ALLOWED_ACTIONS.map((a) => `- ${a}`).join("\n")}
 ${BLOCKED_ACTIONS.map((a) => `- ${a}`).join("\n")}
 
 ## Risk Levels
-- LOW: lead creation, follow-up tasks (no approval needed)
-- MEDIUM: draft quotation (draft only, no send)
+- LOW: lead creation, follow-up tasks, add supplier candidate, add quote, create evidence (no approval needed)
+- MEDIUM: draft quotation, create sourcing run, compare quotes, create checkpoint, create handover (draft only, no send)
 - HIGH: requires human review before execution
 - CRITICAL: must go through approval workflow
 
@@ -146,6 +159,7 @@ function validateAgentPlan(raw: unknown): raw is AgentPlan {
     "CREATE_FOLLOW_UP",
     "DRAFT_QUOTATION",
     "SUGGEST_PARTNER",
+    "RUN_SOURCING",
     "SUMMARIZE",
     "REQUEST_MISSING_INFO",
     "UNKNOWN",
