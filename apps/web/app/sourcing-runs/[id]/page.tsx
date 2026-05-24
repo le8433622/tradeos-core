@@ -3,6 +3,38 @@ import { requirePagePermission } from "../../../lib/page-session";
 import { notFound } from "next/navigation";
 import "@tradeos/sourcing-core";
 
+const STATUS_COLORS: Record<string, string> = {
+  DRAFT: "#6b7280",
+  READY_FOR_REVIEW: "#2563eb",
+  IN_REVIEW: "#7c3aed",
+  COMPARED: "#0891b2",
+  READY_FOR_REPORT: "#ca8a04",
+  REPORT_DELIVERED: "#059669",
+  CANCELLED: "#dc2626",
+  DELIVERED: "#059669",
+  PENDING: "#6b7280",
+  APPROVED: "#2563eb",
+  BILLED: "#7c3aed",
+};
+
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "2px 8px",
+        borderRadius: 12,
+        fontSize: 12,
+        fontWeight: 600,
+        color: "#fff",
+        background: STATUS_COLORS[status] ?? "#6b7280",
+      }}
+    >
+      {status.replace(/_/g, " ")}
+    </span>
+  );
+}
+
 export default async function SourcingRunDetailPage({
   params,
 }: {
@@ -21,7 +53,16 @@ export default async function SourcingRunDetailPage({
       },
       evidenceItems: {
         orderBy: { capturedAt: "desc" },
-        select: { id: true, evidenceType: true, title: true, capturedAt: true },
+        select: {
+          id: true,
+          evidenceType: true,
+          title: true,
+          description: true,
+          content: true,
+          fileUrl: true,
+          externalUrl: true,
+          capturedAt: true,
+        },
       },
       checkpoints: { orderBy: { createdAt: "asc" } },
       handovers: { orderBy: { createdAt: "desc" } },
@@ -41,11 +82,23 @@ export default async function SourcingRunDetailPage({
         &larr; Back to sourcing runs
       </a>
 
-      <h1 style={{ marginTop: 16 }}>{run.title}</h1>
-      <p style={{ color: "#666" }}>
-        Status: <strong>{run.status}</strong> &middot; Created{" "}
-        {run.createdAt.toLocaleDateString()}
-      </p>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginTop: 16,
+        }}
+      >
+        <div>
+          <h1 style={{ margin: 0 }}>{run.title}</h1>
+          <p style={{ color: "#666", marginTop: 4 }}>
+            <StatusBadge status={run.status} /> &middot; Created{" "}
+            {run.createdAt.toLocaleDateString()}
+          </p>
+        </div>
+      </div>
+
       {run.requirement && (
         <p>
           <strong>Requirement:</strong> {run.requirement}
@@ -62,47 +115,56 @@ export default async function SourcingRunDetailPage({
         {run.supplierCandidates.length === 0 ? (
           <p style={{ color: "#999" }}>No suppliers added yet.</p>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ textAlign: "left", borderBottom: "2px solid #ddd" }}>
-                <th style={{ padding: 8 }}>Name</th>
-                <th style={{ padding: 8 }}>Source</th>
-                <th style={{ padding: 8 }}>Country</th>
-                <th style={{ padding: 8 }}>Reliability</th>
-                <th style={{ padding: 8 }}>Risk</th>
-              </tr>
-            </thead>
-            <tbody>
-              {run.supplierCandidates.map((c) => {
-                const riskFlags = Array.isArray(c.riskFlags)
-                  ? c.riskFlags.join(", ")
-                  : typeof c.riskFlags === "string"
-                    ? c.riskFlags
-                    : "None";
-                return (
-                  <tr key={c.id} style={{ borderBottom: "1px solid #eee" }}>
-                    <td style={{ padding: 8 }}>
-                      {c.website ? (
-                        <a href={c.website} style={{ color: "#0070f3" }}>
-                          {c.name}
-                        </a>
-                      ) : (
-                        c.name
-                      )}
-                    </td>
-                    <td style={{ padding: 8 }}>{c.source}</td>
-                    <td style={{ padding: 8 }}>{c.country || "-"}</td>
-                    <td style={{ padding: 8 }}>
-                      {c.reliabilityScore != null
-                        ? `${c.reliabilityScore}/10`
-                        : "-"}
-                    </td>
-                    <td style={{ padding: 8 }}>{riskFlags}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{ width: "100%", borderCollapse: "collapse", minWidth: 500 }}
+            >
+              <thead>
+                <tr
+                  style={{ textAlign: "left", borderBottom: "2px solid #ddd" }}
+                >
+                  <th style={{ padding: 8 }}>Name</th>
+                  <th style={{ padding: 8 }}>Source</th>
+                  <th style={{ padding: 8 }}>Country</th>
+                  <th style={{ padding: 8 }}>Reliability</th>
+                  <th style={{ padding: 8 }}>Risk</th>
+                </tr>
+              </thead>
+              <tbody>
+                {run.supplierCandidates.map((c) => {
+                  const riskFlags = Array.isArray(c.riskFlags)
+                    ? c.riskFlags.join(", ")
+                    : typeof c.riskFlags === "string"
+                      ? c.riskFlags
+                      : "None";
+                  return (
+                    <tr
+                      key={c.id}
+                      style={{ borderBottom: "1px solid #eee" }}
+                    >
+                      <td style={{ padding: 8 }}>
+                        {c.website ? (
+                          <a href={c.website} style={{ color: "#0070f3" }}>
+                            {c.name}
+                          </a>
+                        ) : (
+                          c.name
+                        )}
+                      </td>
+                      <td style={{ padding: 8 }}>{c.source}</td>
+                      <td style={{ padding: 8 }}>{c.country || "-"}</td>
+                      <td style={{ padding: 8 }}>
+                        {c.reliabilityScore != null
+                          ? `${c.reliabilityScore}/10`
+                          : "-"}
+                      </td>
+                      <td style={{ padding: 8 }}>{riskFlags}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
@@ -111,38 +173,57 @@ export default async function SourcingRunDetailPage({
         {run.supplierQuotes.length === 0 ? (
           <p style={{ color: "#999" }}>No quotes collected yet.</p>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ textAlign: "left", borderBottom: "2px solid #ddd" }}>
-                <th style={{ padding: 8 }}>Rank</th>
-                <th style={{ padding: 8 }}>Supplier</th>
-                <th style={{ padding: 8 }}>Product</th>
-                <th style={{ padding: 8 }}>Amount</th>
-                <th style={{ padding: 8 }}>Lead Time</th>
-                <th style={{ padding: 8 }}>Payment</th>
-                <th style={{ padding: 8 }}>Risk</th>
-              </tr>
-            </thead>
-            <tbody>
-              {run.supplierQuotes.map((q) => (
-                <tr key={q.id} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: 8 }}>{q.comparisonRank ?? "-"}</td>
-                  <td style={{ padding: 8 }}>
-                    {q.supplierCandidate?.name || "Unknown"}
-                  </td>
-                  <td style={{ padding: 8 }}>{q.productDescription}</td>
-                  <td style={{ padding: 8 }}>
-                    {q.totalAmount != null
-                      ? `${q.totalAmount} ${q.currency || ""}`
-                      : "-"}
-                  </td>
-                  <td style={{ padding: 8 }}>{q.leadTime || "-"}</td>
-                  <td style={{ padding: 8 }}>{q.paymentTerm || "-"}</td>
-                  <td style={{ padding: 8 }}>{q.riskScore ?? "-"}</td>
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}
+            >
+              <thead>
+                <tr
+                  style={{ textAlign: "left", borderBottom: "2px solid #ddd" }}
+                >
+                  <th style={{ padding: 8 }}>Rank</th>
+                  <th style={{ padding: 8 }}>Supplier</th>
+                  <th style={{ padding: 8 }}>Product</th>
+                  <th style={{ padding: 8 }}>Amount</th>
+                  <th style={{ padding: 8 }}>Lead Time</th>
+                  <th style={{ padding: 8 }}>Payment</th>
+                  <th style={{ padding: 8 }}>Risk</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {run.supplierQuotes.map((q) => (
+                  <tr
+                    key={q.id}
+                    style={{
+                      borderBottom: "1px solid #eee",
+                      background:
+                        q.comparisonRank === 1 ? "#f0fdf4" : undefined,
+                    }}
+                  >
+                    <td style={{ padding: 8 }}>
+                      {q.comparisonRank != null ? (
+                        <strong>#{q.comparisonRank}</strong>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td style={{ padding: 8 }}>
+                      {q.supplierCandidate?.name || "Unknown"}
+                    </td>
+                    <td style={{ padding: 8 }}>{q.productDescription}</td>
+                    <td style={{ padding: 8 }}>
+                      {q.totalAmount != null
+                        ? `${q.totalAmount} ${q.currency || ""}`
+                        : "-"}
+                    </td>
+                    <td style={{ padding: 8 }}>{q.leadTime || "-"}</td>
+                    <td style={{ padding: 8 }}>{q.paymentTerm || "-"}</td>
+                    <td style={{ padding: 8 }}>{q.riskScore ?? "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
@@ -151,42 +232,120 @@ export default async function SourcingRunDetailPage({
         {run.evidenceItems.length === 0 ? (
           <p style={{ color: "#999" }}>No evidence captured yet.</p>
         ) : (
-          <ul>
+          <div
+            style={{
+              display: "grid",
+              gap: 12,
+              gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+            }}
+          >
             {run.evidenceItems.map((e) => (
-              <li key={e.id}>
-                [{e.evidenceType}] {e.title} &mdash;{" "}
-                {e.capturedAt.toLocaleDateString()}
-              </li>
+              <div
+                key={e.id}
+                style={{
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 12,
+                  padding: 16,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <strong style={{ fontSize: 14 }}>{e.title}</strong>
+                  <StatusBadge status={e.evidenceType} />
+                </div>
+                {e.description && (
+                  <p
+                    style={{
+                      margin: "8px 0 0",
+                      fontSize: 13,
+                      color: "#6b7280",
+                    }}
+                  >
+                    {e.description}
+                  </p>
+                )}
+                <p
+                  style={{
+                    margin: "8px 0 0",
+                    fontSize: 12,
+                    color: "#9ca3af",
+                  }}
+                >
+                  {e.capturedAt.toLocaleDateString()}
+                  {e.fileUrl && (
+                    <>
+                      {" · "}
+                      <a
+                        href={e.fileUrl}
+                        target="_blank"
+                        style={{ color: "#0070f3" }}
+                      >
+                        View file
+                      </a>
+                    </>
+                  )}
+                  {e.externalUrl && (
+                    <>
+                      {" · "}
+                      <a
+                        href={e.externalUrl}
+                        target="_blank"
+                        style={{ color: "#0070f3" }}
+                      >
+                        External link
+                      </a>
+                    </>
+                  )}
+                </p>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </section>
 
       {run.checkpoints.length > 0 && (
         <section style={{ marginTop: 32 }}>
           <h2>Checkpoints</h2>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ textAlign: "left", borderBottom: "2px solid #ddd" }}>
-                <th style={{ padding: 8 }}>Title</th>
-                <th style={{ padding: 8 }}>Type</th>
-                <th style={{ padding: 8 }}>Status</th>
-                <th style={{ padding: 8 }}>Delivered</th>
-              </tr>
-            </thead>
-            <tbody>
-              {run.checkpoints.map((cp) => (
-                <tr key={cp.id} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: 8 }}>{cp.title}</td>
-                  <td style={{ padding: 8 }}>{cp.checkpointType}</td>
-                  <td style={{ padding: 8 }}>{cp.status}</td>
-                  <td style={{ padding: 8 }}>
-                    {cp.deliveredAt ? cp.deliveredAt.toLocaleDateString() : "-"}
-                  </td>
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{ width: "100%", borderCollapse: "collapse", minWidth: 500 }}
+            >
+              <thead>
+                <tr
+                  style={{ textAlign: "left", borderBottom: "2px solid #ddd" }}
+                >
+                  <th style={{ padding: 8 }}>Title</th>
+                  <th style={{ padding: 8 }}>Type</th>
+                  <th style={{ padding: 8 }}>Status</th>
+                  <th style={{ padding: 8 }}>Delivered</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {run.checkpoints.map((cp) => (
+                  <tr
+                    key={cp.id}
+                    style={{ borderBottom: "1px solid #eee" }}
+                  >
+                    <td style={{ padding: 8 }}>{cp.title}</td>
+                    <td style={{ padding: 8 }}>{cp.checkpointType}</td>
+                    <td style={{ padding: 8 }}>
+                      <StatusBadge status={cp.status} />
+                    </td>
+                    <td style={{ padding: 8 }}>
+                      {cp.deliveredAt
+                        ? cp.deliveredAt.toLocaleDateString()
+                        : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 
