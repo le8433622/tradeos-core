@@ -365,6 +365,7 @@ export function apiErrorResponse(
     message: getUserFacingError(classified.publicCode),
     retryable: isRetryable(classified.publicCode),
     retryGuidance: getRetryGuidance(classified.publicCode),
+    requestId,
   };
 
   if (options?.includeDiagnostics) {
@@ -377,7 +378,10 @@ export function apiErrorResponse(
     };
   }
 
-  return NextResponse.json(body, { status: classified.status });
+  return NextResponse.json(body, {
+    status: classified.status,
+    headers: { "X-Request-Id": requestId },
+  });
 }
 
 export async function withApiSession(
