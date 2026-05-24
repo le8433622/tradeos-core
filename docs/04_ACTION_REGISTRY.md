@@ -94,8 +94,22 @@ Irreversible, legal, financial, or security-sensitive action. (None currently re
 | `trade.reportIntroductionValue`       | trade-core     | LOW    | OWNER, ADMIN, OPERATOR        | Yes        | No                | Yes            |
 | `report.snapshotCreate`               | analytics-core | MEDIUM | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 | `report.snapshotApprove`              | analytics-core | MEDIUM | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
+| `sourcing.createRun`                  | sourcing-core  | MEDIUM | OWNER, ADMIN                  | Yes        | No                | Yes            |
+| `sourcing.addSupplierCandidate`       | sourcing-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
+| `sourcing.addSupplierQuote`           | sourcing-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
+| `sourcing.compareQuotes`              | sourcing-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
+| `sourcing.markRunReadyForReview`      | sourcing-core  | MEDIUM | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
+| `sourcing.deliverBuyerReport`         | sourcing-core  | HIGH   | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
+| `evidence.createItem`                 | evidence-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
+| `evidence.attachToRun`                | evidence-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
+| `evidence.exportLedger`               | evidence-core  | MEDIUM | OWNER, ADMIN                  | Yes        | No                | Yes            |
+| `checkpoint.create`                   | sourcing-core  | MEDIUM | OWNER, ADMIN                  | Yes        | No                | Yes            |
+| `checkpoint.markDelivered`            | sourcing-core  | MEDIUM | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
+| `checkpoint.approveForBilling`        | sourcing-core  | HIGH   | OWNER                         | No         | Yes for AI        | Yes            |
+| `handover.create`                     | sourcing-core  | MEDIUM | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
+| `handover.resolve`                    | sourcing-core  | HIGH   | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 
-**Total: 35 registered actions** (LOW: 15, MEDIUM: 11, HIGH: 9, CRITICAL: 0)
+**Total: 49 registered actions** (LOW: 17, MEDIUM: 15, HIGH: 13, CRITICAL: 0)
 
 ## Always-MFA Actions
 
