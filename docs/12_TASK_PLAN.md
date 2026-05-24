@@ -4,6 +4,12 @@
 
 This is the executable plan for autonomous coding agents. Each task should be small enough to implement, verify, and checkpoint without losing direction.
 
+## Active Post-PR #3 Plan
+
+The current master upgrade plan is `docs/29_PERFECTION_TASK_PLAN.md`. It supersedes older production-readiness sequencing for work after PR #3 and maps the active GitHub issue backlog (#4-#7, #9-#19) into execution gates.
+
+Use this file for the general task format and historical foundation tasks. Use `docs/29_PERFECTION_TASK_PLAN.md` for the current production-perfect roadmap.
+
 ## Agent Execution Protocol
 
 For every task:

@@ -2,12 +2,12 @@
 
 ## Current Status
 
-**Date**: 2026-05-24
-**Local code readiness**: ~9.5/10 after Phase 6+7 API routes, UI, entitlement gates, and billing workflow
-**Production readiness**: ~8.5/10 after Supabase staging migration and integration test proof
-**Production 10/10 claim**: NOT allowed yet — pending PR #3 merge for remote CI, full Vercel smoke evidence, and monetization UI
+**Date**: 2026-05-25
+**Local code readiness**: ~9.5/10 after PR #3 merge, sourcing UI/API, entitlement gates, billing workflow, and regression tests
+**Production readiness**: ~8.5/10 after staged DB proof and CI, but still blocked by authenticated Vercel smoke, latest migration proof, and open MoneyOS hardening issues
+**Production 10/10 claim**: NOT allowed yet — open P0/P1 backlog is tracked in `docs/29_PERFECTION_TASK_PLAN.md` and GitHub issues #4-#7, #9-#19
 
-This checkpoint is intentionally conservative. It records what is fixed locally, what is only partially fixed, and what still blocks a production-readiness claim.
+This checkpoint is intentionally conservative. It records what is fixed, what is merged, what is only partially proven, and what still blocks a production-readiness claim.
 
 ## Why Previous Documentation Upgrades Did Not Reach 10/10
 
@@ -60,11 +60,19 @@ The main failure modes were:
 | 2026-05-24 | GitHub Actions CI (commit 9fbd249)                                         | pass    | Run `26359118492` on `main` commit `9fbd249`; final gate green including route-actions-check: https://github.com/le8433622/tradeos-core/actions/runs/26359118492                                                                                                      |
 | 2026-05-24 | Branch protection                                                          | enabled | Main branch requires Final Gate status check, 1 approving review, admin enforcement. No force pushes.                                                                                                                                                                 |
 | 2026-05-24 | T2.002 env validation                                                      | pass    | `apps/web/lib/env.ts` created with `validateEnv()`; instrumentation hook calls it at runtime; build passes. Validates DATABASE_URL, ALLOW_DEMO_AUTH=false in production, webhook secrets, APP_URL.                                                                    |
+| 2026-05-24 | PR #3 merge                                                                | pass    | PR #3 merged to `main` as squash commit `2e6eb1c` after CI run `26373254906` passed. Issue #1 was closed after merge.                                                                                                                                                |
+| 2026-05-24 | Branch protection restore                                                  | pass    | Main branch protection was restored after merge: required status check, 1 approving review, code owner review, admin enforcement, no force pushes.                                                                                                                     |
+| 2026-05-25 | Post-PR #3 perfection backlog                                              | pass    | Active open issue backlog reviewed and expanded: #4-#7, #9-#19. New master plan added at `docs/29_PERFECTION_TASK_PLAN.md`.                                                                                                                                          |
 
 Not yet verified:
 
-- Full `docs/20_STAGING_SMOKE_TESTS.md` evidence against Vercel preview (requires authenticated Supabase session)
-- Remote CI green on Phase 6-7 changes (PR #3 open at https://github.com/le8433622/tradeos-core/pull/3)
+- Full authenticated `docs/20_STAGING_SMOKE_TESTS.md` evidence against Vercel preview/staging (#10)
+- Latest Prisma migration proof for `20260525_add_payment_external_id` on staging (#11)
+- Real evidence-count billing approval flow (#4)
+- Buyer report delivery evidence ledger (#5)
+- Public API error classification for entitlement, tenant, and billing states (#6)
+- Real DB integration coverage for sourcing/payment hardening (#7)
+- Monetization UI/API and E2E coverage (#12, #13)
 
 ## Issue #1 Phase Completion Audit
 
@@ -76,10 +84,10 @@ Not yet verified:
 | Phase 3            | MoneyOS procurement operator layer     | Implemented        | `SourcingRun`, `SupplierCandidate`, `SupplierQuote`, `EvidenceItem`, `WorkCheckpoint`, `HumanHandover` Prisma models added. `sourcing-core` and `evidence-core` packages created with 14 registered actions (sourcing, evidence, checkpoint, handover). `pnpm docs:check` passes (49 actions). | Needs staging smoke tests for sourcing runs, evidence, checkpoints, handovers. Migration to staging DB required.                                |
 | Phase 4            | AI procurement agent                   | Implemented        | Added `RUN_SOURCING` intent detection, sourcing step planning in `planTradeAgent()`, procurement actions to `ALLOWED_ACTIONS`/`BLOCKED_ACTIONS` in LLM prompt, procurement golden eval dataset (10 scenarios). `pnpm typecheck` and ai-core tests pass (59/59).                                | Needs staging smoke for AI-based sourcing runs. Eval dataset should be run against real LLM for intent accuracy metrics.                        |
 | Phase 5            | Buyer value reports                    | Implemented        | `sourcing.generateBuyerReport` action generates `BuyerDecisionReport` from stored quotes and evidence. Report includes best price, best risk-adjusted supplier, quote table, risks, missing info, next actions. AI blocked from executing.                                                     | Needs staging smoke for report generation from real sourcing data.                                                                              |
-| Phase 6            | API and UI                             | Complete           | 21 route executeAction calls (up from 15) map to 50 registered actions. `pnpm routes:check` passes. 7 API route files + 2 UI pages (list + detail) for sourcing-runs. `pnpm build` produces 53/53 pages.                                                                                       | None. Full browser staging smoke and integration tests for Phase 6 routes are still blocked without authenticated session.                      |
-| Phase 7            | Monetization                           | In progress        | `checkpoint.markAsBilled` and `checkpoint.recordPayment` actions. `Payment` Prisma model. `plan-core` package with `plan.checkEntitlement`, `plan.getPlan`. Entitlement gates added to `sourcing.createRun` and `checkpoint.create`. 54 registered actions (LOW: 19, MEDIUM: 15, HIGH: 16). `pnpm docs:check`, typecheck, build pass. | Wire entitlement checks into all create actions. Add billing API routes and UI (existing `/settings/billing` page already works with `getBillingMetrics`). |
-| Phase 8            | Final production proof                 | Mostly complete    | Prisma migration applied to staging Supabase. Existing migrations baselined. 11 integration tests pass on staging DB. Branch protection enabled. T2.002 env validation in place. temp-phase7 PR open with Vercel preview building. | Full Vercel smoke tests (`docs/20_STAGING_SMOKE_TESTS.md`) still blocked without authenticated session. Merge PR #3 for remote CI green on Phase 6-7 changes. |
-| Definition of Done | Full issue #1 completion               | Partially complete | T0 local fixes, T1.001-T1.004 tests exist and pass.                                                                                                                                                                                                                                            | DoD items 4-9 are incomplete or lack staging evidence.                                                                                          |
+| Phase 6            | API and UI                             | Merged             | PR #3 merged sourcing-run API routes and UI pages. `pnpm routes:check` reported 22 route calls mapping to 54 registered actions after adding generate-report. Remote CI passed.                                                                                                             | Operator-grade forms, evidence ledger UI, mobile states, and authenticated browser proof are tracked in #10, #12, and #16.                      |
+| Phase 7            | Monetization                           | Backend merged     | `checkpoint.markAsBilled`, `checkpoint.recordPayment`, `Payment`, `PlanLimit`, `plan-core`, entitlement gates, and payment idempotency schema are merged. PR #3 fixes added evidence-before-billing guard and duplicate payment protection.                                                    | Evidence counting reliability (#4), monetization UI/API (#13), public error handling (#6), and PlanLimit source-of-truth decision (#9).         |
+| Phase 8            | Final production proof                 | Partially complete | Staging migration proof exists for `20260525_add_payment_and_planlimit`; integration tests passed on staged DB; PR #3 merged; CI run `26373254906` passed; branch protection restored.                                                                                                        | Latest migration `20260525_add_payment_external_id` needs staging proof (#11). Full authenticated Vercel smoke remains open (#10).              |
+| Definition of Done | Full issue #1 completion               | Closed             | Issue #1 was closed after PR #3 merge. The original super task is done as a foundation milestone.                                                                                                                                                                                              | New post-PR #3 perfection backlog is tracked in #4-#7, #9-#19 and `docs/29_PERFECTION_TASK_PLAN.md`.                                             |
 
 ## Blocker Ledger
 
@@ -135,38 +143,44 @@ Not yet verified:
 
 | Area                    | Status                              | Score                                 | Notes                                                                                                                                                         |
 | ----------------------- | ----------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tenant isolation        | Mostly complete                     | 8.5/10                                | Core actions are org-scoped; invitation role ownership validation is fixed locally.                                                                           |
-| Auth/session resolution | Mostly complete                     | 8/10                                  | Supabase/demo split exists; production env still must explicitly disable demo auth.                                                                           |
-| Input validation        | Much improved                       | 8/10                                  | Action handlers and key routes now parse inputs; remaining route invalid-payload tests needed.                                                                |
-| Action registry         | Metadata gated locally              | 8/10                                  | `docs:check` now compares names, risk, roles, and AI approval metadata.                                                                                       |
-| Policy/MFA/audit        | Improved                            | 8/10                                  | Role/MFA gates exist; `blockReason` is stored in audit `result` JSON.                                                                                         |
-| Webhook security        | Improved                            | 8.5/10                                | Signatures/idempotency/rate limiting exist; webhook body size uses actual byte length.                                                                        |
-| AI safety               | Improved                            | 8/10                                  | AI calls actions through policy; per-step failure isolation is fixed locally.                                                                                 |
-| Testing                 | Staging-verified                    | 9/10                                  | Unit tests pass; 10 DB-backed integration tests pass on staging Supabase. Settings PATCH and quotation line items are covered.                                |
-| CI/CD                   | Remote CI green + branch protection | 9/10                                  | GitHub Actions final gate passed on commit `9fbd249` with route-actions-check; branch protection enabled on main.                                             |
-| Deployment/staging      | Partially proven                    | 7/10                                  | Vercel preview exists, integration tests pass, but full smoke evidence is incomplete and `/api/health` returned 401. Supabase staging migration still needed. |
-| **Overall**             | **Not production-ready**            | **~9.5/10 local, ~8.5/10 production** | Main remaining blockers: full browser-based smoke evidence, Supabase staging migration proof.                                                                 |
+| Tenant isolation        | Mostly complete                     | 8.5/10                                | Core actions are org-scoped and PR #3 fixed new sourcing FK checks. Real DB regression expansion remains open in #7 and RBAC v2 in #14.                       |
+| Auth/session resolution | Mostly complete                     | 8/10                                  | Supabase/demo split exists; production env still must explicitly disable demo auth. Authenticated staging smoke remains open in #10.                          |
+| Input validation        | Much improved                       | 8/10                                  | Action handlers and key routes parse inputs; buyer report delivery JSON validation and error taxonomy remain open in #5 and #6.                               |
+| Action registry         | Metadata gated                      | 9/10                                  | `docs:check` compares names, risk, roles, and AI approval metadata; route/action parity is also gated.                                                         |
+| Policy/MFA/audit        | Improved                            | 8/10                                  | Role/MFA gates exist; permission-first RBAC v2 and stronger approval-path proof remain open in #14 and #17.                                                     |
+| Webhook security        | Improved                            | 8/10                                  | Signature/idempotency/rate-limit foundations exist; production signed smoke, retry, archive proof remain open in #19.                                         |
+| AI safety               | Improved                            | 8/10                                  | AI calls actions through policy; real LLM procurement eval and approval-path proof remain open in #17.                                                         |
+| Testing                 | Strong local, partial staging        | 8.5/10                                | Unit tests and guarded integration tests exist; new sourcing/payment DB integration and browser E2E are open in #7 and #12.                                    |
+| CI/CD                   | Remote CI green + branch protection | 9/10                                  | PR #3 merged after CI run `26373254906`; branch protection restored on main.                                                                                   |
+| Deployment/staging      | Partially proven                    | 7.5/10                                | Prior staged DB proof exists, but latest payment id migration and authenticated Vercel smoke remain open in #11 and #10.                                      |
+| **Overall**             | **Not production-ready**            | **~9.5/10 local, ~8.5/10 production** | Main blockers are the post-PR #3 perfection backlog: #4-#7 and #9-#19.                                                                                        |
 
 ## Next Recommended Tasks
 
-### Immediate code hardening
+### Immediate P0 Proof
 
-1. Complete `docs/20_STAGING_SMOKE_TESTS.md` against Vercel preview/staging.
-2. Investigate and fix pooler connection for production-like config (currently using direct connection).
-3. Only start MoneyOS/procurement modules after staging proof is recorded.
+1. Complete #11: apply/verify latest Prisma migrations on staging with rollback evidence.
+2. Complete #10: run authenticated Vercel staging smoke and update `docs/20_STAGING_SMOKE_TESTS.md`.
+3. Update this checkpoint with exact CI/deployment/migration evidence.
 
-### Documentation and gates
+### MoneyOS Hardening
 
-1. Keep `docs/04_ACTION_REGISTRY.md` gate-verified against source metadata.
-2. Update this checkpoint after every blocker status change.
+1. Complete #4: approve checkpoint for billing only when real evidence exists.
+2. Complete #5: deliver buyer report from JSON body and create `BUYER_DECISION` evidence.
+3. Complete #6: classify entitlement, tenant, and billing errors as stable public API errors.
+4. Complete #7: add real DB integration tests for sourcing/payment hardening.
+5. Complete #13: add monetization UI/API for plans, checkpoints, and payments.
 
-### Production proof
+### Platform Perfection
 
-1. Run full local verification: `pnpm db:generate && pnpm typecheck && pnpm test && pnpm build && pnpm docs:check && pnpm lint && pnpm license:check && git diff --check`.
-2. Run `pnpm routes:check`.
-3. Enable branch protection.
-4. Apply migrations to Supabase staging with pre-existing data simulation.
-5. Deploy Vercel preview and run `docs/20_STAGING_SMOKE_TESTS.md`.
+1. Complete #12: authenticated E2E suite.
+2. Complete #14: permission-first RBAC v2.
+3. Complete #15: observability, audit analytics, and SLO gate.
+4. Complete #16: procurement UX hardening.
+5. Complete #17: AI procurement safety evals and approval paths.
+6. Complete #18: data governance proof.
+7. Complete #19: webhook production readiness.
+8. Complete #9: PlanLimit source-of-truth decision.
 
 ## Checkpoint Update Template
 
