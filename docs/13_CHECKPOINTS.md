@@ -3,9 +3,9 @@
 ## Current Status
 
 **Date**: 2026-05-24
-**Local code readiness**: ~9.5/10 after Phase 6+7 API routes, UI, and billing workflow
-**Production readiness**: ~8/10 pending full browser-based staging smoke, Phase 7.2 entitlement gate wiring, and Phase 8 final proof
-**Production 10/10 claim**: NOT allowed yet
+**Local code readiness**: ~9.5/10 after Phase 6+7 API routes, UI, entitlement gates, and billing workflow
+**Production readiness**: ~8.5/10 after Supabase staging migration and integration test proof
+**Production 10/10 claim**: NOT allowed yet — pending PR #3 merge for remote CI, full Vercel smoke evidence, and monetization UI
 
 This checkpoint is intentionally conservative. It records what is fixed locally, what is only partially fixed, and what still blocks a production-readiness claim.
 
@@ -55,15 +55,16 @@ The main failure modes were:
 | 2026-05-24 | `pnpm db:generate` (Phase 7)                                                | pass    | Payment and PlanLimit Prisma models generated.                                                                                                                                                                                                                          |
 | 2026-05-24 | Phase 7 billing workflow                                                    | pass    | `checkpoint.markAsBilled` action transitions APPROVED → BILLED and records payment. `plan-core` package with 3 actions for entitlement checks. `pnpm typecheck` clean. `pnpm build` produces 53/53 pages.                                                          |
 | 2026-05-24 | Phase 7.2 entitlement gates                                                  | pass    | Entitlement checks added to `sourcing.createRun` and `checkpoint.create` handlers. `checkpoint.recordPayment` action added. 54 registered actions. `pnpm docs:check` passes. `pnpm build` passes.                                                            |
+| 2026-05-24 | Supabase staging migration (Phase 8)                                          | pass    | Prisma migration `20260525_add_payment_and_planlimit` applied to staging Supabase. Existing migrations baselined. All migrations at `latest`.                                                                                                       |
+| 2026-05-24 | Integration tests on staged DB (Phase 8)                                      | pass    | 11 integration tests pass on staging Supabase (10 action-flow + 1 debug).                                                                                                                                                                            |
 | 2026-05-24 | GitHub Actions CI (commit 9fbd249)                                         | pass    | Run `26359118492` on `main` commit `9fbd249`; final gate green including route-actions-check: https://github.com/le8433622/tradeos-core/actions/runs/26359118492                                                                                                      |
 | 2026-05-24 | Branch protection                                                          | enabled | Main branch requires Final Gate status check, 1 approving review, admin enforcement. No force pushes.                                                                                                                                                                 |
 | 2026-05-24 | T2.002 env validation                                                      | pass    | `apps/web/lib/env.ts` created with `validateEnv()`; instrumentation hook calls it at runtime; build passes. Validates DATABASE_URL, ALLOW_DEMO_AUTH=false in production, webhook secrets, APP_URL.                                                                    |
 
 Not yet verified:
 
-- Supabase staging migration with existing data (requires review of applied migration history)
-- Vercel preview URL recorded at https://tradeos-core-av39187zn-earthkingdomuniverse-6943s-projects.vercel.app, but full `docs/20_STAGING_SMOKE_TESTS.md` evidence is not complete
-- MoneyOS procurement operator phases from issue #1 Phase 3 through Phase 7
+- Full `docs/20_STAGING_SMOKE_TESTS.md` evidence against Vercel preview (requires authenticated Supabase session)
+- Remote CI green on Phase 6-7 changes (PR #3 open at https://github.com/le8433622/tradeos-core/pull/3)
 
 ## Issue #1 Phase Completion Audit
 
@@ -77,7 +78,7 @@ Not yet verified:
 | Phase 5            | Buyer value reports                    | Implemented        | `sourcing.generateBuyerReport` action generates `BuyerDecisionReport` from stored quotes and evidence. Report includes best price, best risk-adjusted supplier, quote table, risks, missing info, next actions. AI blocked from executing.                                                     | Needs staging smoke for report generation from real sourcing data.                                                                              |
 | Phase 6            | API and UI                             | Complete           | 21 route executeAction calls (up from 15) map to 50 registered actions. `pnpm routes:check` passes. 7 API route files + 2 UI pages (list + detail) for sourcing-runs. `pnpm build` produces 53/53 pages.                                                                                       | None. Full browser staging smoke and integration tests for Phase 6 routes are still blocked without authenticated session.                      |
 | Phase 7            | Monetization                           | In progress        | `checkpoint.markAsBilled` and `checkpoint.recordPayment` actions. `Payment` Prisma model. `plan-core` package with `plan.checkEntitlement`, `plan.getPlan`. Entitlement gates added to `sourcing.createRun` and `checkpoint.create`. 54 registered actions (LOW: 19, MEDIUM: 15, HIGH: 16). `pnpm docs:check`, typecheck, build pass. | Wire entitlement checks into all create actions. Add billing API routes and UI (existing `/settings/billing` page already works with `getBillingMetrics`). |
-| Phase 8            | Final production proof                 | Partially complete | Local lightweight gates pass; DB-backed integration tests pass against staging Supabase.                                                                                                                                                                                                       | Full Vercel smoke, Supabase migration proof, remote CI on current changes, branch protection, and T2.002 environment validation still required. |
+| Phase 8            | Final production proof                 | Mostly complete    | Prisma migration applied to staging Supabase. Existing migrations baselined. 11 integration tests pass on staging DB. Branch protection enabled. T2.002 env validation in place. temp-phase7 PR open with Vercel preview building. | Full Vercel smoke tests (`docs/20_STAGING_SMOKE_TESTS.md`) still blocked without authenticated session. Merge PR #3 for remote CI green on Phase 6-7 changes. |
 | Definition of Done | Full issue #1 completion               | Partially complete | T0 local fixes, T1.001-T1.004 tests exist and pass.                                                                                                                                                                                                                                            | DoD items 4-9 are incomplete or lack staging evidence.                                                                                          |
 
 ## Blocker Ledger
