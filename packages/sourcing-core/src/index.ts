@@ -437,11 +437,23 @@ export const checkpointApproveForBillingAction = registerAction<
     const parsed = checkpointApproveForBillingSchema.parse(input);
     const cp = await prisma.workCheckpoint.findUnique({
       where: { id: parsed.checkpointId },
-      select: { organizationId: true, status: true, evidenceCount: true },
+      select: { organizationId: true, status: true, sourcingRunId: true },
     });
     validateRecordBelongsToOrg(cp, parsed.organizationId, "CHECKPOINT");
     if (cp?.status !== "DELIVERED") throw new Error("CHECKPOINT_NOT_DELIVERED");
-    if ((cp?.evidenceCount ?? 0) <= 0) {
+
+    const evidenceCount = await prisma.evidenceItem.count({
+      where: {
+        organizationId: parsed.organizationId,
+        OR: [
+          { relatedType: "WORK_CHECKPOINT", relatedId: parsed.checkpointId },
+          ...(cp?.sourcingRunId
+            ? [{ sourcingRunId: cp.sourcingRunId } as const]
+            : []),
+        ],
+      },
+    });
+    if (evidenceCount <= 0) {
       throw new Error("CHECKPOINT_EVIDENCE_REQUIRED");
     }
     const updated = await prisma.workCheckpoint.update({

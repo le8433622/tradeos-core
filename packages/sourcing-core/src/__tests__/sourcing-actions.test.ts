@@ -11,6 +11,7 @@ const {
   mockQuoteFindMany,
   mockQuoteUpdate,
   mockEvidenceFindMany,
+  mockEvidenceCount,
   mockCheckpointFindUnique,
   mockCheckpointCreate,
   mockCheckpointUpdate,
@@ -33,6 +34,7 @@ const {
   const mockQuoteFindMany = vi.fn();
   const mockQuoteUpdate = vi.fn();
   const mockEvidenceFindMany = vi.fn();
+  const mockEvidenceCount = vi.fn();
   const mockCheckpointFindUnique = vi.fn();
   const mockCheckpointCreate = vi.fn();
   const mockCheckpointUpdate = vi.fn();
@@ -64,6 +66,7 @@ const {
     },
     evidenceItem: {
       findMany: mockEvidenceFindMany,
+      count: mockEvidenceCount,
     },
     workCheckpoint: {
       findUnique: mockCheckpointFindUnique,
@@ -94,6 +97,7 @@ const {
     mockQuoteFindMany,
     mockQuoteUpdate,
     mockEvidenceFindMany,
+    mockEvidenceCount,
     mockCheckpointFindUnique,
     mockCheckpointCreate,
     mockCheckpointUpdate,
@@ -130,6 +134,7 @@ vi.mock("@tradeos/database", () => ({
     },
     evidenceItem: {
       findMany: mockEvidenceFindMany,
+      count: mockEvidenceCount,
     },
     workCheckpoint: {
       findUnique: mockCheckpointFindUnique,
@@ -170,6 +175,7 @@ vi.mock("@tradeos/database", () => ({
           },
           evidenceItem: {
             findMany: mockEvidenceFindMany,
+            count: mockEvidenceCount,
           },
           workCheckpoint: {
             findUnique: mockCheckpointFindUnique,
@@ -240,7 +246,7 @@ beforeEach(() => {
   mockQuoteCreate.mockResolvedValue({ id: "quote-1" });
   mockQuoteFindMany.mockResolvedValue([]);
   mockEvidenceFindMany.mockResolvedValue([]);
-  mockCheckpointFindUnique.mockResolvedValue({ id: "cp-1", organizationId: "org-1", status: "DELIVERED", evidenceCount: 5 });
+  mockCheckpointFindUnique.mockResolvedValue({ id: "cp-1", organizationId: "org-1", status: "DELIVERED", sourcingRunId: "run-1" });
   mockCheckpointCreate.mockResolvedValue({ id: "cp-1", status: "PENDING" });
   mockCheckpointUpdate.mockResolvedValue({ status: "DELIVERED" });
   mockHandoverCreate.mockResolvedValue({ id: "handover-1", status: "OPEN" });
@@ -530,8 +536,9 @@ describe("checkpoint.approveForBilling", () => {
       id: "cp-1",
       organizationId: "org-1",
       status: "DELIVERED",
-      evidenceCount: 0,
+      sourcingRunId: "run-1",
     });
+    mockEvidenceCount.mockResolvedValueOnce(0);
     await expect(
       executeAction(
         "checkpoint.approveForBilling",
@@ -546,7 +553,7 @@ describe("checkpoint.approveForBilling", () => {
       id: "cp-1",
       organizationId: "org-1",
       status: "DELIVERED",
-      evidenceCount: 3,
+      sourcingRunId: "run-1",
     });
     mockCheckpointUpdate.mockResolvedValue({ status: "APPROVED" });
     const result = await executeAction(
@@ -699,7 +706,8 @@ describe("generateBuyerReport — risk logic", () => {
     mockQuoteFindMany.mockResolvedValue([
       { id: "q1", supplierCandidate: { name: "A" }, totalAmount: 1000, riskScore: 10, comparisonRank: 1, moq: "1", leadTime: "10", shippingTerm: "FOB", paymentTerm: "TT" },
     ]);
-    mockEvidenceFindMany.mockResolvedValue([]);
+mockEvidenceFindMany.mockResolvedValue([]);
+  mockEvidenceCount.mockResolvedValue(5);
     const result = await executeAction(
       "sourcing.generateBuyerReport",
       { organizationId: "org-1", sourcingRunId: "run-1" },
