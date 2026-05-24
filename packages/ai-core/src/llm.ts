@@ -75,6 +75,7 @@ const BLOCKED_ACTIONS = [
   "crm.deleteLead",
   "crm.deleteCompany",
   "sourcing.deliverBuyerReport",
+  "sourcing.generateBuyerReport",
   "sourcing.markRunReadyForReview",
   "checkpoint.approveForBilling",
   "checkpoint.markDelivered",

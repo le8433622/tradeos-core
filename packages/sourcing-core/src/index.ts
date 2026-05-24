@@ -489,3 +489,142 @@ export const handoverResolveAction = registerAction<
     return { status: updated.status };
   },
 });
+
+export type BuyerDecisionReport = {
+  sourcingRunId: string;
+  summary: string;
+  recommendedSupplierName?: string;
+  expectedSavings?: number;
+  currency?: string;
+  quoteTable: Array<{
+    supplierName: string;
+    unitPrice?: number;
+    totalAmount?: number;
+    moq?: string;
+    leadTime?: string;
+    riskScore?: number;
+    evidenceIds: string[];
+  }>;
+  risks: string[];
+  missingInformation: string[];
+  nextActions: string[];
+};
+
+export const generateBuyerReportSchema = z
+  .object({
+    organizationId: z.string().min(1),
+    sourcingRunId: z.string().min(1),
+  })
+  .strict();
+
+export const generateBuyerReportAction = registerAction<
+  z.infer<typeof generateBuyerReportSchema>,
+  BuyerDecisionReport
+>({
+  name: "sourcing.generateBuyerReport",
+  description:
+    "Generate a buyer-facing decision report from stored quotes and evidence of a sourcing run. AI cannot deliver without human approval.",
+  riskLevel: "HIGH",
+  allowedRoles: DEFAULT_ADMIN_ROLES,
+  requiresApprovalForAI: true,
+  handler: async (input, context) => {
+    const parsed = generateBuyerReportSchema.parse(input);
+    const run = await prisma.sourcingRun.findUnique({
+      where: { id: parsed.sourcingRunId },
+      select: {
+        organizationId: true,
+        title: true,
+        requirement: true,
+        status: true,
+        currency: true,
+      },
+    });
+    validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+
+    const quotes = await prisma.supplierQuote.findMany({
+      where: { sourcingRunId: parsed.sourcingRunId },
+      orderBy: { comparisonRank: "asc" },
+      include: {
+        supplierCandidate: {
+          select: { name: true },
+        },
+      },
+    });
+
+    const evidence = await prisma.evidenceItem.findMany({
+      where: { sourcingRunId: parsed.sourcingRunId },
+      select: { id: true, relatedId: true },
+    });
+
+    const evidenceByRelatedId = new Map<string, string[]>();
+    for (const e of evidence) {
+      const key = e.relatedId ?? "";
+      if (!evidenceByRelatedId.has(key)) evidenceByRelatedId.set(key, []);
+      evidenceByRelatedId.get(key)!.push(e.id);
+    }
+
+    const quoteTable = quotes.map((q) => ({
+      supplierName: q.supplierCandidate?.name ?? "Unknown Supplier",
+      unitPrice: q.unitPrice ? Number(q.unitPrice) : undefined,
+      totalAmount: q.totalAmount ? Number(q.totalAmount) : undefined,
+      moq: q.moq ?? undefined,
+      leadTime: q.leadTime ?? undefined,
+      riskScore: q.riskScore ?? undefined,
+      evidenceIds: evidenceByRelatedId.get(q.id) ?? [],
+    }));
+
+    const bestPrice = [...quotes]
+      .filter((q) => q.totalAmount)
+      .sort((a, b) => Number(a.totalAmount!) - Number(b.totalAmount!))[0];
+    const bestRisk = [...quotes]
+      .filter((q) => q.riskScore != null)
+      .sort((a, b) => (a.riskScore ?? 50) - (b.riskScore ?? 50))[0];
+
+    const risks: string[] = [];
+    if (run?.status !== "REPORT_DELIVERED") {
+      risks.push("Sourcing run has not been delivered as complete");
+    }
+    const quotesWithHighRisk = quotes.filter((q) => (q.riskScore ?? 0) > 70);
+    for (const q of quotesWithHighRisk) {
+      risks.push(
+        `High risk supplier: ${q.supplierCandidate?.name ?? "Unknown"} (risk score: ${q.riskScore})`,
+      );
+    }
+
+    const missingInformation: string[] = [];
+    if (quotes.some((q) => !q.moq)) missingInformation.push("MOQ");
+    if (quotes.some((q) => !q.leadTime)) missingInformation.push("Lead time");
+    if (quotes.some((q) => !q.shippingTerm))
+      missingInformation.push("Shipping terms");
+    if (quotes.some((q) => !q.paymentTerm))
+      missingInformation.push("Payment terms");
+
+    return {
+      sourcingRunId: parsed.sourcingRunId,
+      summary: `Buyer decision report for: ${run?.title ?? "Sourcing Run"}`,
+      recommendedSupplierName: bestPrice?.supplierCandidate?.name,
+      expectedSavings: bestPrice?.totalAmount
+        ? quotes.length > 1
+          ? Number(quotes[quotes.length - 1].totalAmount ?? 0) -
+            Number(bestPrice.totalAmount)
+          : undefined
+        : undefined,
+      currency: run?.currency ?? "USD",
+      quoteTable,
+      risks,
+      missingInformation,
+      nextActions: [
+        bestPrice
+          ? `Consider supplier with best price: ${bestPrice.supplierCandidate?.name}`
+          : "Collect more quotes before making a decision",
+        bestRisk
+          ? `Lowest risk supplier: ${bestRisk.supplierCandidate?.name}`
+          : "Risk assessment incomplete",
+        ...(missingInformation.length > 0
+          ? [`Request missing information: ${missingInformation.join(", ")}`]
+          : []),
+        "Review report and approve for buyer delivery",
+      ],
+    };
+  },
+});

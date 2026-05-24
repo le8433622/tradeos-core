@@ -100,6 +100,7 @@ Irreversible, legal, financial, or security-sensitive action. (None currently re
 | `sourcing.compareQuotes`              | sourcing-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
 | `sourcing.markRunReadyForReview`      | sourcing-core  | MEDIUM | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 | `sourcing.deliverBuyerReport`         | sourcing-core  | HIGH   | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
+| `sourcing.generateBuyerReport`        | sourcing-core  | HIGH   | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 | `evidence.createItem`                 | evidence-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
 | `evidence.attachToRun`                | evidence-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
 | `evidence.exportLedger`               | evidence-core  | MEDIUM | OWNER, ADMIN                  | Yes        | No                | Yes            |
@@ -109,7 +110,7 @@ Irreversible, legal, financial, or security-sensitive action. (None currently re
 | `handover.create`                     | sourcing-core  | MEDIUM | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
 | `handover.resolve`                    | sourcing-core  | HIGH   | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 
-**Total: 49 registered actions** (LOW: 17, MEDIUM: 15, HIGH: 13, CRITICAL: 0)
+**Total: 50 registered actions** (LOW: 17, MEDIUM: 15, HIGH: 14, CRITICAL: 0)
 
 ## Always-MFA Actions
 
