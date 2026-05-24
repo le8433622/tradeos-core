@@ -12,6 +12,7 @@ const {
   mockQuoteUpdate,
   mockEvidenceFindMany,
   mockEvidenceCount,
+  mockEvidenceCreate,
   mockCheckpointFindUnique,
   mockCheckpointCreate,
   mockCheckpointUpdate,
@@ -35,6 +36,7 @@ const {
   const mockQuoteUpdate = vi.fn();
   const mockEvidenceFindMany = vi.fn();
   const mockEvidenceCount = vi.fn();
+  const mockEvidenceCreate = vi.fn();
   const mockCheckpointFindUnique = vi.fn();
   const mockCheckpointCreate = vi.fn();
   const mockCheckpointUpdate = vi.fn();
@@ -67,6 +69,7 @@ const {
     evidenceItem: {
       findMany: mockEvidenceFindMany,
       count: mockEvidenceCount,
+      create: mockEvidenceCreate,
     },
     workCheckpoint: {
       findUnique: mockCheckpointFindUnique,
@@ -98,6 +101,7 @@ const {
     mockQuoteUpdate,
     mockEvidenceFindMany,
     mockEvidenceCount,
+    mockEvidenceCreate,
     mockCheckpointFindUnique,
     mockCheckpointCreate,
     mockCheckpointUpdate,
@@ -135,6 +139,7 @@ vi.mock("@tradeos/database", () => ({
     evidenceItem: {
       findMany: mockEvidenceFindMany,
       count: mockEvidenceCount,
+      create: mockEvidenceCreate,
     },
     workCheckpoint: {
       findUnique: mockCheckpointFindUnique,
@@ -173,10 +178,11 @@ vi.mock("@tradeos/database", () => ({
             findMany: mockQuoteFindMany,
             update: mockQuoteUpdate,
           },
-          evidenceItem: {
-            findMany: mockEvidenceFindMany,
-            count: mockEvidenceCount,
-          },
+    evidenceItem: {
+      findMany: mockEvidenceFindMany,
+      count: mockEvidenceCount,
+      create: mockEvidenceCreate,
+    },
           workCheckpoint: {
             findUnique: mockCheckpointFindUnique,
             create: mockCheckpointCreate,
@@ -246,6 +252,7 @@ beforeEach(() => {
   mockQuoteCreate.mockResolvedValue({ id: "quote-1" });
   mockQuoteFindMany.mockResolvedValue([]);
   mockEvidenceFindMany.mockResolvedValue([]);
+  mockEvidenceCreate.mockResolvedValue({ id: "evidence-1" });
   mockCheckpointFindUnique.mockResolvedValue({ id: "cp-1", organizationId: "org-1", status: "DELIVERED", sourcingRunId: "run-1" });
   mockCheckpointCreate.mockResolvedValue({ id: "cp-1", status: "PENDING" });
   mockCheckpointUpdate.mockResolvedValue({ status: "DELIVERED" });
@@ -809,17 +816,55 @@ describe("sourcing.markRunReadyForReview", () => {
 });
 
 describe("sourcing.deliverBuyerReport", () => {
-  it("delivers buyer report", async () => {
+  it("delivers buyer report and creates BUYER_DECISION evidence", async () => {
     mockSourcingUpdate.mockResolvedValue({ status: "REPORT_DELIVERED" });
+    mockEvidenceCreate.mockResolvedValue({ id: "evidence-1" });
     const result = await executeAction(
       "sourcing.deliverBuyerReport",
       {
         organizationId: "org-1",
         sourcingRunId: "run-1",
         summary: "Report summary",
+        recommendedSupplierName: "Supplier A",
+        expectedSavings: 5000,
+        currency: "USD",
+        risks: ["Risk 1"],
+        missingInformation: ["Missing 1"],
+        nextActions: ["Action 1"],
       },
       context,
     );
-    expect(result).toEqual({ status: "REPORT_DELIVERED" });
+    expect(result).toEqual({
+      status: "REPORT_DELIVERED",
+      evidenceId: "evidence-1",
+    });
+    expect(mockEvidenceCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: "org-1",
+          sourcingRunId: "run-1",
+          evidenceType: "BUYER_DECISION",
+          title: "Report summary",
+        }),
+      }),
+    );
+  });
+
+  it("rejects when sourcing run belongs to another org", async () => {
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-other",
+      organizationId: "org-2",
+    });
+    await expect(
+      executeAction(
+        "sourcing.deliverBuyerReport",
+        {
+          organizationId: "org-1",
+          sourcingRunId: "run-other",
+          summary: "Test",
+        },
+        context,
+      ),
+    ).rejects.toThrow("SOURCING_RUN_BELONGS_TO_ANOTHER_ORGANIZATION");
   });
 });

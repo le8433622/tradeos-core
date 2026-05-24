@@ -16,16 +16,21 @@ export async function POST(
     const { session } = auth;
     const { id } = await params;
 
-    const { searchParams } = new URL(request.url);
+    const jsonBody: Record<string, unknown> = await request.json();
     const body = {
       organizationId: session.organizationId,
       sourcingRunId: id,
-      summary: searchParams.get("summary") ?? "Buyer decision report",
-      recommendedSupplierName: searchParams.get("recommendedSupplierName") ?? undefined,
-      expectedSavings: searchParams.get("expectedSavings")
-        ? Number(searchParams.get("expectedSavings"))
+      summary: (jsonBody.summary as string) ?? "Buyer decision report",
+      recommendedSupplierName: jsonBody.recommendedSupplierName as
+        | string
+        | undefined,
+      expectedSavings: jsonBody.expectedSavings
+        ? Number(jsonBody.expectedSavings)
         : undefined,
-      currency: searchParams.get("currency") ?? undefined,
+      currency: jsonBody.currency as string | undefined,
+      risks: jsonBody.risks as string[] | undefined,
+      missingInformation: jsonBody.missingInformation as string[] | undefined,
+      nextActions: jsonBody.nextActions as string[] | undefined,
     };
 
     const result = await executeAction(
@@ -39,7 +44,7 @@ export async function POST(
         mfaLevel: session.mfaLevel,
       },
     );
-    return NextResponse.json({ status: (result as { status: string }).status });
+    return NextResponse.json(result);
   } catch (error) {
     return apiErrorResponse(request, error);
   }

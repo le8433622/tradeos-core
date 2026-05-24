@@ -305,7 +305,7 @@ export const deliverBuyerReportSchema = z
 
 export const deliverBuyerReportAction = registerAction<
   z.infer<typeof deliverBuyerReportSchema>,
-  { status: string }
+  { status: string; evidenceId: string }
 >({
   name: "sourcing.deliverBuyerReport",
   description:
@@ -325,7 +325,32 @@ export const deliverBuyerReportAction = registerAction<
       data: { status: "REPORT_DELIVERED" },
       select: { status: true },
     });
-    return { status: updated.status };
+    const evidence = await prisma.evidenceItem.create({
+      data: {
+        organizationId: parsed.organizationId,
+        sourcingRunId: parsed.sourcingRunId,
+        relatedType: "SOURCING_RUN",
+        relatedId: parsed.sourcingRunId,
+        evidenceType: "BUYER_DECISION",
+        title: parsed.summary.slice(0, 256),
+        description: [
+          ...(parsed.risks ?? []),
+          ...(parsed.missingInformation ?? []),
+        ].join("; ") || null,
+        content: JSON.stringify({
+          recommendedSupplierName: parsed.recommendedSupplierName,
+          expectedSavings: parsed.expectedSavings,
+          currency: parsed.currency,
+          risks: parsed.risks,
+          missingInformation: parsed.missingInformation,
+          nextActions: parsed.nextActions,
+        }),
+        capturedBy: context.actorUserId,
+        capturedAt: new Date(),
+      },
+      select: { id: true },
+    });
+    return { status: updated.status, evidenceId: evidence.id };
   },
 });
 
