@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@tradeos/database";
 import { executeAction } from "@tradeos/policy-core";
+import type { QuotationLineItemInput } from "@tradeos/trade-core";
 import { apiErrorResponse, withApiPermission } from "../../../lib/api-errors";
 import {
   createQuotationSchema,
@@ -54,6 +55,9 @@ export async function POST(request: Request) {
     }
 
     body = stripSessionManagedFields(body);
+    const items = Array.isArray(body.items)
+      ? (body.items as QuotationLineItemInput[])
+      : undefined;
     const result = await executeAction(
       "trade.draftQuotation",
       {
@@ -63,6 +67,7 @@ export async function POST(request: Request) {
         requirements: (body.content as string) ?? "",
         currency: (body.currency as string) ?? "USD",
         estimatedAmount: body.totalAmount as number | undefined,
+        items,
       },
       {
         actorUserId: session.userId,

@@ -116,6 +116,22 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm docs:check
 
+  route-actions-check:
+    name: Route Action Parity Check
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm routes:check
+
   license-check:
     name: License Compliance Check
     needs: install
@@ -169,6 +185,7 @@ jobs:
       - test
       - lint
       - docs-check
+      - route-actions-check
       - license-check
       - whitespace
     runs-on: ubuntu-latest
@@ -180,6 +197,7 @@ jobs:
           echo "test:         ${{ needs.test.result }}"
           echo "lint:         ${{ needs.lint.result }}"
           echo "docs-check:   ${{ needs.docs-check.result }}"
+          echo "route-actions-check: ${{ needs.route-actions-check.result }}"
           echo "license-check: ${{ needs.license-check.result }}"
           echo "whitespace:   ${{ needs.whitespace.result }}"
       - if: >
@@ -188,6 +206,7 @@ jobs:
           needs.test.result != 'success' ||
           needs.lint.result != 'success' ||
           needs.docs-check.result != 'success' ||
+          needs.route-actions-check.result != 'success' ||
           needs.license-check.result != 'success' ||
           needs.whitespace.result != 'success'
         run: exit 1

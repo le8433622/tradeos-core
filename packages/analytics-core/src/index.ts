@@ -722,7 +722,7 @@ export async function getBillingMetrics(
 
   const [
     org,
-    userCount,
+    seatCount,
     monthlyInbound,
     integrationsCount,
     snapshotMonthCount,
@@ -731,7 +731,9 @@ export async function getBillingMetrics(
       where: { id: organizationId },
       select: { plan: true },
     }),
-    prisma.user.count({ where: { organizationId } }),
+    prisma.organizationMember.count({
+      where: { organizationId, status: "ACTIVE" },
+    }),
     prisma.webhookEvent.count({
       where: { organizationId, receivedAt: { gte: monthStart } },
     }),
@@ -747,9 +749,9 @@ export async function getBillingMetrics(
   const dimensions: BillingDimension[] = [
     {
       dimension: "seats",
-      usage: userCount,
+      usage: seatCount,
       limit: limits.seats,
-      exceeded: userCount > limits.seats,
+      exceeded: seatCount > limits.seats,
     },
     {
       dimension: "monthly_inbound",
@@ -773,7 +775,7 @@ export async function getBillingMetrics(
 
   return {
     plan,
-    userCount,
+    userCount: seatCount,
     monthlyInbound,
     integrationsCount,
     snapshotMonthCount,

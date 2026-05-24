@@ -6,11 +6,12 @@ This plan is the execution map, not proof of production readiness. The project i
 
 Current state:
 
-- Local code readiness: ~7.5/10.
-- Production readiness: ~6.5-7/10.
+- Local code readiness: ~8/10 after issue #1 P0/P1 local fixes.
+- Production readiness: ~7/10 until staging migration proof, remote CI with route/action parity, branch protection, and smoke evidence are recorded.
 - P0 critical blockers are fixed locally or partially mitigated, but B3 still needs staging migration proof.
 - P1 high blockers are fixed locally; B6 uses `result.blockReason` in audit JSON rather than a dedicated DB column.
-- P2 still has open/partial items: B12 staging execution and B13 settings UI null handling. B10, B15, B16, B23, B24, and B25 are fixed locally.
+- P2 still has open/partial items: B12 staging execution, T1.002 settings PATCH integration coverage, T1.003 quotation route integration coverage, and route-level web regression coverage. B10, B15, B16, B23-B32 are fixed locally.
+- Issue #1 Phase 3 through Phase 7 (MoneyOS procurement operator, evidence, checkpoints, handover, procurement AI, buyer reports, API/UI, monetization) have not started.
 - A 10/10 claim is blocked until full local verification, GitHub CI, branch protection, Supabase staging migration, and Vercel preview smoke tests are recorded.
 
 Why repeated documentation upgrades did not reach 10/10:
@@ -73,28 +74,29 @@ P4: Production Staging ───────────────────
 
 ## Status Tracker
 
-| ID  | Status                     | Production Notes                                                                          |
-| --- | -------------------------- | ----------------------------------------------------------------------------------------- |
-| B1  | Fixed locally              | Needs webhook OPERATOR smoke test.                                                        |
-| B2  | Fixed locally              | Handler parsing exists; invalid-input route/action tests should be expanded.              |
-| B3  | Partially fixed            | Migration SQL is safer locally, but staging migration with existing data is not verified. |
-| B4  | Fixed locally              | Add explicit cross-tenant custom role regression test.                                    |
-| B5  | Fixed locally              | Route schemas added; invalid payload tests should be added.                               |
-| B6  | Fixed locally              | Audit result JSON includes structured `blockReason`; no dedicated DB column.              |
-| B7  | Fixed locally              | Add regression test for agent error -> webhook FAILED.                                    |
-| B8  | Fixed locally              | GitHub CI must be pushed and observed green.                                              |
-| B9  | Fixed locally              | Hook behavior should be verified with a failing lint-staged case.                         |
-| B10 | Fixed locally              | `docs:check` compares names, risk, roles, and AI approval metadata.                       |
-| B11 | Fixed locally              | Guarded by B10 metadata checker.                                                          |
-| B12 | Partially fixed            | Guarded DB integration package exists; staging execution still required.                  |
-| B13 | Unknown                    | Needs settings UI review.                                                                 |
-| B14 | Fixed locally              | Line-item route/component tests still needed.                                             |
-| B15 | Fixed locally              | `runTradeAgent` records step failures and continues.                                      |
-| B16 | Fixed for webhook pipeline | Pipeline reads actual body text and checks byte length before JSON parse.                 |
-| B17 | Fixed locally              | Needs middleware regression/manual verification.                                          |
-| B18 | Fixed locally              | `POST /api/agent` uses `source: 'ai'`.                                                    |
+| ID      | Status                             | Production Notes                                                                                                                                                                                                                         |
+| ------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B1      | Fixed locally                      | Needs webhook OPERATOR smoke test.                                                                                                                                                                                                       |
+| B2      | Fixed locally                      | Handler parsing exists; invalid-input route/action tests should be expanded.                                                                                                                                                             |
+| B3      | Partially fixed                    | Migration SQL is safer locally, but staging migration with existing data is not verified.                                                                                                                                                |
+| B4      | Fixed locally                      | Add explicit cross-tenant custom role regression test.                                                                                                                                                                                   |
+| B5      | Fixed locally                      | Route schemas added; invalid payload tests should be added.                                                                                                                                                                              |
+| B6      | Fixed locally                      | Audit result JSON includes structured `blockReason`; no dedicated DB column.                                                                                                                                                             |
+| B7      | Fixed locally                      | Add regression test for agent error -> webhook FAILED.                                                                                                                                                                                   |
+| B8      | Fixed locally                      | GitHub CI must be pushed and observed green.                                                                                                                                                                                             |
+| B9      | Fixed locally                      | Hook behavior should be verified with a failing lint-staged case.                                                                                                                                                                        |
+| B10     | Fixed locally                      | `docs:check` compares names, risk, roles, and AI approval metadata.                                                                                                                                                                      |
+| B11     | Fixed locally                      | Guarded by B10 metadata checker.                                                                                                                                                                                                         |
+| B12     | Partially fixed                    | Guarded DB integration package exists; staging execution still required.                                                                                                                                                                 |
+| B13     | Unknown                            | Needs settings UI review.                                                                                                                                                                                                                |
+| B14     | Fixed locally                      | Line-item route/component tests still needed.                                                                                                                                                                                            |
+| B15     | Fixed locally                      | `runTradeAgent` records step failures and continues.                                                                                                                                                                                     |
+| B16     | Fixed for webhook pipeline         | Pipeline reads actual body text and checks byte length before JSON parse.                                                                                                                                                                |
+| B17     | Fixed locally                      | Needs middleware regression/manual verification.                                                                                                                                                                                         |
+| B18     | Fixed locally                      | `POST /api/agent` uses `source: 'ai'`.                                                                                                                                                                                                   |
+| B26-B32 | Fixed locally from issue #1 intake | Settings route action names, quotation line-item forwarding, numeric null handling, Prisma singleton, billing seat count, archive batching, and route/action parity check have local code fixes. Remote CI/staging proof still required. |
 
-Additional blockers discovered after this plan was written are tracked in `docs/13_CHECKPOINTS.md` as B23-B25; all three are fixed locally.
+Additional blockers discovered after this plan was written are tracked in `docs/13_CHECKPOINTS.md`. B23-B25 are fixed locally. B26-B32 were issue #1 implementation gaps and are now fixed locally, but not production-verified.
 
 ## P0 — Critical Blocker Fix
 
@@ -506,8 +508,9 @@ After all P0-P2 blockers are fixed:
 5. Update `docs/13_CHECKPOINTS.md` — clear resolved blockers, update score
 6. Run full verification suite:
    ```bash
-   pnpm typecheck && pnpm build && pnpm test && pnpm docs:check && pnpm lint && pnpm license:check && git diff --check
+   pnpm db:generate && pnpm typecheck && pnpm build && pnpm test && pnpm docs:check && pnpm lint && pnpm license:check && git diff --check
    ```
+   Also run `pnpm routes:check`.
 
 ## P4 — Production Staging
 

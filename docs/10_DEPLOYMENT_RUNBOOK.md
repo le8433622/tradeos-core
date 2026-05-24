@@ -6,12 +6,12 @@ TradeOS Core is not production 10/10 yet. This runbook defines the gates require
 
 As of 2026-05-23:
 
-- Local typecheck/tests/web build have passed in recent runs.
-- `pnpm docs:check` passes action-name parity only; metadata parity remains open (B10).
-- GitHub CI has not been observed green on remote.
+- Local typecheck/tests/web build have passed in recent runs, but issue #1 T0 fixes must be implemented and re-verified.
+- `pnpm docs:check` checks action-name and metadata parity.
+- GitHub CI was observed green on `main`; issue #1 route/action parity is now implemented locally and needs remote CI proof on the next run.
 - Branch protection has not been enabled.
 - Supabase staging migration has not been verified with existing data.
-- Vercel preview smoke tests have not been recorded.
+- A Vercel preview URL was recorded, but the full `docs/20_STAGING_SMOKE_TESTS.md` checklist still needs evidence.
 
 No production deploy should be attempted until `docs/13_CHECKPOINTS.md` shows no HIGH or CRITICAL open blockers.
 
@@ -126,14 +126,16 @@ pnpm dev:worker        # Separate terminal, optional
    ```
 3. Run all checks:
    ```bash
-   pnpm typecheck && pnpm test && pnpm build && pnpm docs:check && pnpm lint && pnpm license:check && git diff --check
+   pnpm db:generate && pnpm typecheck && pnpm test && pnpm build && pnpm docs:check && pnpm lint && pnpm license:check && git diff --check
    ```
+   Also run `pnpm routes:check`.
 4. Run DB-backed integration tests against staging/local DB:
    ```bash
    RUN_INTEGRATION_TESTS=true pnpm --filter @tradeos/integration-tests test
    ```
 5. Deploy to Vercel preview (automatic on PR push)
-6. Validate:
+6. Complete `docs/20_STAGING_SMOKE_TESTS.md` and record evidence in `docs/13_CHECKPOINTS.md`
+7. Validate:
    - [ ] `/api/health` returns 200
    - [ ] Login with test credentials succeeds
    - [ ] Tenant dashboard loads with correct org data
@@ -249,9 +251,9 @@ Never rollback by deleting tenant data.
 - Project ID: `prj_3b4Eg8YpEvztpNpCxRMm2sgj8utj`
 - Framework: Next.js
 - Root Directory: `.`
-- Build Command: `pnpm db:generate && pnpm --filter @tradeos/web build`
-- Install Command: `pnpm install`
-- Output Directory: `apps/web/.next`
+- Build Command: `pnpm --filter @tradeos/database db:generate && pnpm --filter @tradeos/web build`
+- Install Command: `npm install -g pnpm@10.11.0 && pnpm install --registry=https://registry.npmjs.org/`
+- Output Directory: `.next`
 - Node Version: 20.x
 
 ### Known build issues
@@ -288,7 +290,13 @@ The CI pipeline (`.github/workflows/ci.yml`) must pass before any production dep
 
 ```bash
 # Equivalent local check:
-pnpm typecheck && pnpm build && pnpm test && pnpm docs:check && pnpm lint && pnpm license:check && git diff --check
+pnpm db:generate && pnpm typecheck && pnpm build && pnpm test && pnpm docs:check && pnpm lint && pnpm license:check && git diff --check
+```
+
+Include route/action parity:
+
+```bash
+pnpm routes:check
 ```
 
 Database-backed staging check:

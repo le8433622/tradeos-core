@@ -140,6 +140,13 @@ Minimum additional smoke tests before production:
 2. Migration smoke against existing data, not only an empty database
 3. Approval lifecycle against a real database
 4. Invitation acceptance and role assignment against a real database
+5. Settings PATCH updates plan/profile/budget through registered actions
+6. Quotation POST persists line items and computes total from items
+
+Issue #1 adds two required verification documents:
+
+- `docs/20_STAGING_SMOKE_TESTS.md` - staging/Vercel preview smoke checklist and evidence template
+- `docs/21_PRODUCTION_READINESS_GATE.md` - production gate checklist, required commands, and stop rule
 
 ## Manual Smoke Tests
 
@@ -167,16 +174,17 @@ The CI pipeline (`.github/workflows/ci.yml`) MUST include:
 3. `pnpm build` (with db:generate)
 4. `pnpm test` (all 10 test suites)
 5. `pnpm lint` (no new warnings)
-6. `pnpm docs:check` (currently action-name parity only; metadata parity is still B10)
+6. `pnpm docs:check` (action name, risk, role, and AI-approval metadata parity)
 7. `pnpm license:check` (no blocked licenses)
 8. `git diff --check` (no whitespace errors)
-9. `pnpm --filter @tradeos/ai-core eval` (only when ai-core changes)
+9. `pnpm routes:check`
+10. `pnpm --filter @tradeos/ai-core eval` (only when ai-core changes)
 
 ## Pre-commit Gates
 
 `.husky/pre-commit` MUST run and fail on:
 
-1. `pnpm docs:check` — fail on action name mismatch; metadata mismatch will not be caught until B10 is fixed
+1. `pnpm docs:check` — fail on action name or metadata mismatch
 2. `npx lint-staged` — fail on formatting errors (no `|| true` fallback)
 3. `pnpm typecheck` — fail on type errors
 
@@ -197,17 +205,18 @@ When fixing a bug, add a regression test that would have FAILED before the fix:
 
 ## Verification Command Quick Reference
 
-| Command                                                                    | Purpose                     | Expected                                                |
-| -------------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------- |
-| `pnpm typecheck`                                                           | TypeScript strict check     | 13/13, 0 errors                                         |
-| `pnpm build`                                                               | Compile all packages        | 53/53 pages                                             |
-| `pnpm test`                                                                | Run all tests               | 256+ tests pass                                         |
-| `pnpm lint`                                                                | Lint all packages           | No new warnings                                         |
-| `pnpm docs:check`                                                          | Action registry name parity | All actions in source ↔ doc; metadata parity still open |
-| `pnpm license:check`                                                       | License compliance          | No blocked licenses                                     |
-| `pnpm db:generate`                                                         | Prisma client generation    | Client regenerated                                      |
-| `git diff --check`                                                         | Whitespace check            | No errors                                               |
-| `RUN_INTEGRATION_TESTS=true pnpm --filter @tradeos/integration-tests test` | Real DB integration suite   | Must pass against staging/local DB before production    |
+| Command                                                                    | Purpose                   | Expected                                                                       |
+| -------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------ |
+| `pnpm typecheck`                                                           | TypeScript strict check   | 13/13, 0 errors                                                                |
+| `pnpm build`                                                               | Compile all packages      | 53/53 pages                                                                    |
+| `pnpm test`                                                                | Run all tests             | 256+ tests pass                                                                |
+| `pnpm lint`                                                                | Lint all packages         | No new warnings                                                                |
+| `pnpm docs:check`                                                          | Action registry parity    | All actions in source <-> doc, including metadata                              |
+| `pnpm routes:check`                                                        | API route action parity   | Every literal `executeAction("...")` in API routes maps to a registered action |
+| `pnpm license:check`                                                       | License compliance        | No blocked licenses                                                            |
+| `pnpm db:generate`                                                         | Prisma client generation  | Client regenerated                                                             |
+| `git diff --check`                                                         | Whitespace check          | No errors                                                                      |
+| `RUN_INTEGRATION_TESTS=true pnpm --filter @tradeos/integration-tests test` | Real DB integration suite | Must pass against staging/local DB before production                           |
 
 ## Known Local Caveat
 

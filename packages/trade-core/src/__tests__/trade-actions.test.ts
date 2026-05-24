@@ -94,6 +94,67 @@ beforeEach(() => {
 });
 
 describe("trade-core registered actions", () => {
+  it("creates quotation line items and computes total from items", async () => {
+    mockQuotationCreate.mockResolvedValue({
+      id: "quote-1",
+      organizationId: "org-1",
+      totalAmount: 250,
+      lineItems: [
+        { description: "Rice", quantity: 2, unitPrice: 100 },
+        { description: "Inspection", quantity: 1, unitPrice: 50 },
+      ],
+    });
+
+    const result = await executeAction(
+      "trade.draftQuotation",
+      {
+        organizationId: "org-1",
+        title: "Rice quote",
+        requirements: "Quote with line items",
+        currency: "USD",
+        estimatedAmount: 999,
+        items: [
+          {
+            description: "Rice",
+            quantity: 2,
+            unitPrice: 100,
+          },
+          {
+            description: "Inspection",
+            quantity: 1,
+            unitPrice: 50,
+          },
+        ],
+      },
+      context,
+    );
+
+    expect(mockQuotationCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        organizationId: "org-1",
+        totalAmount: 250,
+        lineItems: {
+          create: [
+            expect.objectContaining({
+              description: "Rice",
+              quantity: 2,
+              unitPrice: 100,
+              totalAmount: 200,
+            }),
+            expect.objectContaining({
+              description: "Inspection",
+              quantity: 1,
+              unitPrice: 50,
+              totalAmount: 50,
+            }),
+          ],
+        },
+      }),
+      include: { lineItems: true },
+    });
+    expect((result as { totalAmount: number }).totalAmount).toBe(250);
+  });
+
   it("rejects quotation line items that reference products outside the tenant", async () => {
     mockProductFindMany.mockResolvedValue([]);
 

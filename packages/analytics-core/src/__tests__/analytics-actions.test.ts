@@ -12,6 +12,7 @@ const {
   mockQuotationFindMany,
   mockOrganizationFindUnique,
   mockUserFindMany,
+  mockOrganizationMemberCount,
   mockWebhookFindMany,
   mockAiUsageFindMany,
   mockReportSnapshotFindMany,
@@ -38,6 +39,7 @@ const {
   const mockQuotationFindMany = vi.fn();
   const mockOrganizationFindUnique = vi.fn();
   const mockUserFindMany = vi.fn();
+  const mockOrganizationMemberCount = vi.fn();
   const mockWebhookFindMany = vi.fn();
   const mockAiUsageFindMany = vi.fn();
   const mockReportSnapshotFindMany = vi.fn();
@@ -68,6 +70,7 @@ const {
     quotation: { count: mockQuotationCount, findMany: mockQuotationFindMany },
     organization: { findUnique: mockOrganizationFindUnique },
     user: { findMany: mockUserFindMany, count: vi.fn().mockResolvedValue(0) },
+    organizationMember: { count: mockOrganizationMemberCount },
     aiUsageEvent: {
       findMany: mockAiUsageFindMany,
       count: vi.fn().mockResolvedValue(0),
@@ -103,6 +106,7 @@ const {
     mockQuotationFindMany,
     mockOrganizationFindUnique,
     mockUserFindMany,
+    mockOrganizationMemberCount,
     mockWebhookFindMany,
     mockAiUsageFindMany,
     mockReportSnapshotFindMany,
@@ -162,6 +166,7 @@ beforeEach(() => {
     aiMonthlyBudget: 50,
   });
   mockUserFindMany.mockResolvedValue([]);
+  mockOrganizationMemberCount.mockResolvedValue(0);
   mockWebhookFindMany.mockResolvedValue([]);
   mockAiUsageFindMany.mockResolvedValue([]);
   mockReportSnapshotFindMany.mockResolvedValue([]);
@@ -399,6 +404,9 @@ describe("getBillingMetrics", () => {
       dimension: "seats",
       limit: 10,
     });
+    expect(mockOrganizationMemberCount).toHaveBeenCalledWith({
+      where: { organizationId: "org-1", status: "ACTIVE" },
+    });
   });
 
   it("returns FREE plan when org not found", async () => {
@@ -412,7 +420,7 @@ describe("getBillingMetrics", () => {
 
   it("flags exceeded dimensions", async () => {
     mockOrganizationFindUnique.mockResolvedValue({ plan: "FREE" });
-    vi.mocked(tx.user.count).mockResolvedValue(5);
+    mockOrganizationMemberCount.mockResolvedValue(5);
 
     const result = await getBillingMetrics("org-1");
 

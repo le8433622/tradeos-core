@@ -39,6 +39,8 @@ function makeContext(session: {
 }
 
 function toNumber(val: unknown): number | undefined {
+  // Settings forms send null for empty numeric inputs. Current actions treat
+  // null like omitted until explicit clearing is supported end-to-end.
   if (val === undefined || val === null) return undefined;
   const n = Number(val);
   return isNaN(n) ? undefined : n;
@@ -226,7 +228,7 @@ export async function PATCH(request: Request) {
 
     if (budgetField !== null) {
       await executeAction(
-        "ai.budgetUpdate",
+        "budget.update",
         {
           organizationId: session.organizationId,
           aiMonthlyBudget: budgetField,
@@ -237,7 +239,7 @@ export async function PATCH(request: Request) {
 
     if (avgField !== null || convField !== null) {
       await executeAction(
-        "organization.settings.profile",
+        "organization.settings.updateProfile",
         {
           organizationId: session.organizationId,
           ...(avgField !== null ? { avgDealValue: avgField } : {}),

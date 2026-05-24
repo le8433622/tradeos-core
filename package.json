@@ -17,6 +17,7 @@
     "sbom": "pnpm licenses list --json > sbom.json && echo 'SBOM written to sbom.json'",
     "license:check": "pnpm licenses list --json | node scripts/check-licenses.mjs",
     "docs:check": "node scripts/check-docs.mjs",
+    "routes:check": "node scripts/check-route-actions.mjs",
     "prepare": "husky"
   },
   "packageManager": "pnpm@10.11.0",

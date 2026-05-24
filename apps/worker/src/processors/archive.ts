@@ -3,7 +3,7 @@ import {
   redactWebhookPayload,
   getRetentionArchiveDays,
 } from "@tradeos/webhook-core";
-import type { ClaimedJob } from "@tradeos/job-core";
+import { enqueueJob, type ClaimedJob } from "@tradeos/job-core";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -40,8 +40,10 @@ export async function archiveWebhookPayloads(job: ClaimedJob): Promise<void> {
   });
 
   if (remaining > 0) {
-    throw new Error(
-      `Archived ${events.length} events, ${remaining} remaining — batch complete, will continue next run`,
-    );
+    await enqueueJob({
+      organizationId,
+      type: "ARCHIVE_WEBHOOK_PAYLOADS",
+      payload: { organizationId },
+    });
   }
 }

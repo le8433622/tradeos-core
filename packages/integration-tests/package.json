@@ -10,6 +10,7 @@
     "@tradeos/database": "workspace:*",
     "@tradeos/policy-core": "workspace:*",
     "@tradeos/crm-core": "workspace:*",
+    "@tradeos/trade-core": "workspace:*",
     "@tradeos/webhook-core": "workspace:*"
   },
   "devDependencies": {

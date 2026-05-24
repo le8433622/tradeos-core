@@ -1,6 +1,6 @@
 {
-  "buildCommand": "pnpm db:generate && pnpm --filter @tradeos/web build",
+  "buildCommand": "pnpm --filter @tradeos/database db:generate && pnpm --filter @tradeos/web build",
   "installCommand": "npm install -g pnpm@10.11.0 && pnpm install --registry=https://registry.npmjs.org/",
   "framework": "nextjs",
-  "outputDirectory": "apps/web/.next"
+  "outputDirectory": ".next"
 }

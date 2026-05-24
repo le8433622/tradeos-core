@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@tradeos/database";
 import { executeAction, type ActionContext } from "@tradeos/policy-core";
 import "@tradeos/crm-core";
+import "@tradeos/trade-core";
 
 const runIntegration =
   process.env.RUN_INTEGRATION_TESTS === "true" &&
@@ -132,5 +133,97 @@ describeIntegration("database-backed action integration", () => {
     `;
 
     expect(rows[0]?.is_nullable).toBe("NO");
+  });
+
+  it("settings PATCH updates budget via budget.update (T1.002)", async () => {
+    const result = await executeAction(
+      "budget.update",
+      { organizationId: orgA.id, aiMonthlyBudget: 150 },
+      context(),
+    );
+    expect(result).toMatchObject({ aiMonthlyBudget: 150 });
+  });
+
+  it("settings PATCH updates profile via organization.settings.updateProfile (T1.002)", async () => {
+    const result = await executeAction(
+      "organization.settings.updateProfile",
+      { organizationId: orgA.id, avgDealValue: 5000, conversionRate: 0.15 },
+      context(),
+    );
+    expect(result).toMatchObject({ avgDealValue: 5000, conversionRate: 0.15 });
+  });
+
+  it("settings PATCH updates plan via billing.planUpdate as OWNER (T1.002)", async () => {
+    const result = await executeAction(
+      "billing.planUpdate",
+      { organizationId: orgA.id, plan: "TEAM" },
+      context(),
+    );
+    expect(result).toMatchObject({ plan: "TEAM" });
+  });
+
+  it("settings PATCH rejects invalid conversion rate (T1.002)", async () => {
+    await expect(
+      executeAction(
+        "organization.settings.updateProfile",
+        { organizationId: orgA.id, conversionRate: 5 },
+        context(),
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("quotation with line items persists items and computes totalAmount (T1.003)", async () => {
+    const result = (await executeAction(
+      "trade.draftQuotation",
+      {
+        organizationId: orgA.id,
+        title: "Integration Test Quotation",
+        requirements: "Test requirements",
+        currency: "USD",
+        items: [
+          {
+            description: "Item A",
+            quantity: 2,
+            unit: "pcs",
+            unitPrice: 100,
+          },
+          {
+            description: "Item B",
+            quantity: 3,
+            unit: "pcs",
+            unitPrice: 50,
+          },
+        ],
+      },
+      context(),
+    )) as { id: string; lineItems: unknown[]; totalAmount: number };
+
+    expect(result.id).toBeTruthy();
+    expect(result.lineItems).toHaveLength(2);
+    // totalAmount = 2*100 + 3*50 = 200 + 150 = 350
+    expect(Number(result.totalAmount)).toBe(350);
+  });
+
+  it("quotation rejects non-finite quantity via schema validation (T1.003)", async () => {
+    // Infinity passes schema min/positive checks but is caught by handler's isFinite check
+    await expect(
+      executeAction(
+        "trade.draftQuotation",
+        {
+          organizationId: orgA.id,
+          title: "Bad Quantity Quotation",
+          requirements: "Test",
+          items: [
+            {
+              description: "Bad Item",
+              quantity: Infinity,
+              unit: "pcs",
+              unitPrice: 100,
+            },
+          ],
+        },
+        context(),
+      ),
+    ).rejects.toThrow("INVALID_QUOTATION_ITEM_QUANTITY");
   });
 });

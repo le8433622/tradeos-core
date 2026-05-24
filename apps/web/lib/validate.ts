@@ -105,9 +105,9 @@ export const updateOrganizationSettingsSchema = z
       .enum(["FREE", "PILOT", "TEAM", "ASSOCIATION", "ENTERPRISE"])
       .optional(),
     mfaRequired: z.boolean().optional(),
-    aiMonthlyBudget: z.number().min(0).optional(),
-    avgDealValue: z.number().min(0).optional(),
-    conversionRate: z.number().min(0).max(1).optional(),
+    aiMonthlyBudget: z.number().min(0).nullable().optional(),
+    avgDealValue: z.number().min(0).nullable().optional(),
+    conversionRate: z.number().min(0).max(1).nullable().optional(),
     introductionsEnabled: z.boolean().optional(),
   })
   .strict();

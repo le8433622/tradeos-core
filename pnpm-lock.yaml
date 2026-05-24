@@ -293,6 +293,9 @@ importers:
       "@tradeos/policy-core":
         specifier: workspace:*
         version: link:../policy-core
+      "@tradeos/trade-core":
+        specifier: workspace:*
+        version: link:../trade-core
       "@tradeos/webhook-core":
         specifier: workspace:*
         version: link:../webhook-core
