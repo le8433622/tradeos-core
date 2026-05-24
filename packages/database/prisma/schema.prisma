@@ -164,6 +164,9 @@ model Organization {
   partnerIntroductions   IntroductionRequest[] @relation("PartnerOrg")
   deals                  Deal[]
   sourcingRuns           SourcingRun[]
+  payments               Payment[]
+
+  @@index([plan])
 }
 
 model User {
@@ -812,13 +815,14 @@ model WorkCheckpoint {
   updatedAt      DateTime         @updatedAt
 
   sourcingRun SourcingRun? @relation(fields: [sourcingRunId], references: [id], onDelete: Cascade)
+  payments     Payment[]
 
   @@index([organizationId, status])
   @@index([sourcingRunId])
 }
 
 model HumanHandover {
-  id                    String         @id @default(cuid())
+  id                    String           @id @default(cuid())
   organizationId        String
   sourcingRunId         String?
   reason                HandoverReason
@@ -835,4 +839,47 @@ model HumanHandover {
   sourcingRun SourcingRun? @relation(fields: [sourcingRunId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, status])
+}
+
+model Payment {
+  id                 String         @id @default(cuid())
+  organizationId     String
+  checkpointId       String
+  invoiceId          String?
+  amount             Decimal
+  currency           String         @default("USD")
+  externalPaymentId   String?
+  provider           String         @default("manual")
+  status             PaymentStatus  @default(COMPLETED)
+  paidAt             DateTime       @default(now())
+  metadata           Json?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  checkpoint   WorkCheckpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, checkpointId])
+  @@index([organizationId, paidAt])
+  @@unique([provider, externalPaymentId])
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model PlanLimit {
+  id             String @id @default(cuid())
+  plan           TenantPlan
+  feature        String
+  limitValue     Int
+  unit           String @default("count")
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([plan, feature])
 }

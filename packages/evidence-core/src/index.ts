@@ -35,6 +35,13 @@ export const createEvidenceItemAction = registerAction<
   requiresApprovalForAI: false,
   handler: async (input, context) => {
     const parsed = createEvidenceItemSchema.parse(input);
+    if (parsed.sourcingRunId) {
+      const run = await prisma.sourcingRun.findUnique({
+        where: { id: parsed.sourcingRunId },
+        select: { organizationId: true },
+      });
+      validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+    }
     const item = await prisma.evidenceItem.create({
       data: {
         organizationId: parsed.organizationId,

@@ -6,6 +6,7 @@ import {
   validateRecordBelongsToOrg,
 } from "@tradeos/policy-core";
 import type { ActionContext } from "@tradeos/policy-core";
+import { checkEntitlement } from "@tradeos/plan-core";
 import { z } from "zod";
 
 export const createSourcingRunSchema = z
@@ -35,6 +36,20 @@ export const createSourcingRunAction = registerAction<
   requiresApprovalForAI: false,
   handler: async (input, context) => {
     const parsed = createSourcingRunSchema.parse(input);
+    const entitlement = await checkEntitlement(
+      parsed.organizationId,
+      "sourcing_runs",
+    );
+    if (!entitlement.allowed) {
+      throw new Error("ENTITLEMENT_EXCEEDED");
+    }
+    if (parsed.leadId) {
+      const lead = await prisma.lead.findUnique({
+        where: { id: parsed.leadId },
+        select: { organizationId: true },
+      });
+      validateRecordBelongsToOrg(lead, parsed.organizationId, "LEAD");
+    }
     const run = await prisma.sourcingRun.create({
       data: {
         organizationId: parsed.organizationId,
@@ -143,6 +158,16 @@ export const addSupplierQuoteAction = registerAction<
       select: { organizationId: true },
     });
     validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+    if (parsed.supplierCandidateId) {
+      const candidate = await prisma.supplierCandidate.findUnique({
+        where: { id: parsed.supplierCandidateId },
+        select: { organizationId: true, sourcingRunId: true },
+      });
+      validateRecordBelongsToOrg(candidate, parsed.organizationId, "SUPPLIER_CANDIDATE");
+      if (candidate!.sourcingRunId !== parsed.sourcingRunId) {
+        throw new Error("SUPPLIER_CANDIDATE_RUN_MISMATCH");
+      }
+    }
     const quote = await prisma.supplierQuote.create({
       data: {
         organizationId: parsed.organizationId,
@@ -328,6 +353,20 @@ export const createCheckpointAction = registerAction<
   requiresApprovalForAI: false,
   handler: async (input, context) => {
     const parsed = createCheckpointSchema.parse(input);
+    const entitlement = await checkEntitlement(
+      parsed.organizationId,
+      "checkpoints",
+    );
+    if (!entitlement.allowed) {
+      throw new Error("ENTITLEMENT_EXCEEDED");
+    }
+    if (parsed.sourcingRunId) {
+      const run = await prisma.sourcingRun.findUnique({
+        where: { id: parsed.sourcingRunId },
+        select: { organizationId: true },
+      });
+      validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+    }
     const cp = await prisma.workCheckpoint.create({
       data: {
         organizationId: parsed.organizationId,
@@ -398,10 +437,13 @@ export const checkpointApproveForBillingAction = registerAction<
     const parsed = checkpointApproveForBillingSchema.parse(input);
     const cp = await prisma.workCheckpoint.findUnique({
       where: { id: parsed.checkpointId },
-      select: { organizationId: true, status: true },
+      select: { organizationId: true, status: true, evidenceCount: true },
     });
     validateRecordBelongsToOrg(cp, parsed.organizationId, "CHECKPOINT");
     if (cp?.status !== "DELIVERED") throw new Error("CHECKPOINT_NOT_DELIVERED");
+    if ((cp?.evidenceCount ?? 0) <= 0) {
+      throw new Error("CHECKPOINT_EVIDENCE_REQUIRED");
+    }
     const updated = await prisma.workCheckpoint.update({
       where: { id: parsed.checkpointId },
       data: {
@@ -438,6 +480,13 @@ export const handoverCreateAction = registerAction<
   requiresApprovalForAI: false,
   handler: async (input, context) => {
     const parsed = handoverCreateSchema.parse(input);
+    if (parsed.sourcingRunId) {
+      const run = await prisma.sourcingRun.findUnique({
+        where: { id: parsed.sourcingRunId },
+        select: { organizationId: true },
+      });
+      validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+    }
     const h = await prisma.humanHandover.create({
       data: {
         organizationId: parsed.organizationId,
@@ -581,7 +630,7 @@ export const generateBuyerReportAction = registerAction<
       .sort((a, b) => (a.riskScore ?? 50) - (b.riskScore ?? 50))[0];
 
     const risks: string[] = [];
-    if (run?.status !== "REPORT_DELIVERED") {
+    if (!["COMPARED", "READY_FOR_REVIEW", "REPORT_DELIVERED"].includes(run?.status ?? "")) {
       risks.push("Sourcing run has not been delivered as complete");
     }
     const quotesWithHighRisk = quotes.filter((q) => (q.riskScore ?? 0) > 70);
@@ -605,8 +654,8 @@ export const generateBuyerReportAction = registerAction<
       recommendedSupplierName: bestPrice?.supplierCandidate?.name,
       expectedSavings: bestPrice?.totalAmount
         ? quotes.length > 1
-          ? Number(quotes[quotes.length - 1].totalAmount ?? 0) -
-            Number(bestPrice.totalAmount)
+          ? Math.max(...quotes.filter((q) => q.totalAmount).map((q) => Number(q.totalAmount))) -
+            Math.min(...quotes.filter((q) => q.totalAmount).map((q) => Number(q.totalAmount)))
           : undefined
         : undefined,
       currency: run?.currency ?? "USD",
@@ -626,5 +675,130 @@ export const generateBuyerReportAction = registerAction<
         "Review report and approve for buyer delivery",
       ],
     };
+  },
+});
+
+export const markAsBilledSchema = z
+  .object({
+    organizationId: z.string().min(1),
+    checkpointId: z.string().min(1),
+    invoiceId: z.string().max(256).optional(),
+    amount: z.number().min(0),
+    currency: z.string().max(8).optional(),
+    provider: z.string().max(64).optional(),
+    externalPaymentId: z.string().max(256).optional(),
+  })
+  .strict();
+
+export const markAsBilledAction = registerAction<
+  z.infer<typeof markAsBilledSchema>,
+  { status: string; paymentId: string }
+>({
+  name: "checkpoint.markAsBilled",
+  description:
+    "Mark an approved checkpoint as billed and record the payment. Only OWNER can execute.",
+  riskLevel: "HIGH",
+  allowedRoles: ["OWNER"],
+  requiresApprovalForAI: true,
+  handler: async (input, context) => {
+    const parsed = markAsBilledSchema.parse(input);
+    const cp = await prisma.workCheckpoint.findUnique({
+      where: { id: parsed.checkpointId },
+      select: { organizationId: true, status: true },
+    });
+    validateRecordBelongsToOrg(cp, parsed.organizationId, "CHECKPOINT");
+    if (cp?.status !== "APPROVED") throw new Error("CHECKPOINT_NOT_APPROVED");
+
+    const [updated, payment] = await prisma.$transaction([
+      prisma.workCheckpoint.update({
+        where: { id: parsed.checkpointId },
+        data: {
+          status: "BILLED",
+          updatedAt: new Date(),
+        },
+        select: { status: true },
+      }),
+      prisma.payment.create({
+        data: {
+          organizationId: parsed.organizationId,
+          checkpointId: parsed.checkpointId,
+          invoiceId: parsed.invoiceId,
+          amount: parsed.amount,
+          currency: parsed.currency ?? "USD",
+          provider: parsed.provider ?? "manual",
+          externalPaymentId: parsed.externalPaymentId,
+          status: "COMPLETED",
+        },
+        select: { id: true },
+      }),
+    ]);
+
+    return { status: updated.status, paymentId: payment.id };
+  },
+});
+
+export const recordPaymentSchema = z
+  .object({
+    organizationId: z.string().min(1),
+    checkpointId: z.string().min(1),
+    invoiceId: z.string().max(256).optional(),
+    amount: z.number().min(0),
+    currency: z.string().max(8).optional(),
+    provider: z.string().max(64).optional(),
+    externalPaymentId: z.string().max(256).optional(),
+    metadata: z.any().optional(),
+  })
+  .strict();
+
+export const recordPaymentAction = registerAction<
+  z.infer<typeof recordPaymentSchema>,
+  { paymentId: string }
+>({
+  name: "checkpoint.recordPayment",
+  description:
+    "Record a payment for an already-billed checkpoint (e.g. from Stripe webhook callback). Only OWNER can execute.",
+  riskLevel: "HIGH",
+  allowedRoles: ["OWNER"],
+  requiresApprovalForAI: true,
+  handler: async (input, context) => {
+    const parsed = recordPaymentSchema.parse(input);
+    const cp = await prisma.workCheckpoint.findUnique({
+      where: { id: parsed.checkpointId },
+      select: { organizationId: true, status: true },
+    });
+    validateRecordBelongsToOrg(cp, parsed.organizationId, "CHECKPOINT");
+    if (cp?.status !== "BILLED") throw new Error("CHECKPOINT_NOT_BILLED");
+
+    if (parsed.externalPaymentId && parsed.provider) {
+      const existing = await prisma.payment.findUnique({
+        where: {
+          provider_externalPaymentId: {
+            provider: parsed.provider,
+            externalPaymentId: parsed.externalPaymentId,
+          },
+        },
+        select: { id: true },
+      });
+      if (existing) {
+        return { paymentId: existing.id };
+      }
+    }
+
+    const payment = await prisma.payment.create({
+      data: {
+        organizationId: parsed.organizationId,
+        checkpointId: parsed.checkpointId,
+        invoiceId: parsed.invoiceId,
+        amount: parsed.amount,
+        currency: parsed.currency ?? "USD",
+        provider: parsed.provider ?? "external",
+        externalPaymentId: parsed.externalPaymentId,
+        status: "COMPLETED",
+        metadata: parsed.metadata,
+      },
+      select: { id: true },
+    });
+
+    return { paymentId: payment.id };
   },
 });

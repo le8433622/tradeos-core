@@ -107,10 +107,14 @@ Irreversible, legal, financial, or security-sensitive action. (None currently re
 | `checkpoint.create`                   | sourcing-core  | MEDIUM | OWNER, ADMIN                  | Yes        | No                | Yes            |
 | `checkpoint.markDelivered`            | sourcing-core  | MEDIUM | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 | `checkpoint.approveForBilling`        | sourcing-core  | HIGH   | OWNER                         | No         | Yes for AI        | Yes            |
+| `checkpoint.markAsBilled`             | sourcing-core  | HIGH   | OWNER                         | No         | Yes for AI        | Yes            |
+| `checkpoint.recordPayment`            | sourcing-core  | HIGH   | OWNER                         | No         | Yes for AI        | Yes            |
 | `handover.create`                     | sourcing-core  | MEDIUM | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
 | `handover.resolve`                    | sourcing-core  | HIGH   | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
+| `plan.checkEntitlement`                | plan-core      | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
+| `plan.getPlan`                         | plan-core      | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
 
-**Total: 50 registered actions** (LOW: 17, MEDIUM: 15, HIGH: 14, CRITICAL: 0)
+**Total: 54 registered actions** (LOW: 19, MEDIUM: 15, HIGH: 16, CRITICAL: 0)
 
 ## Always-MFA Actions
 
@@ -121,7 +125,7 @@ These actions ALWAYS require `mfaLevel === 'aal2'` through `policy-core`, regard
 - `privacy.export`
 - `billing.manage` (TODO — future action)
 - `billing.export`
-- `billing.planUpdate`
+- `billing.planUpdate` — see `plan.updatePlan`
 - `notification.sendBulk`
 - `user.roleUpdate`
 - `settings.security`

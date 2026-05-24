@@ -1,0 +1,17 @@
+{
+  "version": "5.19.0",
+  "steps": [
+    {
+      "tag": "AlterColumn",
+      "model": "Payment",
+      "field": "externalPaymentId",
+      "operation": "Add"
+    },
+    {
+      "tag": "CreateIndex",
+      "model": "Payment",
+      "fields": ["provider", "externalPaymentId"],
+      "unique": true
+    }
+  ]
+}
