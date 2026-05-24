@@ -628,3 +628,60 @@ export const generateBuyerReportAction = registerAction<
     };
   },
 });
+
+export const markAsBilledSchema = z
+  .object({
+    organizationId: z.string().min(1),
+    checkpointId: z.string().min(1),
+    invoiceId: z.string().max(256).optional(),
+    amount: z.number().min(0),
+    currency: z.string().max(8).optional(),
+    provider: z.string().max(64).optional(),
+  })
+  .strict();
+
+export const markAsBilledAction = registerAction<
+  z.infer<typeof markAsBilledSchema>,
+  { status: string; paymentId: string }
+>({
+  name: "checkpoint.markAsBilled",
+  description:
+    "Mark an approved checkpoint as billed and record the payment. Only OWNER can execute.",
+  riskLevel: "HIGH",
+  allowedRoles: ["OWNER"],
+  requiresApprovalForAI: true,
+  handler: async (input, context) => {
+    const parsed = markAsBilledSchema.parse(input);
+    const cp = await prisma.workCheckpoint.findUnique({
+      where: { id: parsed.checkpointId },
+      select: { organizationId: true, status: true },
+    });
+    validateRecordBelongsToOrg(cp, parsed.organizationId, "CHECKPOINT");
+    if (cp?.status !== "APPROVED") throw new Error("CHECKPOINT_NOT_APPROVED");
+
+    const [updated, payment] = await prisma.$transaction([
+      prisma.workCheckpoint.update({
+        where: { id: parsed.checkpointId },
+        data: {
+          status: "BILLED",
+          updatedAt: new Date(),
+        },
+        select: { status: true },
+      }),
+      prisma.payment.create({
+        data: {
+          organizationId: parsed.organizationId,
+          checkpointId: parsed.checkpointId,
+          invoiceId: parsed.invoiceId,
+          amount: parsed.amount,
+          currency: parsed.currency ?? "USD",
+          provider: parsed.provider ?? "manual",
+          status: "COMPLETED",
+        },
+        select: { id: true },
+      }),
+    ]);
+
+    return { status: updated.status, paymentId: payment.id };
+  },
+});

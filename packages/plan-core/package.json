@@ -1,0 +1,14 @@
+{
+  "name": "@tradeos/plan-core",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tradeos/database": "workspace:*",
+    "@tradeos/policy-core": "workspace:*",
+    "zod": "^3.24.4"
+  }
+}
