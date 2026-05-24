@@ -6,6 +6,7 @@ const nextConfig = {
     "@tradeos/policy-core",
     "@tradeos/crm-core",
     "@tradeos/trade-core",
+    "@tradeos/sourcing-core",
   ],
   experimental: {
     instrumentationHook: true,
