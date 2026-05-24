@@ -231,7 +231,7 @@ function isSafeErrorCode(code: string) {
   return /^[A-Z0-9_]+$/.test(code) && code.length <= 80;
 }
 
-function classifyApiError(error: unknown): ClassifiedApiError {
+export function classifyApiError(error: unknown): ClassifiedApiError {
   if (error instanceof SyntaxError) {
     return {
       status: 400,
