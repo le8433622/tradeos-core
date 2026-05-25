@@ -6,9 +6,10 @@
 ## Current GitHub State
 
 - Open PRs: **none**.
-- Latest `main` commit: `4875f65` (`docs: add Plugin Intake Layer spec`).
+- Latest `main` commit: `7b2d7ea` (`docs: add Supplier Switch Execution Protocol + lock #40→#45 sequence`).
 - Latest local verification: pre-commit hooks passed on recent doc/spec PRs; latest CI must be checked live before merge-sensitive work.
 - Recently merged PRs (newest first):
+  - `#46` — docs: add Supplier Switch Execution Protocol + lock #40→#45 sequence.
   - `#39` — docs: add Plugin Intake Layer spec.
   - `#38` — docs: add Supplier Switch Intelligence spec.
   - `#37` — feat: add Playwright E2E harness with env-gated tests.
@@ -20,8 +21,8 @@
   - `#22` — AI procurement safety and blocked-action sync.
   - `#21` — MoneyOS evidence/billing/API errors/billing UI micro-task round.
 - Open issues:
-  - `#48` — **P0 (ACTIVE)**: Cloud DB Safety Protocol — blocks all schema work in `#40`–`#45`.
-  - `#40` — P1: PurchaseBaseline MVP — model+action+API+UI built locally. Awaiting `#48` + migration + final PR.
+  - `#48` — **P0**: Cloud DB Safety Protocol — blocks all schema work in `#40`–`#45`.
+  - `#40` — **IN PROGRESS** (local): PurchaseBaseline MVP — model+action+API+UI done, awaiting final PR.
   - `#41` — P1: Implement SupplierAlternative and QuoteProof normalization MVP.
   - `#42` — P1: Implement SwitchDecisionReport generator MVP.
   - `#43` — P2: Add buyer-facing Switch Report portal MVP.
@@ -118,6 +119,7 @@ Spec completed at `docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md`. No source-code chan
 
 Spec completed at `docs/31_PLUGIN_INTAKE_LAYER.md`. No source-code integrations.
 
+<<<<<<< HEAD
 ### `#48` — P0 ACTIVE (2026-05-26)
 
 Cloud DB Safety Protocol blocks all schema work in `#40`–`#45`.
@@ -130,17 +132,30 @@ Cloud DB Safety Protocol blocks all schema work in `#40`–`#45`.
 **Blocks**: `#40`–`#45`.
 
 ### `#40` — NEXT GATE (BLOCKED ON `#48`)
+=======
+### `#40` — FIRST ACTIVE IMPLEMENTATION GATE (LOCAL: IMPLEMENTED)
+>>>>>>> 635ebf1 (feat: implement PurchaseBaseline MVP (#40))
 
 Build Current Spend/PurchaseBaseline only. Manual input first. Existing `EvidenceItem` links only. No marketplace, no social/API integration, no quote scraping.
 
 **Completed locally (2026-05-26):**
 
+<<<<<<< HEAD
 - Prisma schema: `PurchaseBaseline` model + new `EvidenceType` enum values
 - Registered action: `sourcing.createPurchaseBaseline`
 - API route: `POST /api/sourcing-runs/[id]/purchase-baseline`
 - UI: inline form + display on sourcing run detail page
 - Typecheck passes
 - PR #47 sent, blocked until `#48` merges
+=======
+- Added `PurchaseBaseline` model to Prisma schema (tenant-scoped, linked to SourcingRun)
+- Added new `EvidenceType` enum values (`CURRENT_SUPPLIER_INVOICE`, `CURRENT_SUPPLIER_PRICE_LIST`, `ALTERNATIVE_QUOTE`, `ALTERNATIVE_PROFILE`, `MARKET_BENCHMARK`, `SWITCH_DECISION_REPORT`, `OUTCOME_EVIDENCE`, `NEGOTIATION_LOG`)
+- Created registered action `sourcing.createPurchaseBaseline` in `sourcing-core` (LOW risk, Zod validated, org-scoped)
+- Created POST API route at `/api/sourcing-runs/[id]/purchase-baseline`
+- Added PurchaseBaseline display + create form to sourcing run detail page
+- Typecheck passes (both `sourcing-core` and `web`)
+- Awaiting migration + final PR.
+>>>>>>> 635ebf1 (feat: implement PurchaseBaseline MVP (#40))
 
 ### `#41` — SECOND GATE
 

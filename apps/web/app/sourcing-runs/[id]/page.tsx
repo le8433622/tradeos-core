@@ -2,6 +2,7 @@ import { prisma } from "@tradeos/database";
 import { requirePagePermission } from "../../../lib/page-session";
 import { notFound } from "next/navigation";
 import "@tradeos/sourcing-core";
+import PurchaseBaselineForm from "./purchase-baseline-form";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "#6b7280",
@@ -64,6 +65,7 @@ export default async function SourcingRunDetailPage({
           capturedAt: true,
         },
       },
+      purchaseBaselines: { orderBy: { createdAt: "desc" } },
       checkpoints: { orderBy: { createdAt: "asc" } },
       handovers: { orderBy: { createdAt: "desc" } },
     },
@@ -117,7 +119,11 @@ export default async function SourcingRunDetailPage({
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table
-              style={{ width: "100%", borderCollapse: "collapse", minWidth: 500 }}
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                minWidth: 500,
+              }}
             >
               <thead>
                 <tr
@@ -138,10 +144,7 @@ export default async function SourcingRunDetailPage({
                       ? c.riskFlags
                       : "None";
                   return (
-                    <tr
-                      key={c.id}
-                      style={{ borderBottom: "1px solid #eee" }}
-                    >
+                    <tr key={c.id} style={{ borderBottom: "1px solid #eee" }}>
                       <td style={{ padding: 8 }}>
                         {c.website ? (
                           <a href={c.website} style={{ color: "#0070f3" }}>
@@ -169,13 +172,77 @@ export default async function SourcingRunDetailPage({
       </section>
 
       <section style={{ marginTop: 32 }}>
+        <h2>Purchase Baseline ({run.purchaseBaselines.length})</h2>
+        {run.purchaseBaselines.length === 0 ? (
+          <p style={{ color: "#999" }}>
+            No purchase baseline recorded yet. Enter your current supplier
+            information below.
+          </p>
+        ) : (
+          run.purchaseBaselines.map((b) => (
+            <div
+              key={b.id}
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: 12,
+                padding: 16,
+                marginBottom: 12,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: 8,
+                }}
+              >
+                <strong>{b.supplierName}</strong>
+                <span style={{ fontSize: 13, color: "#6b7280" }}>
+                  {b.sourceType}
+                </span>
+              </div>
+              <p style={{ margin: 0, fontSize: 14 }}>{b.productDescription}</p>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+                  gap: 8,
+                  marginTop: 8,
+                  fontSize: 13,
+                  color: "#6b7280",
+                }}
+              >
+                {b.quantity != null && <span>Qty: {String(b.quantity)}</span>}
+                {b.unit && <span>Unit: {b.unit}</span>}
+                {b.unitPrice != null && (
+                  <span>Price: {String(b.unitPrice)}</span>
+                )}
+                {b.currency && <span>Currency: {b.currency}</span>}
+                {b.frequency && <span>Frequency: {b.frequency}</span>}
+                {b.paymentTerms && <span>Payment: {b.paymentTerms}</span>}
+                {b.deliveryTerms && <span>Delivery: {b.deliveryTerms}</span>}
+                {b.leadTime && <span>Lead: {b.leadTime}</span>}
+              </div>
+            </div>
+          ))
+        )}
+        <div style={{ marginTop: 16 }}>
+          <PurchaseBaselineForm sourcingRunId={id} />
+        </div>
+      </section>
+
+      <section style={{ marginTop: 32 }}>
         <h2>Supplier Quotes ({run.supplierQuotes.length})</h2>
         {run.supplierQuotes.length === 0 ? (
           <p style={{ color: "#999" }}>No quotes collected yet.</p>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table
-              style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                minWidth: 600,
+              }}
             >
               <thead>
                 <tr
@@ -313,7 +380,11 @@ export default async function SourcingRunDetailPage({
           <h2>Checkpoints</h2>
           <div style={{ overflowX: "auto" }}>
             <table
-              style={{ width: "100%", borderCollapse: "collapse", minWidth: 500 }}
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                minWidth: 500,
+              }}
             >
               <thead>
                 <tr
@@ -327,10 +398,7 @@ export default async function SourcingRunDetailPage({
               </thead>
               <tbody>
                 {run.checkpoints.map((cp) => (
-                  <tr
-                    key={cp.id}
-                    style={{ borderBottom: "1px solid #eee" }}
-                  >
+                  <tr key={cp.id} style={{ borderBottom: "1px solid #eee" }}>
                     <td style={{ padding: 8 }}>{cp.title}</td>
                     <td style={{ padding: 8 }}>{cp.checkpointType}</td>
                     <td style={{ padding: 8 }}>
