@@ -20,7 +20,8 @@
   - `#22` — AI procurement safety and blocked-action sync.
   - `#21` — MoneyOS evidence/billing/API errors/billing UI micro-task round.
 - Open issues:
-  - `#40` — P1: Implement PurchaseBaseline MVP for Supplier Switch Intelligence.
+  - `#48` — **P0 (ACTIVE)**: Cloud DB Safety Protocol — blocks all schema work in `#40`–`#45`.
+  - `#40` — P1: PurchaseBaseline MVP — model+action+API+UI built locally. Awaiting `#48` + migration + final PR.
   - `#41` — P1: Implement SupplierAlternative and QuoteProof normalization MVP.
   - `#42` — P1: Implement SwitchDecisionReport generator MVP.
   - `#43` — P2: Add buyer-facing Switch Report portal MVP.
@@ -38,26 +39,17 @@
 
 ## Current Mode
 
-The repo is in **Supplier Switch execution mode**. The only permitted product path is the buyer-led economic case chain:
+The repo is in **Cloud DB Safety + Supplier Switch execution mode**.
 
-```txt
-Current Spend
-→ PurchaseBaseline
-→ Alternative Proof
-→ SwitchDecisionReport
-→ Buyer Approval
-→ Checkpoint Billing
-→ OutcomeLearning
-```
-
-This chain is sequential. Do not skip ahead.
+The safety gate (`#48`) must clear before any schema work.
 
 Allowed now:
 
-1. Start with `#40` only: Current Spend/PurchaseBaseline from manual input and existing evidence.
-2. Proceed to `#41` only after `#40` is merged, tested, and documented.
-3. Run authenticated E2E locally when needed (`E2E_RUN_ENABLED=true pnpm --filter @tradeos/web test:e2e`).
-4. Use registered actions, tenant isolation, evidence records, approval boundaries, and checkpoint docs for every step.
+1. **`#48`**: Create Cloud DB Safety Protocol — pure docs task, no code/schema changes.
+2. After `#48` is merged: proceed to `#40` (PurchaseBaseline MVP).
+3. Proceed to `#41` only after `#40` is merged, tested, and documented.
+4. Run authenticated E2E locally when needed (`E2E_RUN_ENABLED=true pnpm --filter @tradeos/web test:e2e`).
+5. Use registered actions, tenant isolation, evidence records, approval boundaries, and checkpoint docs for every step.
 
 Not allowed now:
 
@@ -126,9 +118,29 @@ Spec completed at `docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md`. No source-code chan
 
 Spec completed at `docs/31_PLUGIN_INTAKE_LAYER.md`. No source-code integrations.
 
-### `#40` — FIRST ACTIVE IMPLEMENTATION GATE
+### `#48` — P0 ACTIVE (2026-05-26)
+
+Cloud DB Safety Protocol blocks all schema work in `#40`–`#45`.
+
+**Completed locally:**
+
+- Created `docs/33_CLOUD_DB_SAFETY_PROTOCOL.md`
+- Updated `SUPER_AGENT_RULER.md`, `13_CHECKPOINTS.md`, `CURRENT_TRUTH.md`, `20_DEVELOPER_ONBOARDING.md`
+
+**Blocks**: `#40`–`#45`.
+
+### `#40` — NEXT GATE (BLOCKED ON `#48`)
 
 Build Current Spend/PurchaseBaseline only. Manual input first. Existing `EvidenceItem` links only. No marketplace, no social/API integration, no quote scraping.
+
+**Completed locally (2026-05-26):**
+
+- Prisma schema: `PurchaseBaseline` model + new `EvidenceType` enum values
+- Registered action: `sourcing.createPurchaseBaseline`
+- API route: `POST /api/sourcing-runs/[id]/purchase-baseline`
+- UI: inline form + display on sourcing run detail page
+- Typecheck passes
+- PR #47 sent, blocked until `#48` merges
 
 ### `#41` — SECOND GATE
 

@@ -23,7 +23,8 @@ cp apps/web/.env.example apps/web/.env.local
 
 # 4. Set up database
 pnpm db:generate   # generate Prisma client
-pnpm db:push       # push schema to your local Supabase instance
+
+⚠️ **IMPORTANT**: Do NOT run `pnpm db:push` — this project uses Prisma migrations, not push. `db:push` bypasses migration history and can corrupt the shared Supabase database. See `docs/33_CLOUD_DB_SAFETY_PROTOCOL.md` for full rules.
 
 # 5. Start development
 pnpm dev           # starts Next.js on http://localhost:3000

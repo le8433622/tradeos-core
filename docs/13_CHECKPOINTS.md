@@ -9,7 +9,8 @@
 - Latest `main` commit: `4875f65` (`docs: add Plugin Intake Layer spec`).
 - Latest CI: check live before merge-sensitive work; recent local pre-commit/typecheck/docs gates passed on doc/spec PRs.
 - Open issues:
-  - `#40` — P1: Implement PurchaseBaseline MVP for Supplier Switch Intelligence.
+  - `#48` — **P0 (ACTIVE)**: Cloud DB Safety Protocol — blocks all schema work in `#40`–`#45`.
+  - `#40` — P1: PurchaseBaseline MVP — model+action+API+UI built. Awaiting `#48` + migration + final PR.
   - `#41` — P1: Implement SupplierAlternative and QuoteProof normalization MVP.
   - `#42` — P1: Implement SwitchDecisionReport generator MVP.
   - `#43` — P2: Add buyer-facing Switch Report portal MVP.
