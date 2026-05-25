@@ -125,6 +125,10 @@ The agent must stop immediately when any condition is true:
 6. The agent is trying to satisfy stale documentation instead of live GitHub state.
 7. The proposed change does not connect to Current Spend → PurchaseBaseline → Alternative Proof → SwitchDecisionReport → Buyer Approval → Checkpoint Billing → OutcomeLearning.
 8. The proposed change starts marketplace, generic CRM/ERP, or social/API integration work before `#40`–`#45` are complete.
+9. The agent is about to run `prisma db push`, `prisma migrate dev`, `prisma migrate reset`, or `prisma db seed` against a shared Supabase database.
+10. The agent is about to run E2E tests with online writes without an isolated DB or `E2E_RUN_ID + organizationId` scope.
+11. The agent is about to delete or update records without `organizationId` scope.
+12. The agent is about to run deploy commands manually without a documented rollback path.
 
 When stopped, write a blocker note:
 
@@ -151,9 +155,10 @@ Next human/operator action:
 
 ## 6. Remaining Current Work
 
-As of 2026-05-26, the incident/spec batch (`#25`–`#29`) is closed and the active implementation issues are:
+As of 2026-05-26, the incident/spec batch (`#25`–`#29`) is closed. The active work is:
 
 ```txt
+#48 — P0: Cloud DB Safety Protocol (BEFORE any schema work)
 #40 — PurchaseBaseline MVP
 #41 — SupplierAlternative and QuoteProof normalization
 #42 — SwitchDecisionReport generator
@@ -164,10 +169,12 @@ As of 2026-05-26, the incident/spec batch (`#25`–`#29`) is closed and the acti
 
 Therefore:
 
-- Product feature expansion is frozen outside this chain.
-- Start with `#40` only.
-- No marketplace, generic CRM/ERP, or social/API integrations before `#40`–`#45` are complete.
+- **`#48` blocks `#40`–`#45`**: no schema mutation, no E2E writes, no DB push until protocol is documented and enforced.
+- Product feature expansion is frozen outside `#40`–`#45`.
+- Start with `#48` (safety) then `#40` (baseline only).
+- No marketplace, generic CRM/ERP, or social/API integrations.
 - `docs/32_SUPPLIER_SWITCH_EXECUTION_PROTOCOL.md` is mandatory reading for `#40`–`#45`.
+- `docs/33_CLOUD_DB_SAFETY_PROTOCOL.md` is mandatory reading for any schema/data change.
 
 ## 7. Rule For `#26` — ✅ CLOSED
 
