@@ -3,6 +3,7 @@ import { requirePagePermission } from "../../../lib/page-session";
 import { notFound } from "next/navigation";
 import "@tradeos/sourcing-core";
 import PurchaseBaselineForm from "./purchase-baseline-form";
+import SupplierAlternativeForm from "./supplier-alternative-form";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "#6b7280",
@@ -66,6 +67,10 @@ export default async function SourcingRunDetailPage({
         },
       },
       purchaseBaselines: { orderBy: { createdAt: "desc" } },
+      supplierAlternatives: {
+        orderBy: { createdAt: "desc" },
+        include: { supplierCandidate: { select: { name: true } } },
+      },
       checkpoints: { orderBy: { createdAt: "asc" } },
       handovers: { orderBy: { createdAt: "desc" } },
     },
@@ -228,6 +233,69 @@ export default async function SourcingRunDetailPage({
         )}
         <div style={{ marginTop: 16 }}>
           <PurchaseBaselineForm sourcingRunId={id} />
+        </div>
+      </section>
+
+      <section style={{ marginTop: 32 }}>
+        <h2>Supplier Alternatives ({run.supplierAlternatives.length})</h2>
+        {run.supplierAlternatives.length === 0 ? (
+          <p style={{ color: "#999" }}>
+            No alternative suppliers recorded yet. Add potential alternatives
+            below.
+          </p>
+        ) : (
+          run.supplierAlternatives.map((a) => (
+            <div
+              key={a.id}
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: 12,
+                padding: 16,
+                marginBottom: 12,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: 8,
+                }}
+              >
+                <strong>{a.supplierName}</strong>
+                <span style={{ fontSize: 13, color: "#6b7280" }}>
+                  {a.status}
+                </span>
+              </div>
+              <p style={{ margin: 0, fontSize: 14 }}>{a.productDescription}</p>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+                  gap: 8,
+                  marginTop: 8,
+                  fontSize: 13,
+                  color: "#6b7280",
+                }}
+              >
+                {a.quantity != null && <span>Qty: {String(a.quantity)}</span>}
+                {a.unit && <span>Unit: {a.unit}</span>}
+                {a.unitPrice != null && (
+                  <span>Price: {String(a.unitPrice)}</span>
+                )}
+                {a.totalCost != null && (
+                  <span>Total: {String(a.totalCost)}</span>
+                )}
+                {a.currency && <span>Currency: {a.currency}</span>}
+                {a.moq && <span>MOQ: {a.moq}</span>}
+                {a.leadTime && <span>Lead: {a.leadTime}</span>}
+                {a.paymentTerm && <span>Payment: {a.paymentTerm}</span>}
+                {a.evidenceId && <span>Evidence: {a.evidenceId}</span>}
+              </div>
+            </div>
+          ))
+        )}
+        <div style={{ marginTop: 16 }}>
+          <SupplierAlternativeForm sourcingRunId={id} />
         </div>
       </section>
 

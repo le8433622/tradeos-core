@@ -140,6 +140,89 @@ export const createPurchaseBaselineAction = registerAction<
   },
 });
 
+export const addSupplierAlternativeSchema = z
+  .object({
+    organizationId: z.string().min(1),
+    sourcingRunId: z.string().min(1),
+    supplierName: z.string().min(1).max(256),
+    supplierCandidateId: z.string().optional(),
+    productDescription: z.string().min(1).max(4096),
+    quantity: z.string().optional(),
+    unit: z.string().max(64).optional(),
+    unitPrice: z.string().optional(),
+    totalCost: z.string().optional(),
+    currency: z.string().max(8).optional(),
+    moq: z.string().max(128).optional(),
+    leadTime: z.string().max(128).optional(),
+    paymentTerm: z.string().max(256).optional(),
+    warranty: z.string().max(512).optional(),
+    shippingNotes: z.string().max(1024).optional(),
+    riskFlags: z.any().optional(),
+    evidenceId: z.string().optional(),
+  })
+  .strict();
+
+export const addSupplierAlternativeAction = registerAction<
+  z.infer<typeof addSupplierAlternativeSchema>,
+  { id: string }
+>({
+  name: "sourcing.addSupplierAlternative",
+  description:
+    "Add a supplier alternative with normalized quote fields linked to a sourcing run.",
+  riskLevel: "LOW",
+  allowedRoles: DEFAULT_ADMIN_ROLES,
+  requiresApprovalForAI: false,
+  handler: async (input, context) => {
+    const parsed = addSupplierAlternativeSchema.parse(input);
+    const entitlement = await checkEntitlement(
+      parsed.organizationId,
+      "sourcing_runs",
+    );
+    if (!entitlement.allowed) {
+      throw new Error("ENTITLEMENT_EXCEEDED");
+    }
+    const run = await prisma.sourcingRun.findUnique({
+      where: { id: parsed.sourcingRunId },
+      select: { organizationId: true },
+    });
+    validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+    if (parsed.supplierCandidateId) {
+      const candidate = await prisma.supplierCandidate.findUnique({
+        where: { id: parsed.supplierCandidateId },
+        select: { organizationId: true },
+      });
+      validateRecordBelongsToOrg(
+        candidate,
+        parsed.organizationId,
+        "SUPPLIER_CANDIDATE",
+      );
+    }
+    const alt = await prisma.supplierAlternative.create({
+      data: {
+        organizationId: parsed.organizationId,
+        sourcingRunId: parsed.sourcingRunId,
+        supplierName: parsed.supplierName,
+        supplierCandidateId: parsed.supplierCandidateId,
+        productDescription: parsed.productDescription,
+        quantity: parsed.quantity,
+        unit: parsed.unit,
+        unitPrice: parsed.unitPrice,
+        totalCost: parsed.totalCost,
+        currency: parsed.currency,
+        moq: parsed.moq,
+        leadTime: parsed.leadTime,
+        paymentTerm: parsed.paymentTerm,
+        warranty: parsed.warranty,
+        shippingNotes: parsed.shippingNotes,
+        riskFlags: parsed.riskFlags,
+        evidenceId: parsed.evidenceId,
+      },
+      select: { id: true },
+    });
+    return { id: alt.id };
+  },
+});
+
 export const addSupplierCandidateSchema = z
   .object({
     organizationId: z.string().min(1),
