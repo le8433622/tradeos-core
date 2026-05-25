@@ -43,7 +43,12 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  try {
+    await supabase.auth.getUser();
+  } catch {
+    // Auth service unreachable — middleware still passes request through.
+    // Route-level auth enforcement handles session validation.
+  }
   response.headers.set("X-Request-Id", requestId);
   return response;
 }
