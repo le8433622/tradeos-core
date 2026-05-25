@@ -797,6 +797,10 @@ model SwitchDecisionReport {
   summary             String?
   nextActions         Json?
 
+  buyerDecision       String?   // APPROVED | REQUEST_MORE_PROOF | REJECTED
+  buyerDecidedAt      DateTime?
+  buyerDecidedById    String?
+
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 

@@ -679,6 +679,96 @@ export const generateSwitchDecisionAction = registerAction<
   },
 });
 
+export const submitBuyerDecisionSchema = z
+  .object({
+    organizationId: z.string().min(1),
+    sourcingRunId: z.string().min(1),
+    decision: z.enum(["APPROVE", "REQUEST_MORE_PROOF", "REJECT"]),
+    notes: z.string().max(4096).optional(),
+  })
+  .strict();
+
+export type SubmitBuyerDecisionResult = {
+  reportId: string;
+  decision: string;
+  evidenceId: string;
+};
+
+export const submitBuyerDecisionAction = registerAction<
+  z.infer<typeof submitBuyerDecisionSchema>,
+  SubmitBuyerDecisionResult
+>({
+  name: "sourcing.submitBuyerDecision",
+  description:
+    "Record a buyer decision (APPROVE / REQUEST_MORE_PROOF / REJECT) on a switch decision report. Creates BUYER_DECISION evidence.",
+  riskLevel: "MEDIUM",
+  allowedRoles: DEFAULT_ADMIN_ROLES,
+  requiresApprovalForAI: true,
+  handler: async (input, context) => {
+    const parsed = submitBuyerDecisionSchema.parse(input);
+    const run = await prisma.sourcingRun.findUnique({
+      where: { id: parsed.sourcingRunId },
+      select: { organizationId: true },
+    });
+    validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+
+    const report = await prisma.switchDecisionReport.findFirst({
+      where: {
+        sourcingRunId: parsed.sourcingRunId,
+        organizationId: parsed.organizationId,
+      },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, recommendation: true },
+    });
+    if (!report) {
+      throw new Error("NO_SWITCH_DECISION_REPORT");
+    }
+    if (report.recommendation !== "SWITCH" && parsed.decision === "APPROVE") {
+      throw new Error("CANNOT_APPROVE_NON_SWITCH_RECOMMENDATION");
+    }
+
+    const [updated, evidence] = await prisma.$transaction([
+      prisma.switchDecisionReport.update({
+        where: { id: report.id },
+        data: {
+          buyerDecision: parsed.decision,
+          buyerDecidedAt: new Date(),
+          buyerDecidedById: context.actorUserId,
+        },
+        select: { id: true },
+      }),
+      prisma.evidenceItem.create({
+        data: {
+          organizationId: parsed.organizationId,
+          sourcingRunId: parsed.sourcingRunId,
+          relatedType: "SWITCH_DECISION_REPORT",
+          relatedId: report.id,
+          evidenceType: "BUYER_DECISION",
+          title: `Buyer decision: ${parsed.decision}`,
+          description:
+            `Buyer ${parsed.decision === "APPROVE" ? "approved" : parsed.decision === "REQUEST_MORE_PROOF" ? "requested more proof for" : "rejected"} the switch decision report.` +
+            (parsed.notes ? ` Notes: ${parsed.notes}` : ""),
+          content: JSON.stringify({
+            decision: parsed.decision,
+            reportId: report.id,
+            recommendation: report.recommendation,
+            notes: parsed.notes,
+          }),
+          capturedBy: context.actorUserId,
+          capturedAt: new Date(),
+        },
+        select: { id: true },
+      }),
+    ]);
+
+    return {
+      reportId: updated.id,
+      decision: parsed.decision,
+      evidenceId: evidence.id,
+    };
+  },
+});
+
 export const createCheckpointSchema = z
   .object({
     organizationId: z.string().min(1),

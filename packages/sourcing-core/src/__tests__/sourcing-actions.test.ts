@@ -27,6 +27,8 @@ const {
   mockBaselineFindMany,
   mockAltFindMany,
   mockSwitchReportCreate,
+  mockSwitchReportFindFirst,
+  mockSwitchReportUpdate,
 } = vi.hoisted(() => {
   const mockSourcingFindUnique = vi.fn();
   const mockSourcingCreate = vi.fn();
@@ -54,6 +56,8 @@ const {
   const mockBaselineFindMany = vi.fn();
   const mockAltFindMany = vi.fn();
   const mockSwitchReportCreate = vi.fn();
+  const mockSwitchReportFindFirst = vi.fn();
+  const mockSwitchReportUpdate = vi.fn();
   const tx = {
     auditLog: { create: mockAuditCreate },
     organization: { findUnique: mockOrgFindUnique },
@@ -122,6 +126,8 @@ const {
     mockBaselineFindMany,
     mockAltFindMany,
     mockSwitchReportCreate,
+    mockSwitchReportFindFirst,
+    mockSwitchReportUpdate,
     tx,
   };
 });
@@ -158,6 +164,8 @@ vi.mock("@tradeos/database", () => ({
     },
     switchDecisionReport: {
       create: mockSwitchReportCreate,
+      findFirst: mockSwitchReportFindFirst,
+      update: mockSwitchReportUpdate,
     },
     workCheckpoint: {
       findUnique: mockCheckpointFindUnique,
@@ -208,6 +216,8 @@ vi.mock("@tradeos/database", () => ({
         },
         switchDecisionReport: {
           create: mockSwitchReportCreate,
+          findFirst: mockSwitchReportFindFirst,
+          update: mockSwitchReportUpdate,
         },
         workCheckpoint: {
           findUnique: mockCheckpointFindUnique,
@@ -321,6 +331,8 @@ beforeEach(() => {
     summary: "No data",
     nextActions: [],
   });
+  mockSwitchReportFindFirst.mockResolvedValue(null);
+  mockSwitchReportUpdate.mockResolvedValue({ id: "report-1" });
 });
 
 describe("sourcing.createRun", () => {
@@ -1068,5 +1080,141 @@ describe("sourcing.generateSwitchDecision", () => {
         context,
       ),
     ).rejects.toThrow("SOURCING_RUN_BELONGS_TO_ANOTHER_ORGANIZATION");
+  });
+});
+
+describe("sourcing.submitBuyerDecision", () => {
+  it("rejects when no report exists", async () => {
+    mockSwitchReportFindFirst.mockResolvedValue(null);
+    await expect(
+      executeAction(
+        "sourcing.submitBuyerDecision",
+        {
+          organizationId: "org-1",
+          sourcingRunId: "run-1",
+          decision: "APPROVE",
+        },
+        context,
+      ),
+    ).rejects.toThrow("NO_SWITCH_DECISION_REPORT");
+  });
+
+  it("records APPROVE decision and creates evidence", async () => {
+    mockSwitchReportFindFirst.mockResolvedValue({
+      id: "report-1",
+      recommendation: "SWITCH",
+    });
+    mockSwitchReportUpdate.mockResolvedValue({ id: "report-1" });
+    mockEvidenceCreate.mockResolvedValue({ id: "evidence-1" });
+    const result = (await executeAction(
+      "sourcing.submitBuyerDecision",
+      {
+        organizationId: "org-1",
+        sourcingRunId: "run-1",
+        decision: "APPROVE",
+        notes: "Looks good, proceed",
+      },
+      context,
+    )) as { reportId: string; decision: string; evidenceId: string };
+    expect(result.decision).toBe("APPROVE");
+    expect(result.evidenceId).toBe("evidence-1");
+    expect(mockSwitchReportUpdate).toHaveBeenCalled();
+    expect(mockEvidenceCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          evidenceType: "BUYER_DECISION",
+          title: "Buyer decision: APPROVE",
+        }),
+      }),
+    );
+  });
+
+  it("rejects APPROVE when recommendation is not SWITCH", async () => {
+    mockSwitchReportFindFirst.mockResolvedValue({
+      id: "report-1",
+      recommendation: "WAIT",
+    });
+    await expect(
+      executeAction(
+        "sourcing.submitBuyerDecision",
+        {
+          organizationId: "org-1",
+          sourcingRunId: "run-1",
+          decision: "APPROVE",
+        },
+        context,
+      ),
+    ).rejects.toThrow("CANNOT_APPROVE_NON_SWITCH_RECOMMENDATION");
+  });
+
+  it("records REQUEST_MORE_PROOF on any recommendation", async () => {
+    mockSwitchReportFindFirst.mockResolvedValue({
+      id: "report-1",
+      recommendation: "NEGOTIATE",
+    });
+    mockSwitchReportUpdate.mockResolvedValue({ id: "report-1" });
+    mockEvidenceCreate.mockResolvedValue({ id: "evidence-2" });
+    const result = (await executeAction(
+      "sourcing.submitBuyerDecision",
+      {
+        organizationId: "org-1",
+        sourcingRunId: "run-1",
+        decision: "REQUEST_MORE_PROOF",
+      },
+      context,
+    )) as { decision: string };
+    expect(result.decision).toBe("REQUEST_MORE_PROOF");
+  });
+
+  it("records REJECT on any recommendation", async () => {
+    mockSwitchReportFindFirst.mockResolvedValue({
+      id: "report-1",
+      recommendation: "SWITCH",
+    });
+    mockSwitchReportUpdate.mockResolvedValue({ id: "report-1" });
+    mockEvidenceCreate.mockResolvedValue({ id: "evidence-3" });
+    const result = (await executeAction(
+      "sourcing.submitBuyerDecision",
+      {
+        organizationId: "org-1",
+        sourcingRunId: "run-1",
+        decision: "REJECT",
+      },
+      context,
+    )) as { decision: string };
+    expect(result.decision).toBe("REJECT");
+  });
+
+  it("rejects when sourcing run belongs to another org", async () => {
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-other",
+      organizationId: "org-2",
+    });
+    await expect(
+      executeAction(
+        "sourcing.submitBuyerDecision",
+        {
+          organizationId: "org-1",
+          sourcingRunId: "run-other",
+          decision: "REJECT",
+        },
+        context,
+      ),
+    ).rejects.toThrow("SOURCING_RUN_BELONGS_TO_ANOTHER_ORGANIZATION");
+  });
+
+  it("rejects when report belongs to another org (findFirst returns null)", async () => {
+    mockSwitchReportFindFirst.mockResolvedValue(null);
+    await expect(
+      executeAction(
+        "sourcing.submitBuyerDecision",
+        {
+          organizationId: "org-1",
+          sourcingRunId: "run-1",
+          decision: "REQUEST_MORE_PROOF",
+        },
+        context,
+      ),
+    ).rejects.toThrow("NO_SWITCH_DECISION_REPORT");
   });
 });
