@@ -4,6 +4,8 @@
 **Status**: Spec-only — no source-code integration
 **Issue**: #29
 
+**Implementation status**: deferred until Supplier Switch chain `#40`–`#45` is complete.
+
 ## 1. Strategic Premise
 
 TradeOS wins by allowing AI to execute real economic cases through tools/plugins while preserving evidence, approval, billing, and outcome learning. Plugins are not the product core — they are action/data channels that feed the core chain:
@@ -13,6 +15,22 @@ pain/source signal → plugin → EvidenceItem → Case → Decision → Approva
 ```
 
 Every plugin must produce **evidence** or **case state**, not just raw data.
+
+## 1.1 Deferral Rule
+
+Do not implement plugin integrations before the core Supplier Switch loop exists:
+
+```txt
+Current Spend
+→ PurchaseBaseline
+→ Alternative Proof
+→ SwitchDecisionReport
+→ Buyer Approval
+→ Checkpoint Billing
+→ OutcomeLearning
+```
+
+Until `#40`–`#45` are complete, this document is architecture guidance only. Zernio, Zalo, Facebook, Instagram, TikTok, LinkedIn, Reddit, Telegram, Alibaba, AliExpress, 1688, Shopee, Lazada, PayOS, Casso, Stripe, or any similar source/payment API must not be integrated.
 
 ## 2. Plugin Interface
 
@@ -216,7 +234,7 @@ Inbound message → inbox.ingestMessage → Conversation/Message created
 → EvidenceItem created with source message link
 ```
 
-**First implementation**: Extend existing Zalo/WhatsApp/Email inbox routes with an optional signal analyzer adapter.
+**Implementation status**: deferred. Do not extend Zalo/WhatsApp/Email/social routes until `#40`–`#45` are complete.
 
 ### 6.2 Supplier Source Plugin
 
@@ -238,7 +256,7 @@ User query → SupplierSourcePlugin.search(query) → Candidate[] with evidence 
 → EvidenceItem created per candidate (source URL, reliability score, risk flags)
 ```
 
-**First implementation**: Manual entry via existing `sourcing.addSupplierCandidate`. Automation deferred.
+**Implementation status**: manual entry only during `#40`–`#45`. Automation deferred.
 
 ### 6.3 Quote/Invoice Parser Plugin
 
@@ -259,7 +277,7 @@ Quote file/email/screenshot → QuoteParserPlugin.parse(file) → StructuredQuot
 → EvidenceItem created (raw source + extracted data + confidence score)
 ```
 
-**First implementation**: Manual entry via structured form. PDF/image parsing deferred.
+**Implementation status**: manual entry via structured form only during `#40`–`#45`. PDF/image parsing deferred.
 
 ### 6.4 Evidence Capture Plugin
 
@@ -299,7 +317,7 @@ Payment webhook → PaymentPlugin.handleWebhook(payload) → checkpoint.recordPa
 → EvidenceItem created (payment proof)
 ```
 
-**First implementation**: Extend `checkpoint.recordPayment` with webhook-compatible adapter.
+**Implementation status**: deferred. No payment provider integration before checkpoint billing semantics in `#44` are complete.
 
 ## 7. Architecture Mapping
 
@@ -362,7 +380,9 @@ Caller → executePlugin(pluginName, input, context)
 | Plugin configuration change             | MEDIUM   | No           | Yes (ADMIN/OWNER) | Security boundary   |
 | New plugin activation                   | MEDIUM   | No           | Yes (ADMIN/OWNER) | Entitlement check   |
 
-## 10. First 3 Plugins to Implement
+## 10. First 3 Plugin Candidates After Core Chain
+
+These are candidates only. They must not start before `#40`–`#45` are complete and a new GitHub issue explicitly authorizes integration work.
 
 ### Plugin #1: Quote/Invoice Parser (Priority: HIGH)
 
@@ -411,7 +431,7 @@ Caller → executePlugin(pluginName, input, context)
 4. **No generic ETL** — Plugins produce evidence and case state, not raw data pipelines.
 5. **No plugin store / marketplace** — Plugins are configured, not installed from a public registry.
 6. **No plugin SDK v1** — The first iteration uses internal interfaces, not a public SDK.
-7. **No production integrations before proof gates clear** — Spec-only until E2E and authenticated smoke pass.
+7. **No production integrations before proof chain clear** — Spec-only until `#40`–`#45` are complete and a new issue explicitly authorizes plugin work.
 
 ## 12. Implementation Checklist
 
@@ -422,6 +442,7 @@ Before any plugin code is written, these must be complete:
 | Supplier Switch spec complete                 | ✅ #28 closed      |
 | Production smoke passes                       | ✅ #26 closed      |
 | E2E harness exists                            | ✅ #27 closed      |
+| Supplier Switch proof chain complete          | `#40`–`#45` open   |
 | `PluginDefinition` type designed              | This spec          |
 | `registerPlugin()` function designed          | This spec          |
 | `plugin.*` permission keys added              | Pre-implementation |
