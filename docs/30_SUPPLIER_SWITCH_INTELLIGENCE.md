@@ -4,6 +4,8 @@
 **Status**: Spec-only — no source-code implementation
 **Issue**: #28
 
+**Active implementation protocol**: `docs/32_SUPPLIER_SWITCH_EXECUTION_PROTOCOL.md`
+
 ## 1. Strategic Premise
 
 TradeOS is an AI case execution OS for economic/supply-chain decisions. Supplier Switch Intelligence is the first wedge: a focused product that helps buyers answer one question:
@@ -15,16 +17,27 @@ This is not a marketplace, not a generic CRM, not an ERP module. It is a **decis
 ### Core chain
 
 ```txt
-Buyer pain (overpaying, locked in, no alternatives)
-→ Purchase Baseline (what you buy, at what price, from whom)
-→ Leakage/risk detection
-→ Alternative discovery
-→ Quote normalization
-→ Switch decision report
-→ Human approval or negotiation
-→ Checkpoint billing
-→ Outcome learning
+Current Spend
+→ PurchaseBaseline
+→ Alternative Proof
+→ SwitchDecisionReport
+→ Buyer Approval
+→ Checkpoint Billing
+→ OutcomeLearning
 ```
+
+This order is mandatory for implementation. Do not open marketplace, generic CRM/ERP, or social/API/source-plugin integrations before this loop exists.
+
+### Current Implementation Issues
+
+| Step                             | Issue | Scope                                                                           |
+| -------------------------------- | ----- | ------------------------------------------------------------------------------- |
+| Current Spend → PurchaseBaseline | `#40` | Manual baseline input, current supplier spend, evidence IDs, leakage hypothesis |
+| Alternative Proof                | `#41` | Manual alternative supplier and quote proof normalization                       |
+| SwitchDecisionReport             | `#42` | Deterministic `SWITCH` / `NEGOTIATE` / `WAIT` report                            |
+| Buyer Approval                   | `#43` | Buyer-safe review and approve/request-more-proof/reject path                    |
+| Checkpoint Billing               | `#44` | Evidence-before-billing mapping to WorkCheckpoint                               |
+| OutcomeLearning                  | `#45` | Actual decision outcome and learning record                                     |
 
 ## 2. Target User
 
@@ -68,15 +81,16 @@ System: Generates leakage report
 Checkpoint: SUPPLIER_SHORTLIST (billable)
 ```
 
-### Phase 2: Alternative Discovery
+### Phase 2: Alternative Proof
 
 ```txt
-System: Searches known supplier database, trade directories, public sources
-User action: Add discovered suppliers manually
+User action: Add alternative suppliers manually
 System: Enriches supplier profiles (reliability score, risk flags)
 Each supplier: Stored as SupplierCandidate with source metadata
 Checkpoint: QUOTE_COLLECTION (billable)
 ```
+
+MVP note: no Alibaba, Shopee, Zernio, social, or other external API/source integration in this phase. Alternative proof means operator-entered, evidence-backed alternatives.
 
 ### Phase 3: Quote Normalization
 
@@ -332,10 +346,10 @@ Reuses the existing `WorkCheckpoint` + `CheckpointType` billing lifecycle:
 7. Checkpoint billing (existing infrastructure)
 ```
 
-### Phase B — What to defer
+### Phase B — What to defer until `#40`–`#45` are complete
 
 ```txt
-1. Automated alternative discovery (web search, directory crawl)
+1. Automated alternative discovery (web search, directory crawl, supplier APIs)
 2. Automated quote extraction from PDF/email
 3. Market benchmark data feed
 4. Outcome learning tracking
@@ -343,7 +357,7 @@ Reuses the existing `WorkCheckpoint` + `CheckpointType` billing lifecycle:
 6. AI-powered recommendation generation
 ```
 
-### Phase C — Future
+### Phase C — Future only after proof chain
 
 ```txt
 1. Multi-user collaboration within buyer org
@@ -352,6 +366,8 @@ Reuses the existing `WorkCheckpoint` + `CheckpointType` billing lifecycle:
 4. Cross-user benchmark aggregation
 5. Trade association network effects
 ```
+
+Forbidden before Phase C: marketplace mechanics, public supplier profiles, supplier bidding, generic CRM/ERP modules, social/API integrations, scraping, or payment-provider integrations.
 
 ## 9. Existing Architecture Mapping
 

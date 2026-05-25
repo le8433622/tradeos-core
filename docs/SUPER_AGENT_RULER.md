@@ -21,7 +21,19 @@ Human pain
 → Outcome learning
 ```
 
-Any code/task that does not strengthen this chain is lower priority or noise.
+The active implementation chain is stricter:
+
+```txt
+Current Spend
+→ PurchaseBaseline
+→ Alternative Proof
+→ SwitchDecisionReport
+→ Buyer Approval
+→ Checkpoint Billing
+→ OutcomeLearning
+```
+
+Any code/task that does not strengthen this chain in order is lower priority or noise.
 
 ## 1. Source-of-Truth Hierarchy
 
@@ -111,7 +123,8 @@ The agent must stop immediately when any condition is true:
 4. The agent is about to modify unrelated product code for a proof/ops task.
 5. The same test/command has failed twice for the same reason.
 6. The agent is trying to satisfy stale documentation instead of live GitHub state.
-7. The proposed change does not connect to case → evidence → decision → approval → billing → outcome learning.
+7. The proposed change does not connect to Current Spend → PurchaseBaseline → Alternative Proof → SwitchDecisionReport → Buyer Approval → Checkpoint Billing → OutcomeLearning.
+8. The proposed change starts marketplace, generic CRM/ERP, or social/API integration work before `#40`–`#45` are complete.
 
 When stopped, write a blocker note:
 
@@ -132,27 +145,29 @@ Next human/operator action:
 2. Never keep coding when the remaining blocker is credentials or staging access.
 3. Never replace real proof with a simulated proof unless the issue explicitly asks for a simulation.
 4. Never solve an ops proof task by adding unrelated UI/backend features.
-5. Never expand scope from closed issues (`#10`, `#12`, `#26`) into new marketplace, CRM, ERP, or social features.
+5. Never expand scope from closed issues or Supplier Switch work into marketplace, generic CRM/ERP, or social/API integrations.
 6. Never treat missing environment variables as product defects unless the issue is specifically env validation.
 7. Never change more than the minimal required files for the classified task.
 
 ## 6. Remaining Current Work
 
-As of 2026-05-26, all 5 incident/spec issues (`#25`–`#29`) are closed:
+As of 2026-05-26, the incident/spec batch (`#25`–`#29`) is closed and the active implementation issues are:
 
 ```txt
-#25 — Docs sync (done)
-#26 — Production smoke (verified)
-#27 — E2E harness (built)
-#28 — Supplier Switch spec (done)
-#29 — Plugin Intake spec (done)
+#40 — PurchaseBaseline MVP
+#41 — SupplierAlternative and QuoteProof normalization
+#42 — SwitchDecisionReport generator
+#43 — Buyer-facing Switch Report portal / approval
+#44 — Supplier Switch checkpoint billing
+#45 — OutcomeLearning skeleton
 ```
 
 Therefore:
 
-- Product feature expansion is frozen.
-- No open issues remain in this batch.
-- Next product direction requires a new GitHub issue.
+- Product feature expansion is frozen outside this chain.
+- Start with `#40` only.
+- No marketplace, generic CRM/ERP, or social/API integrations before `#40`–`#45` are complete.
+- `docs/32_SUPPLIER_SWITCH_EXECUTION_PROTOCOL.md` is mandatory reading for `#40`–`#45`.
 
 ## 7. Rule For `#26` — ✅ CLOSED
 
@@ -198,6 +213,29 @@ Supplier Switch Intelligence spec completed at `docs/30_SUPPLIER_SWITCH_INTELLIG
 
 Plugin Intake Layer spec completed at `docs/31_PLUGIN_INTAKE_LAYER.md`. No source-code integrations. No scraping automation. No marketplace pivot.
 
+## 8.3 Rule For `#40`–`#45` — Active Chain
+
+The chain is sequential and mandatory:
+
+```txt
+#40 Current Spend/PurchaseBaseline
+→ #41 Alternative Proof/QuoteProof
+→ #42 SwitchDecisionReport
+→ #43 Buyer Approval
+→ #44 Checkpoint Billing
+→ #45 OutcomeLearning
+```
+
+Rules:
+
+1. `#40` is the only valid first implementation task.
+2. `#41` cannot start until `#40` is merged with tests and docs.
+3. `#42` cannot start until `#40/#41` provide stored baseline, alternatives, quote proof, and evidence.
+4. `#43` cannot start until `#42` produces deterministic recommendations.
+5. `#44` cannot start until `#43` has buyer approval/request-more-proof semantics.
+6. `#45` cannot start until the case/report/billing relation exists.
+7. No social/API/source plugin integrations until the full chain is complete.
+
 ## 9. File Change Boundaries
 
 ### For doc sync tasks
@@ -208,6 +246,7 @@ Allowed:
 docs/CURRENT_TRUTH.md
 docs/13_CHECKPOINTS.md
 docs/SUPER_AGENT_RULER.md
+docs/32_SUPPLIER_SWITCH_EXECUTION_PROTOCOL.md
 agent.md if it conflicts with the ruler
 ```
 
@@ -219,7 +258,7 @@ packages/**
 prisma/**
 ```
 
-### For `#12` E2E harness
+### For `#27` E2E harness
 
 Allowed if necessary:
 

@@ -1,20 +1,26 @@
 # TradeOS Checkpoints — Honest Production Readiness Ledger
 
-**Date**: 2026-05-25
+**Date**: 2026-05-26
 **Purpose**: keep production-readiness status aligned with live GitHub issue/PR/deployment state so AI/code agents do not loop on stale blockers.
 
 ## Current Truth
 
 - Open PRs: **none**.
-- Latest `main` commit: `d246b68` (`fix: remove DIRECT_URL from requiredServerVars`).
-- Latest `main` CI: pass — pre-commit & typecheck pass for both `fix/remove-middleware-entirely` and `fix/env-validation-throw-on-direct-url`.
+- Latest `main` commit: `4875f65` (`docs: add Plugin Intake Layer spec`).
+- Latest CI: check live before merge-sensitive work; recent local pre-commit/typecheck/docs gates passed on doc/spec PRs.
 - Open issues:
-  - `#25` — P0: rebuild current truth after incident recovery and prevent stale-state regression.
-  - `#27` — P1: add authenticated E2E harness with environment-blocked stop behavior.
-  - `#28` — P1: define Supplier Switch Intelligence product spec without coding features.
-  - `#29` — P2: design plugin intake layer for social pain, supplier sources, quote parsing, and evidence.
+  - `#40` — P1: Implement PurchaseBaseline MVP for Supplier Switch Intelligence.
+  - `#41` — P1: Implement SupplierAlternative and QuoteProof normalization MVP.
+  - `#42` — P1: Implement SwitchDecisionReport generator MVP.
+  - `#43` — P2: Add buyer-facing Switch Report portal MVP.
+  - `#44` — P2: Map Supplier Switch checkpoints to billing and paid proof.
+  - `#45` — P2: Add OutcomeLearning skeleton for Supplier Switch cases.
 - Closed/completed issues:
+  - `#29` — ✅ **DONE**: Plugin Intake Layer spec, no source-code integrations.
+  - `#28` — ✅ **DONE**: Supplier Switch Intelligence spec, no schema/source implementation.
+  - `#27` — ✅ **DONE**: Playwright E2E harness with env-gated tests.
   - `#26` — ✅ **PASSED**: production smoke verified 2026-05-25 — `/api/health` → 200 `{"ok":true,"service":"tradeos-core-web"}`, `/` → 307 (unauthenticated redirect expected).
+  - `#25` — ✅ **DONE**: truth docs synced after incident recovery.
   - `#10` — closed as not planned; replaced by focused production/staging smoke issue `#26`.
   - `#12` — closed as not planned; replaced by focused E2E harness issue `#27`.
 - Closed/completed issues include:
@@ -31,6 +37,10 @@
   - `#18` data governance.
   - `#19` webhook production readiness.
 - Recently merged PRs:
+  - `#39` — Plugin Intake Layer spec.
+  - `#38` — Supplier Switch Intelligence spec.
+  - `#37` — Playwright E2E harness.
+  - `#36` — truth docs after production fix.
   - `#24` — incident recovery: restore middleware, anti-loop protocol, rollback-first runbook.
   - `#23` — current truth docs + super agent ruler.
   - `#22` — AI procurement safety and blocked-action sync.
@@ -40,13 +50,13 @@ For the short, agent-readable source of truth, see `docs/CURRENT_TRUTH.md`.
 
 ## Production Readiness Snapshot
 
-| Area                    | Status                         | Notes                                                                                                                 |
-| ----------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| Local code readiness    | High                           | Core product, MoneyOS, procurement safety, integration/migration proof, and hardening issues have been merged/closed. |
-| Production availability | ✅ **Pass** via `#26`          | `/api/health` → 200. Home → 307 redirect. Middleware deleted (platform crash).                                        |
-| Browser/E2E confidence  | ✅ **Harness built** via `#27` | 10 Playwright tests exist; run locally with `E2E_RUN_ENABLED=true`. Not in CI.                                        |
-| Product direction       | ✅ **Specs done** `#28/#29`    | Supplier Switch and Plugin Intake specs complete. No source-code implementation.                                      |
-| Production 10/10 claim  | **Not yet**                    | No authenticated session smoke in CI, no edge auth.                                                                   |
+| Area                    | Status                         | Notes                                                                                                                    |
+| ----------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Local code readiness    | High                           | Core product, MoneyOS, procurement safety, integration/migration proof, and hardening issues have been merged/closed.    |
+| Production availability | ✅ **Pass** via `#26`          | `/api/health` → 200. Home → 307 redirect. Middleware deleted (platform crash).                                           |
+| Browser/E2E confidence  | ✅ **Harness built** via `#27` | 10 Playwright tests exist; run locally with `E2E_RUN_ENABLED=true`. Not in CI.                                           |
+| Product direction       | Active via `#40`–`#45`         | Strict Supplier Switch chain only: Current Spend → Baseline → Alternative Proof → Report → Approval → Billing → Outcome. |
+| Production 10/10 claim  | **Not yet**                    | No authenticated session smoke in CI, no edge auth.                                                                      |
 
 ## Production Availability Evidence
 
@@ -110,19 +120,29 @@ From now on:
 4. Ops-proof tasks must not be treated as product-code tasks.
 5. Production runtime/env failures must be recorded as blockers before any middleware/auth code iteration.
 
-## Remaining Work
+## Active Work
 
-### `#25` — Rebuild current truth after incident recovery
+### Supplier Switch Execution Chain — Mandatory Order
 
-Task class: documentation synchronization.
+```txt
+Current Spend
+→ PurchaseBaseline (#40)
+→ Alternative Proof (#41)
+→ SwitchDecisionReport (#42)
+→ Buyer Approval (#43)
+→ Checkpoint Billing (#44)
+→ OutcomeLearning (#45)
+```
 
-Required result:
+This is the only product implementation lane currently open. Do not open marketplace, generic CRM/ERP, or social/API/source-plugin integrations before this chain is complete.
 
-- live GitHub state checked;
-- `docs/CURRENT_TRUTH.md`, `docs/13_CHECKPOINTS.md`, and `docs/SUPER_AGENT_RULER.md` updated;
-- `agent.md` checked for conflict with the ruler;
-- no source-code/product files changed;
-- `pnpm docs:check` passes.
+For the exact execution protocol, read `docs/32_SUPPLIER_SWITCH_EXECUTION_PROTOCOL.md`.
+
+## Closed Reference
+
+### `#25` — ✅ CLOSED: Rebuild current truth after incident recovery
+
+Docs synced to live GitHub state after incident recovery.
 
 ### `#26` — ✅ CLOSED (2026-05-25)
 
@@ -162,6 +182,39 @@ Plugin Intake Layer spec created at `docs/31_PLUGIN_INTAKE_LAYER.md`.
 
 Covers: plugin interface design, 5 source-of-truth rules, evidence creation rules, permission/risk levels, 5 plugin categories mapped to existing architecture, plugin lifecycle, human approval boundaries, first 3 plugins to implement, and non-goals.
 
+## Active Implementation Gates
+
+### `#40` — PurchaseBaseline MVP
+
+First active implementation gate. Capture current spend manually and link existing evidence. No integrations, scraping, marketplace, or generic procurement module.
+
+Required proof:
+
+- baseline create/update action is tenant-scoped;
+- evidence IDs are validated against the same organization;
+- monthly spend is calculated or stored deterministically;
+- tests cover validation and cross-tenant rejection.
+
+### `#41` — SupplierAlternative + QuoteProof
+
+Second gate. Starts only after `#40` is complete. Alternatives are manually entered, normalized, and evidence-backed.
+
+### `#42` — SwitchDecisionReport
+
+Third gate. Starts only after `#40` and `#41` are complete. Recommendation must be deterministic: `SWITCH`, `NEGOTIATE`, or `WAIT`.
+
+### `#43` — Buyer Approval
+
+Fourth gate. Starts only after `#42`. Buyer can approve, request more proof, or reject/wait through tenant-safe access.
+
+### `#44` — Checkpoint Billing
+
+Fifth gate. Starts only after `#43`. Evidence-before-billing and buyer acceptance semantics are mandatory.
+
+### `#45` — OutcomeLearning
+
+Sixth gate. Starts only after `#43/#44`. Outcome must link back to originating baseline/report/case.
+
 ## Agent Execution Rules
 
 Before any AI/code agent edits this repo, it must read:
@@ -170,16 +223,18 @@ Before any AI/code agent edits this repo, it must read:
 docs/CURRENT_TRUTH.md
 docs/13_CHECKPOINTS.md
 docs/SUPER_AGENT_RULER.md
+docs/32_SUPPLIER_SWITCH_EXECUTION_PROTOCOL.md
 ```
 
 Then follow these rules:
 
 1. Do not rework closed issues `#4-#24` unless a new failing test/issue proves regression.
-2. Do not add marketplace/CRM/ERP/social/product features.
-3. No source-code implementation of Supplier Switch or Plugin Intake Layer until production proof gates are explicitly clear or intentionally separated.
-4. Do not fake staging/authenticated proof.
-5. Do not treat missing secrets or invalid env values as code bugs.
-6. If blocked by environment, update docs with exact missing inputs and stop.
+2. Do not add marketplace/CRM/ERP/social/API integration features.
+3. Do not implement Plugin Intake Layer integrations before `#40`–`#45` are complete.
+4. Do not skip the Supplier Switch sequence. `#41` waits for `#40`; `#42` waits for `#40/#41`; `#43` waits for `#42`; `#44` waits for `#43`; `#45` waits for `#43/#44`.
+5. Do not fake staging/authenticated proof.
+6. Do not treat missing secrets or invalid env values as code bugs.
+7. If blocked by environment, update docs with exact missing inputs and stop.
 
 ## Product Direction Reminder
 
@@ -198,10 +253,10 @@ Human pain
 → Outcome learning
 ```
 
-Current strategic wedge:
+Current strategic wedge and order:
 
 ```txt
-Supplier Switch Intelligence / Procurement Case Execution
+Current Spend → PurchaseBaseline → Alternative Proof → SwitchDecisionReport → Buyer Approval → Checkpoint Billing → OutcomeLearning
 ```
 
 Every new product task must connect to:
