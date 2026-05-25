@@ -138,25 +138,19 @@ Next human/operator action:
 
 ## 6. Remaining Current Work
 
-As of 2026-05-25 after PR `#34` (delete middleware) and PR `#35` (env validation fix), the open issues are:
+As of 2026-05-26 after PR `#34` (delete middleware), `#35` (env fix), `#36` (docs sync), and `#37` (E2E harness), the open issues are:
 
 ```txt
-#25 — Rebuild current truth after incident recovery
-#27 — Add authenticated E2E harness with environment-blocked stop behavior
-#28 — Define Supplier Switch Intelligence product spec without coding features
 #29 — Design plugin intake layer for social pain, supplier sources, quote parsing, and evidence
 ```
 
-`#26` is closed (production unauthenticated smoke verified — `/api/health` returns 200).
+`#25`, `#26`, `#27`, and `#28` are all closed.
 
 Therefore:
 
 - Product feature expansion is frozen.
 - Closed issues must not be reworked.
-- `#25` must synchronize docs/truth only.
-- `#27` may add E2E harness only with explicit env-blocked behavior.
-- `#28/#29` are spec-only. They must not add source-code implementation.
-- `#26` is done. Do not reopen it. Authenticated smoke deferred to `#27`.
+- `#29` is spec-only. Must not add source-code implementation.
 
 ## 7. Rule For `#26` — ✅ CLOSED
 
@@ -194,14 +188,17 @@ Remaining for full closure:
 - Add CI job for E2E (optional, after production gates clear)
 ```
 
-## 8.1 Rule For `#28/#29`
+## 8.1 Rule For `#28` — ✅ Spec Done (2026-05-25)
 
-`#28` and `#29` are product/spec tasks only.
+Supplier Switch Intelligence spec completed at `docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md`. No source-code changes. No schema migration. No product implementation.
+
+## 8.2 Rule For `#29`
+
+`#29` is a product/spec task only.
 
 Allowed work:
 
 ```txt
-- docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md
 - docs/31_PLUGIN_INTAKE_LAYER.md
 - checkpoint/current-truth updates that classify the docs correctly
 ```

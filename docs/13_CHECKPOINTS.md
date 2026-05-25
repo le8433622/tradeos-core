@@ -149,11 +149,13 @@ Status:
 
 Stop condition: ✅ All tests skip clearly when `E2E_RUN_ENABLED !== true`.
 
-### `#28` — Supplier Switch Intelligence spec
+### `#28` — ✅ Spec Done (2026-05-25)
 
-Task class: product/spec only.
+Supplier Switch Intelligence spec created at `docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md`.
 
-Allowed output: `docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md` or equivalent. No source-code changes, no schema migration, no product implementation.
+Covers: target user, case flow, 5 core objects (EconomicCase, PurchaseBaseline, SupplierAlternative, SwitchDecisionReport, OutcomeLearning), evidence types, approval boundaries, checkpoint monetization, MVP phasing, architecture mapping, and non-goals.
+
+No source-code changes. No schema migration. No product implementation.
 
 ### `#29` — Plugin intake layer spec
 

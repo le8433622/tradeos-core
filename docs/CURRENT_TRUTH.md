@@ -16,11 +16,10 @@
   - `#22` — AI procurement safety and blocked-action sync.
   - `#21` — MoneyOS evidence/billing/API errors/billing UI micro-task round.
 - Open issues:
-  - `#25` — P0: rebuild current truth after incident recovery and prevent stale-state regression.
-  - `#27` — P1: add authenticated E2E harness with environment-blocked stop behavior.
-  - `#28` — P1: define Supplier Switch Intelligence product spec without coding features.
   - `#29` — P2: design plugin intake layer for social pain, supplier sources, quote parsing, and evidence.
 - Closed/completed issues (newest first):
+  - `#28` — ✅ **DONE**: Supplier Switch Intelligence spec at `docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md`.
+  - `#27` — ✅ **DONE**: Playwright E2E harness with 10 env-gated tests.
   - `#26` — ✅ **PASSED**: production smoke test verified 2026-05-25. `/api/health` returns 200.
   - `#10` — closed as not planned; replaced by `#26`.
   - `#12` — closed as not planned; replaced by `#27`.
@@ -28,19 +27,19 @@
 
 ## Current Mode
 
-The repo is in **incident-proof / state-sync mode** until `#25` is resolved. `#26` is closed as completed.
+The repo is in **spec-forward mode**. All P0 incident recovery issues are closed. Remaining open issue: `#29` (plugin intake spec).
 
 Allowed now:
 
-1. Update docs to match live GitHub and deployment truth (`#25`).
-2. Add E2E harness with explicit env-blocked behavior (`#27`).
-3. Write product/spec docs for `#28` and `#29` without source-code implementation.
+1. Write product/spec docs for `#29` without source-code implementation.
+2. Authenticated E2E can be run locally (`E2E_RUN_ENABLED=true pnpm test:e2e`).
+3. Unit/integration testing for registered actions.
 
 Not allowed now:
 
-1. Claim production 10/10 readiness (no E2E, no authenticated session smoke, no edge auth).
-2. Fake authenticated smoke proof.
-3. Add marketplace/CRM/ERP/social/product features outside the open issues.
+1. Claim production 10/10 readiness (no authenticated session smoke in CI, no edge auth).
+2. Add marketplace/CRM/ERP/social/product features outside the open issue `#29`.
+3. Implement Supplier Switch Intelligence code before production gates clear.
 
 ## Production Availability Truth
 
@@ -98,9 +97,9 @@ Remaining authenticated smoke deferred to `#27` (E2E harness).
 
 This may require Playwright/test infrastructure plus test auth credentials. Missing env must produce clear skip/fail behavior, not fake proof.
 
-### `#28` — Product/spec task
+### `#28` — ✅ CLOSED (2026-05-25)
 
-Spec-only Supplier Switch Intelligence direction. No source-code changes or migrations.
+Spec completed at `docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md`. No source-code changes.
 
 ### `#29` — Product/spec task
 
