@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
+    "@playwright/test": "^1.60.0",
     "@types/node": "^22.10.5",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
