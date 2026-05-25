@@ -677,6 +677,7 @@ enum CheckpointType {
   BUYER_DECISION_REPORT
   INTRODUCTION
   DEAL_SUCCESS
+  OUTCOME_FOLLOWUP
 }
 
 enum HandoverStatus {
@@ -727,6 +728,7 @@ model SourcingRun {
   purchaseBaselines  PurchaseBaseline[]
   supplierAlternatives SupplierAlternative[]
   switchDecisionReports SwitchDecisionReport[]
+  outcomeRecords        OutcomeRecord[]
 
   @@index([organizationId, status])
   @@index([leadId])
@@ -803,6 +805,31 @@ model SwitchDecisionReport {
 
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+
+  sourcingRun SourcingRun @relation(fields: [sourcingRunId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, sourcingRunId])
+}
+
+model OutcomeRecord {
+  id                String   @id @default(cuid())
+  organizationId    String
+  sourcingRunId     String
+
+  buyerAction       String   // SWITCH | NEGOTIATE | WAIT | REJECT
+  actualSupplier    String?
+  actualUnitPrice   Decimal?
+  actualDeliveryDays Int?
+  qualityResult     String?  // GOOD | ACCEPTABLE | POOR | DISPUTED
+  disputeOccurred   Boolean  @default(false)
+  reorderOccurred   Boolean  @default(false)
+  buyerSatisfaction Int?     // 1-5
+  learningNote      String?
+
+  linkedReportId    String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   sourcingRun SourcingRun @relation(fields: [sourcingRunId], references: [id], onDelete: Cascade)
 

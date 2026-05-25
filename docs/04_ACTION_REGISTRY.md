@@ -97,10 +97,12 @@ Irreversible, legal, financial, or security-sensitive action. (None currently re
 | `sourcing.createPurchaseBaseline`     | sourcing-core  | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
 | `sourcing.addSupplierAlternative`     | sourcing-core  | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
 | `sourcing.createRun`                  | sourcing-core  | MEDIUM | OWNER, ADMIN                  | Yes        | No                | Yes            |
+| `sourcing.createSwitchCheckpoints`    | sourcing-core  | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
 | `sourcing.addSupplierCandidate`       | sourcing-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
 | `sourcing.addSupplierQuote`           | sourcing-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
 | `sourcing.compareQuotes`              | sourcing-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
 | `sourcing.markRunReadyForReview`      | sourcing-core  | MEDIUM | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
+| `sourcing.recordOutcome`              | sourcing-core  | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
 | `sourcing.deliverBuyerReport`         | sourcing-core  | HIGH   | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 | `sourcing.generateBuyerReport`        | sourcing-core  | HIGH   | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 | `sourcing.generateSwitchDecision`     | sourcing-core  | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
