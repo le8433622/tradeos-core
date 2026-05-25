@@ -138,27 +138,33 @@ Next human/operator action:
 
 ## 6. Remaining Current Work
 
-As of 2026-05-25, the only open issues are:
+As of 2026-05-25 after PR `#23` and PR `#24` merged, the open issues are:
 
 ```txt
-#10 — Authenticated Vercel staging smoke
-#12 — Authenticated E2E suite
+#25 — Rebuild current truth after incident recovery
+#26 — Run authenticated production/staging smoke after incident restore
+#27 — Add authenticated E2E harness with environment-blocked stop behavior
+#28 — Define Supplier Switch Intelligence product spec without coding features
+#29 — Design plugin intake layer for social pain, supplier sources, quote parsing, and evidence
 ```
 
 Therefore:
 
 - Product feature expansion is frozen.
 - Closed issues must not be reworked.
-- Any task must either support `#10`, support `#12`, or synchronize docs/truth.
+- `#25` must synchronize docs/truth only.
+- `#26` must prove production/staging health or record environment blockers.
+- `#27` may add E2E harness only with explicit env-blocked behavior.
+- `#28/#29` are spec-only. They must not add source-code implementation.
 
-## 7. Rule For `#10`
+## 7. Rule For `#26`
 
-`#10` is an authenticated staging proof task.
+`#26` is an authenticated production/staging proof task after incident recovery.
 
 Allowed work:
 
 ```txt
-- update staging smoke checklist
+- update production/staging smoke checklist
 - record exact missing env/session inputs
 - add proof table entries after real smoke
 - add scripts only if they directly support smoke evidence
@@ -176,12 +182,12 @@ Disallowed work:
 Stop if:
 
 ```txt
-Vercel preview URL, Supabase auth user, staging credentials, or authenticated browser/session are unavailable.
+Vercel deployment URL, Supabase auth user, production/staging credentials, runtime logs, or authenticated browser/session are unavailable.
 ```
 
-## 8. Rule For `#12`
+## 8. Rule For `#27`
 
-`#12` is an authenticated E2E proof/harness task.
+`#27` is an authenticated E2E proof/harness task.
 
 Allowed work:
 
@@ -209,6 +215,33 @@ Stop if:
 E2E env vars, test user, test database, or auth bootstrap are unavailable.
 ```
 
+## 8.1 Rule For `#28/#29`
+
+`#28` and `#29` are product/spec tasks only.
+
+Allowed work:
+
+```txt
+- docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md
+- docs/31_PLUGIN_INTAKE_LAYER.md
+- checkpoint/current-truth updates that classify the docs correctly
+```
+
+Disallowed work:
+
+```txt
+- production source-code implementation
+- schema migrations
+- integration code
+- marketplace/social automation features
+```
+
+Stop if:
+
+```txt
+The work starts adding product/source code before production proof gates are resolved or intentionally separated.
+```
+
 ## 9. File Change Boundaries
 
 ### For doc sync tasks
@@ -219,6 +252,7 @@ Allowed:
 docs/CURRENT_TRUTH.md
 docs/13_CHECKPOINTS.md
 docs/SUPER_AGENT_RULER.md
+agent.md if it conflicts with the ruler
 ```
 
 Disallowed:
