@@ -129,8 +129,6 @@ Required result:
 
 Production smoke verified. See production availability evidence above.
 
-### `#27` — Authenticated E2E harness
-
 ### `#27` — ✅ Skeleton Done (2026-05-25)
 
 E2E harness created. See `docs/09_TESTING_STRATEGY.md#e2e-tests` for full details.

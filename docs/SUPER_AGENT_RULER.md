@@ -191,7 +191,6 @@ All tests skip clearly when `E2E_RUN_ENABLED !== true`. No production database w
 Remaining for full closure:
 
 ```txt
-- Run E2E locally against running dev server to verify
 - Add CI job for E2E (optional, after production gates clear)
 ```
 
