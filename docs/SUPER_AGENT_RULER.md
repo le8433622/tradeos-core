@@ -198,10 +198,10 @@ Supplier Switch Intelligence spec completed at `docs/30_SUPPLIER_SWITCH_INTELLIG
 
 Allowed work:
 
-```txt
 - docs/31_PLUGIN_INTAKE_LAYER.md
 - checkpoint/current-truth updates that classify the docs correctly
-```
+
+````
 
 Disallowed work:
 
@@ -210,7 +210,7 @@ Disallowed work:
 - schema migrations
 - integration code
 - marketplace/social automation features
-```
+````
 
 Stop if:
 
