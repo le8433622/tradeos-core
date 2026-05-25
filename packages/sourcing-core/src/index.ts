@@ -769,6 +769,127 @@ export const submitBuyerDecisionAction = registerAction<
   },
 });
 
+export const createSwitchCheckpointsSchema = z
+  .object({
+    organizationId: z.string().min(1),
+    sourcingRunId: z.string().min(1),
+  })
+  .strict();
+
+export type CreateSwitchCheckpointsResult = {
+  checkpointIds: string[];
+};
+
+const SWITCH_CHECKPOINTS = [
+  { title: "Baseline Scan", type: "PAID_SOURCING_REQUEST" },
+  { title: "Alternative Supplier Shortlist", type: "SUPPLIER_SHORTLIST" },
+  { title: "Quote Proof / Quote Comparison", type: "QUOTE_COMPARISON" },
+  { title: "Switch Decision Report", type: "BUYER_DECISION_REPORT" },
+  { title: "Negotiation Pack", type: "NEGOTIATION_RUN" },
+  { title: "Outcome Follow-up", type: "OUTCOME_FOLLOWUP" },
+] as const;
+
+export const createSwitchCheckpointsAction = registerAction<
+  z.infer<typeof createSwitchCheckpointsSchema>,
+  CreateSwitchCheckpointsResult
+>({
+  name: "sourcing.createSwitchCheckpoints",
+  description:
+    "Create the standard Supplier Switch checkpoint chain (baseline → shortlist → quotes → report → negotiation → outcome).",
+  riskLevel: "LOW",
+  allowedRoles: DEFAULT_ADMIN_ROLES,
+  requiresApprovalForAI: false,
+  handler: async (input, context) => {
+    const parsed = createSwitchCheckpointsSchema.parse(input);
+    const run = await prisma.sourcingRun.findUnique({
+      where: { id: parsed.sourcingRunId },
+      select: { organizationId: true },
+    });
+    validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+
+    const checkpoints = await prisma.$transaction(
+      SWITCH_CHECKPOINTS.map((cp) =>
+        prisma.workCheckpoint.create({
+          data: {
+            organizationId: parsed.organizationId,
+            sourcingRunId: parsed.sourcingRunId,
+            title: cp.title,
+            checkpointType: cp.type as any,
+            status: "PENDING",
+          },
+          select: { id: true },
+        }),
+      ),
+    );
+
+    return { checkpointIds: checkpoints.map((c) => c.id) };
+  },
+});
+
+export const recordOutcomeSchema = z
+  .object({
+    organizationId: z.string().min(1),
+    sourcingRunId: z.string().min(1),
+    buyerAction: z.enum(["SWITCH", "NEGOTIATE", "WAIT", "REJECT"]),
+    actualSupplier: z.string().max(256).optional(),
+    actualUnitPrice: z.string().optional(),
+    actualDeliveryDays: z.number().int().min(0).optional(),
+    qualityResult: z
+      .enum(["GOOD", "ACCEPTABLE", "POOR", "DISPUTED"])
+      .optional(),
+    disputeOccurred: z.boolean().optional(),
+    reorderOccurred: z.boolean().optional(),
+    buyerSatisfaction: z.number().int().min(1).max(5).optional(),
+    learningNote: z.string().max(4096).optional(),
+    linkedReportId: z.string().optional(),
+  })
+  .strict();
+
+export type RecordOutcomeResult = {
+  id: string;
+  buyerAction: string;
+};
+
+export const recordOutcomeAction = registerAction<
+  z.infer<typeof recordOutcomeSchema>,
+  RecordOutcomeResult
+>({
+  name: "sourcing.recordOutcome",
+  description:
+    "Record the post-decision outcome of a Supplier Switch case. Closes the learning loop.",
+  riskLevel: "LOW",
+  allowedRoles: DEFAULT_ADMIN_ROLES,
+  requiresApprovalForAI: false,
+  handler: async (input, context) => {
+    const parsed = recordOutcomeSchema.parse(input);
+    const run = await prisma.sourcingRun.findUnique({
+      where: { id: parsed.sourcingRunId },
+      select: { organizationId: true },
+    });
+    validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+
+    const outcome = await prisma.outcomeRecord.create({
+      data: {
+        organizationId: parsed.organizationId,
+        sourcingRunId: parsed.sourcingRunId,
+        buyerAction: parsed.buyerAction,
+        actualSupplier: parsed.actualSupplier,
+        actualUnitPrice: parsed.actualUnitPrice,
+        actualDeliveryDays: parsed.actualDeliveryDays,
+        qualityResult: parsed.qualityResult,
+        disputeOccurred: parsed.disputeOccurred ?? false,
+        reorderOccurred: parsed.reorderOccurred ?? false,
+        buyerSatisfaction: parsed.buyerSatisfaction,
+        learningNote: parsed.learningNote,
+        linkedReportId: parsed.linkedReportId,
+      },
+      select: { id: true, buyerAction: true },
+    });
+
+    return { id: outcome.id, buyerAction: outcome.buyerAction };
+  },
+});
+
 export const createCheckpointSchema = z
   .object({
     organizationId: z.string().min(1),

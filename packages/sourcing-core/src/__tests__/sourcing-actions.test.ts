@@ -29,7 +29,9 @@ const {
   mockSwitchReportCreate,
   mockSwitchReportFindFirst,
   mockSwitchReportUpdate,
+  mockOutcomeCreate,
 } = vi.hoisted(() => {
+  const mockOutcomeCreate = vi.fn();
   const mockSourcingFindUnique = vi.fn();
   const mockSourcingCreate = vi.fn();
   const mockSourcingUpdate = vi.fn();
@@ -128,6 +130,7 @@ const {
     mockSwitchReportCreate,
     mockSwitchReportFindFirst,
     mockSwitchReportUpdate,
+    mockOutcomeCreate,
     tx,
   };
 });
@@ -166,6 +169,9 @@ vi.mock("@tradeos/database", () => ({
       create: mockSwitchReportCreate,
       findFirst: mockSwitchReportFindFirst,
       update: mockSwitchReportUpdate,
+    },
+    outcomeRecord: {
+      create: mockOutcomeCreate,
     },
     workCheckpoint: {
       findUnique: mockCheckpointFindUnique,
@@ -218,6 +224,9 @@ vi.mock("@tradeos/database", () => ({
           create: mockSwitchReportCreate,
           findFirst: mockSwitchReportFindFirst,
           update: mockSwitchReportUpdate,
+        },
+        outcomeRecord: {
+          create: mockOutcomeCreate,
         },
         workCheckpoint: {
           findUnique: mockCheckpointFindUnique,
@@ -333,6 +342,10 @@ beforeEach(() => {
   });
   mockSwitchReportFindFirst.mockResolvedValue(null);
   mockSwitchReportUpdate.mockResolvedValue({ id: "report-1" });
+  mockOutcomeCreate.mockResolvedValue({
+    id: "outcome-1",
+    buyerAction: "SWITCH",
+  });
 });
 
 describe("sourcing.createRun", () => {
@@ -1216,5 +1229,92 @@ describe("sourcing.submitBuyerDecision", () => {
         context,
       ),
     ).rejects.toThrow("NO_SWITCH_DECISION_REPORT");
+  });
+});
+
+describe("sourcing.createSwitchCheckpoints", () => {
+  it("creates 6 checkpoints for the supplier switch chain", async () => {
+    mockCheckpointCreate
+      .mockResolvedValueOnce({ id: "cp-1" })
+      .mockResolvedValueOnce({ id: "cp-2" })
+      .mockResolvedValueOnce({ id: "cp-3" })
+      .mockResolvedValueOnce({ id: "cp-4" })
+      .mockResolvedValueOnce({ id: "cp-5" })
+      .mockResolvedValueOnce({ id: "cp-6" });
+    const result = (await executeAction(
+      "sourcing.createSwitchCheckpoints",
+      { organizationId: "org-1", sourcingRunId: "run-1" },
+      context,
+    )) as { checkpointIds: string[] };
+    expect(result.checkpointIds).toHaveLength(6);
+    expect(mockCheckpointCreate).toHaveBeenCalledTimes(6);
+  });
+
+  it("rejects when sourcing run belongs to another org", async () => {
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-other",
+      organizationId: "org-2",
+    });
+    await expect(
+      executeAction(
+        "sourcing.createSwitchCheckpoints",
+        { organizationId: "org-1", sourcingRunId: "run-other" },
+        context,
+      ),
+    ).rejects.toThrow("SOURCING_RUN_BELONGS_TO_ANOTHER_ORGANIZATION");
+  });
+});
+
+describe("sourcing.recordOutcome", () => {
+  it("records an outcome with valid data", async () => {
+    mockOutcomeCreate.mockResolvedValue({
+      id: "outcome-1",
+      buyerAction: "SWITCH",
+    });
+    const result = (await executeAction(
+      "sourcing.recordOutcome",
+      {
+        organizationId: "org-1",
+        sourcingRunId: "run-1",
+        buyerAction: "SWITCH",
+        actualSupplier: "New Supplier Co",
+        actualUnitPrice: "85",
+        actualDeliveryDays: 14,
+        qualityResult: "GOOD",
+        disputeOccurred: false,
+        reorderOccurred: true,
+        buyerSatisfaction: 4,
+        learningNote: "Faster than expected",
+      },
+      context,
+    )) as { id: string; buyerAction: string };
+    expect(result.buyerAction).toBe("SWITCH");
+    expect(mockOutcomeCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          buyerAction: "SWITCH",
+          actualSupplier: "New Supplier Co",
+          buyerSatisfaction: 4,
+        }),
+      }),
+    );
+  });
+
+  it("rejects when sourcing run belongs to another org", async () => {
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-other",
+      organizationId: "org-2",
+    });
+    await expect(
+      executeAction(
+        "sourcing.recordOutcome",
+        {
+          organizationId: "org-1",
+          sourcingRunId: "run-other",
+          buyerAction: "REJECT",
+        },
+        context,
+      ),
+    ).rejects.toThrow("SOURCING_RUN_BELONGS_TO_ANOTHER_ORGANIZATION");
   });
 });
