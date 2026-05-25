@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockUpdateMany = vi.fn();
 const mockFindUnique = vi.fn();
+const mockFindFirst = vi.fn();
+const mockFindMany = vi.fn();
 const mockUpdate = vi.fn();
 const mockApprovalCreate = vi.fn();
 const mockAuditCreate = vi.fn();
@@ -13,6 +15,8 @@ vi.mock("@tradeos/database", () => ({
         approvalRequest: {
           updateMany: mockUpdateMany,
           findUnique: mockFindUnique,
+          findFirst: mockFindFirst,
+          findMany: mockFindMany,
           update: mockUpdate,
           create: mockApprovalCreate,
         },
@@ -24,6 +28,8 @@ vi.mock("@tradeos/database", () => ({
     approvalRequest: {
       updateMany: mockUpdateMany,
       findUnique: mockFindUnique,
+      findFirst: mockFindFirst,
+      findMany: mockFindMany,
       update: mockUpdate,
       create: mockApprovalCreate,
     },
@@ -45,6 +51,11 @@ const {
   rejectRequest,
   executeApprovedRequest,
   failApprovalRequest,
+  findStaleExecutingRequests,
+  recoverStaleRequest,
+  retryApprovalRequest,
+  getRetryChain,
+  getIdempotencyResult,
 } = await import("../index");
 const { executeAction } = await import("@tradeos/policy-core");
 
@@ -66,6 +77,18 @@ function makeApproval(overrides: Record<string, unknown> = {}) {
     status: "APPROVED",
     executedAt: null,
     result: null,
+    idempotencyKey: null,
+    executingSince: null,
+    lockedBy: null,
+    retryCount: 0,
+    maxRetries: 3,
+    expiresAt: null,
+    parentApprovalRequestId: null,
+    retryChainId: null,
+    supersededById: null,
+    deprecatedAt: null,
+    createdAt: new Date("2025-01-01"),
+    reviewedAt: null,
     ...overrides,
   };
 }
@@ -94,7 +117,11 @@ describe("atomic claim", () => {
 
     expect(mockUpdateMany).toHaveBeenCalledWith({
       where: { id: "approval-1", organizationId: "org-1", status: "APPROVED" },
-      data: { status: "EXECUTING" },
+      data: {
+        status: "EXECUTING",
+        executingSince: expect.any(Date),
+        lockedBy: "user-1",
+      },
     });
     expect(vi.mocked(executeAction)).toHaveBeenCalledOnce();
     expect(result.status).toBe("EXECUTED");
@@ -179,6 +206,7 @@ describe("createApprovalRequest", () => {
       status: "PENDING",
       input: { quotationId: "q-1", organizationId: "org-1" },
     });
+    mockFindFirst.mockResolvedValue(null);
     mockApprovalCreate.mockResolvedValue(approval);
 
     const result = await createApprovalRequest({
@@ -196,6 +224,8 @@ describe("createApprovalRequest", () => {
         actionName: "trade.sendQuotation",
         riskLevel: "HIGH",
         input: { quotationId: "q-1", organizationId: "org-1" },
+        idempotencyKey: expect.stringMatching(/^ik_/),
+        maxRetries: 3,
       }),
     });
     expect(mockAuditCreate).toHaveBeenCalledWith(
@@ -205,7 +235,28 @@ describe("createApprovalRequest", () => {
     );
   });
 
+  it("skips duplicate creation when idempotency key matches existing", async () => {
+    const existing = makeApproval({
+      id: "existing-1",
+      status: "EXECUTED",
+      idempotencyKey: "ik_already_done",
+    });
+    mockFindFirst.mockResolvedValue(existing);
+
+    const result = await createApprovalRequest({
+      organizationId: "org-1",
+      actionName: "trade.sendQuotation",
+      input: { quotationId: "q-1" },
+      idempotencyKey: "ik_already_done",
+    });
+
+    expect(result).toBe(existing);
+    expect(mockApprovalCreate).not.toHaveBeenCalled();
+  });
+
   it("rejects nested foreign tenant identifiers before storage", async () => {
+    mockFindFirst.mockResolvedValue(null);
+
     await expect(
       createApprovalRequest({
         organizationId: "org-1",
@@ -482,5 +533,241 @@ describe("assertValidTransition edge cases via public API", () => {
         organizationId: "org-1",
       }),
     ).rejects.toThrow("INVALID_APPROVAL_TRANSITION");
+  });
+});
+
+describe("idempotency", () => {
+  it("returns existing result when same idempotency key already executed", async () => {
+    const approval = makeApproval({ idempotencyKey: "ik_existing" });
+    const existingExecuted = makeApproval({
+      id: "already-done",
+      status: "EXECUTED",
+      idempotencyKey: "ik_existing",
+      result: { ok: true },
+    });
+    mockFindUnique.mockResolvedValue(approval);
+    mockFindFirst.mockResolvedValue(existingExecuted);
+
+    const result = await executeApprovedRequest({
+      approvalRequestId: "approval-1",
+      organizationId: "org-1",
+      context: MOCK_CONTEXT,
+    });
+
+    expect(result).toBe(existingExecuted);
+    expect(mockUpdateMany).not.toHaveBeenCalled();
+    expect(vi.mocked(executeAction)).not.toHaveBeenCalled();
+  });
+
+  it("still executes when idempotency key has no prior result", async () => {
+    const approval = makeApproval({ idempotencyKey: "ik_fresh" });
+    mockFindUnique.mockResolvedValue(approval);
+    mockFindFirst.mockResolvedValue(null);
+    mockUpdateMany.mockResolvedValue({ count: 1 });
+    mockUpdate.mockResolvedValue({
+      ...approval,
+      status: "EXECUTED",
+      executedAt: new Date(),
+    });
+    vi.mocked(executeAction).mockResolvedValue({ ok: true });
+
+    const result = await executeApprovedRequest({
+      approvalRequestId: "approval-1",
+      organizationId: "org-1",
+      context: MOCK_CONTEXT,
+    });
+
+    expect(result.status).toBe("EXECUTED");
+    expect(mockUpdateMany).toHaveBeenCalled();
+    expect(vi.mocked(executeAction)).toHaveBeenCalledOnce();
+  });
+});
+
+describe("findStaleExecutingRequests", () => {
+  it("finds EXECUTING records older than timeout", async () => {
+    const stale = makeApproval({
+      id: "stale-1",
+      status: "EXECUTING",
+      executingSince: new Date(Date.now() - 10 * 60 * 1000),
+    });
+    mockFindMany.mockResolvedValue([stale]);
+
+    const result = await findStaleExecutingRequests({
+      organizationId: "org-1",
+      timeoutMs: 5 * 60 * 1000,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("stale-1");
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          status: "EXECUTING",
+          executingSince: expect.objectContaining({ lt: expect.any(Date) }),
+          organizationId: "org-1",
+        }),
+      }),
+    );
+  });
+});
+
+describe("recoverStaleRequest", () => {
+  it("marks HIGH-risk stale as FAILED requiring human review", async () => {
+    const stale = makeApproval({
+      status: "EXECUTING",
+      executingSince: new Date(Date.now() - 10 * 60 * 1000),
+      riskLevel: "HIGH",
+    });
+    mockFindUnique.mockResolvedValue(stale);
+    mockUpdate.mockResolvedValue({ ...stale, status: "FAILED" });
+
+    const result = await recoverStaleRequest({
+      approvalRequestId: "approval-1",
+      organizationId: "org-1",
+      reviewNote: "Stale recovery",
+    });
+
+    expect(result.status).toBe("FAILED");
+    expect(mockAuditCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ actionName: "approval.stale_recovered" }),
+      }),
+    );
+  });
+
+  it("auto-retries LOW-risk stale request within retry budget", async () => {
+    const stale = makeApproval({
+      status: "EXECUTING",
+      riskLevel: "LOW",
+      retryCount: 0,
+      maxRetries: 3,
+    });
+    mockFindUnique.mockResolvedValue(stale);
+    mockFindFirst.mockResolvedValue(null);
+    mockUpdate.mockResolvedValue({ ...stale, deprecatedAt: new Date() });
+    mockApprovalCreate.mockResolvedValue({
+      ...stale,
+      id: "retry-1",
+      status: "PENDING",
+      retryCount: 1,
+      parentApprovalRequestId: "approval-1",
+    });
+
+    const result = await recoverStaleRequest({
+      approvalRequestId: "approval-1",
+      organizationId: "org-1",
+    });
+
+    expect(result.status).toBe("PENDING");
+    expect(result.parentApprovalRequestId).toBe("approval-1");
+    expect(mockAuditCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ actionName: "approval.retry" }),
+      }),
+    );
+  });
+
+  it("fails if no retry budget remains", async () => {
+    const stale = makeApproval({
+      status: "EXECUTING",
+      riskLevel: "LOW",
+      retryCount: 3,
+      maxRetries: 3,
+    });
+    mockFindUnique.mockResolvedValue(stale);
+    mockUpdate.mockResolvedValue({ ...stale, status: "FAILED" });
+
+    const result = await recoverStaleRequest({
+      approvalRequestId: "approval-1",
+      organizationId: "org-1",
+    });
+
+    expect(result.status).toBe("FAILED");
+  });
+});
+
+describe("retryApprovalRequest", () => {
+  it("creates a retry linked to the parent and supersedes the old", async () => {
+    const parent = makeApproval({ status: "FAILED" });
+    mockFindUnique.mockResolvedValue(parent);
+    mockFindFirst.mockResolvedValue(null);
+    mockUpdate.mockResolvedValue({ ...parent, deprecatedAt: new Date(), supersededById: "retry-1" });
+    mockApprovalCreate.mockResolvedValue({
+      ...parent,
+      id: "retry-1",
+      status: "PENDING",
+      retryCount: 1,
+      parentApprovalRequestId: parent.id,
+    });
+
+    const result = await retryApprovalRequest({
+      approvalRequestId: parent.id,
+      organizationId: "org-1",
+      reason: "Retrying after failure",
+    });
+
+    expect(result.status).toBe("PENDING");
+    expect(result.parentApprovalRequestId).toBe(parent.id);
+    expect(result.retryCount).toBe(1);
+    expect(mockApprovalCreate).toHaveBeenCalled();
+  });
+
+  it("throws RETRY_CHAIN_ACTIVE if a retry is already in progress", async () => {
+    const parent = makeApproval({ status: "FAILED" });
+    mockFindUnique.mockResolvedValue(parent);
+    mockFindFirst.mockResolvedValue({ id: "active-retry", status: "PENDING" });
+
+    await expect(
+      retryApprovalRequest({
+        approvalRequestId: parent.id,
+        organizationId: "org-1",
+      }),
+    ).rejects.toThrow("RETRY_CHAIN_ACTIVE");
+  });
+});
+
+describe("getRetryChain", () => {
+  it("returns all requests in a retry chain", async () => {
+    const original = makeApproval({ id: "original-1", retryChainId: null });
+    const retry1 = makeApproval({ id: "retry-1", retryChainId: "original-1", parentApprovalRequestId: "original-1" });
+    mockFindUnique.mockResolvedValue(original);
+    mockFindMany.mockResolvedValue([original, retry1]);
+
+    const result = await getRetryChain({
+      approvalRequestId: "original-1",
+      organizationId: "org-1",
+    });
+
+    expect(result).toHaveLength(2);
+  });
+});
+
+describe("getIdempotencyResult", () => {
+  it("returns existing executed/failed result by idempotency key", async () => {
+    const existing = makeApproval({
+      id: "existing-1",
+      status: "EXECUTED",
+      idempotencyKey: "ik_test",
+      result: { ok: true },
+    });
+    mockFindFirst.mockResolvedValue(existing);
+
+    const result = await getIdempotencyResult({
+      organizationId: "org-1",
+      idempotencyKey: "ik_test",
+    });
+
+    expect(result).toBe(existing);
+  });
+
+  it("returns null when no result exists", async () => {
+    mockFindFirst.mockResolvedValue(null);
+
+    const result = await getIdempotencyResult({
+      organizationId: "org-1",
+      idempotencyKey: "ik_nonexistent",
+    });
+
+    expect(result).toBeNull();
   });
 });
