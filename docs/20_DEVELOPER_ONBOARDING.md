@@ -243,15 +243,39 @@ Check that `DATABASE_URL` is set and the database is running.
 
 ## Testing
 
+### Unit tests
+
 ```bash
-# Run all package tests
-pnpm --filter @tradeos/policy-core test    # 21 tests
-pnpm --filter @tradeos/approval-core test  # 6 tests
-pnpm --filter @tradeos/ai-core test        # 48 tests
-pnpm --filter @tradeos/job-core test       # 12 tests
+pnpm test                                    # all packages
+pnpm --filter @tradeos/policy-core test      # 21 tests
+pnpm --filter @tradeos/approval-core test    # 6 tests
+pnpm --filter @tradeos/ai-core test          # 48 tests
+pnpm --filter @tradeos/job-core test         # 12 tests
 ```
 
 Tests are written with [Vitest](https://vitest.dev/) (v4). Test files live in `src/__tests__/` within each package.
+
+### Integration tests
+
+```bash
+RUN_INTEGRATION_TESTS=true pnpm --filter @tradeos/integration-tests test
+```
+
+Requires a real local/staging database. Skipped when `RUN_INTEGRATION_TESTS` is not `true`.
+
+### E2E tests
+
+Browser-level E2E tests in `apps/web/e2e/` using [Playwright](https://playwright.dev/).
+
+```bash
+# First-time setup
+pnpm --filter @tradeos/web exec playwright install chromium
+
+# Run (starts dev server automatically)
+E2E_RUN_ENABLED=true pnpm --filter @tradeos/web test:e2e
+```
+
+All tests skip with clear message when `E2E_RUN_ENABLED` is not `true`. Uses demo auth — no real login needed for local testing.
 
 ## Getting Help
 

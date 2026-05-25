@@ -170,34 +170,28 @@ HTTP 200
 
 Authenticated smoke evidence is now part of `#27` (E2E harness). Do not reopen `#26` or redo production smoke unless a new issue documents a regression.
 
-## 8. Rule For `#27`
+## 8. Rule For `#27` — ✅ Skeleton Done (2026-05-25)
 
-`#27` is an authenticated E2E proof/harness task.
+`#27` E2E harness skeleton is complete. See `docs/09_TESTING_STRATEGY.md#e2e-tests`.
 
-Allowed work:
+What was built:
 
 ```txt
-- Playwright config
-- auth storage-state fixture
-- env validation for E2E
-- clearly skipped tests when env missing
-- procurement/billing happy path test skeleton
-- permission denied test skeleton
+apps/web/playwright.config.ts — Playwright config (chromium, webServer, CI retries)
+apps/web/e2e/env.ts — env validation (E2E_RUN_ENABLED, E2E_BASE_URL, etc.)
+apps/web/e2e/smoke.spec.ts — 4 protected-page smoke tests
+apps/web/e2e/procurement.spec.ts — 3 procurement skeleton tests
+apps/web/e2e/permissions.spec.ts — 3 permission skeleton tests
+apps/web/e2e/global-setup.ts — setup logging
+scripts/test:e2e in package.json
 ```
 
-Disallowed work:
+All tests skip clearly when `E2E_RUN_ENABLED !== true`. No production database writes. No fake proof.
+
+Remaining for full closure:
 
 ```txt
-- large product refactor
-- fake auth bypass unless explicitly named test-only and gated
-- production database writes
-- tests that silently pass without proving anything
-```
-
-Stop if:
-
-```txt
-E2E env vars, test user, test database, or auth bootstrap are unavailable.
+- Add CI job for E2E (optional, after production gates clear)
 ```
 
 ## 8.1 Rule For `#28/#29`

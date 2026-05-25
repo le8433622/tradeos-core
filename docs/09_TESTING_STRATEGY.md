@@ -148,6 +148,76 @@ Issue #1 adds two required verification documents:
 - `docs/20_STAGING_SMOKE_TESTS.md` - staging/Vercel preview smoke checklist and evidence template
 - `docs/21_PRODUCTION_READINESS_GATE.md` - production gate checklist, required commands, and stop rule
 
+## E2E Tests
+
+Browser-based E2E tests live in `apps/web/e2e/` using **Playwright** (`@playwright/test`).
+
+### Setup
+
+```bash
+# Install Playwright browsers (first time only)
+pnpm --filter @tradeos/web exec playwright install chromium
+```
+
+### Running
+
+```bash
+# Starts Next.js dev server automatically, runs tests
+E2E_RUN_ENABLED=true pnpm --filter @tradeos/web test:e2e
+
+# Or with custom URL (no dev server needed)
+E2E_RUN_ENABLED=true E2E_BASE_URL=https://staging.example.com pnpm --filter @tradeos/web test:e2e
+```
+
+### Env Gates
+
+| Env Var           | Required | Default                 | Purpose                                      |
+| ----------------- | -------- | ----------------------- | -------------------------------------------- |
+| `E2E_RUN_ENABLED` | No       | `false`                 | Safety gate — all tests skip when not `true` |
+| `E2E_BASE_URL`    | No       | `http://localhost:3000` | Target app URL                               |
+| `E2E_USER_EMAIL`  | No       | `owner@tradeos.local`   | Email for demo auth context                  |
+| `E2E_ORG_ID`      | No       | `demo-org`              | Tenant context for multi-org tests           |
+
+### Auth Approach
+
+E2E tests rely on **demo auth** (built-in local auth bypass). When no Supabase session exists, `requirePageSession()` falls through to `getDemoSession()` which returns a hardcoded OWNER session. No real login steps are needed.
+
+When demo auth is removed for production, E2E tests will need real test credentials and an auth bootstrap fixture.
+
+### Test Files
+
+| File                      | Tests | Purpose                                                     |
+| ------------------------- | ----- | ----------------------------------------------------------- |
+| `e2e/smoke.spec.ts`       | 4     | Protected page loads (dashboard, sourcing, leads, settings) |
+| `e2e/procurement.spec.ts` | 3     | Sourcing run list, detail, create page skeleton             |
+| `e2e/permissions.spec.ts` | 3     | Permission check, unauthorized redirect, approvals gate     |
+
+### CI Integration
+
+E2E is NOT yet in CI pipeline. The tests exist as a local/developer proof harness. When CI E2E is desired, add a job with:
+
+```yaml
+e2e-test:
+  needs: build
+  runs-on: ubuntu-latest
+  steps:
+    - run: pnpm install --frozen-lockfile
+    - run: pnpm db:generate
+    - run: pnpm build
+    - run: pnpm --filter @tradeos/web exec playwright install chromium
+    - run: E2E_RUN_ENABLED=true pnpm --filter @tradeos/web test:e2e
+      env:
+        E2E_BASE_URL: http://localhost:3000
+```
+
+### Important
+
+- Missing E2E env vars → tests skip with clear message (not fail silently)
+- Screenshots captured on failure → `e2e-screenshots/` directory
+- Traces enabled for debugging → view with `npx playwright show-trace`
+- No production database writes
+- No fake proof when env vars are missing
+
 ## Manual Smoke Tests
 
 Before declaring production-ready, test these manually:
@@ -217,6 +287,7 @@ When fixing a bug, add a regression test that would have FAILED before the fix:
 | `pnpm db:generate`                                                         | Prisma client generation  | Client regenerated                                                             |
 | `git diff --check`                                                         | Whitespace check          | No errors                                                                      |
 | `RUN_INTEGRATION_TESTS=true pnpm --filter @tradeos/integration-tests test` | Real DB integration suite | Must pass against staging/local DB before production                           |
+| `E2E_RUN_ENABLED=true pnpm --filter @tradeos/web test:e2e`                 | Browser E2E tests         | 10 tests in 3 files; all skip when env vars missing                            |
 
 ## Known Local Caveat
 

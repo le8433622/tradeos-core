@@ -8,9 +8,6 @@ const nextConfig = {
     "@tradeos/trade-core",
     "@tradeos/sourcing-core",
   ],
-  experimental: {
-    instrumentationHook: true,
-  },
 };
 
 export default nextConfig;
