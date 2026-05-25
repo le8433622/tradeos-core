@@ -30,7 +30,8 @@ export const createSourcingRunAction = registerAction<
   { id: string; status: string }
 >({
   name: "sourcing.createRun",
-  description: "Create a new sourcing run for supplier discovery and quotation.",
+  description:
+    "Create a new sourcing run for supplier discovery and quotation.",
   riskLevel: "MEDIUM",
   allowedRoles: DEFAULT_ADMIN_ROLES,
   requiresApprovalForAI: false,
@@ -68,6 +69,74 @@ export const createSourcingRunAction = registerAction<
       select: { id: true, status: true },
     });
     return { id: run.id, status: run.status };
+  },
+});
+
+export const createPurchaseBaselineSchema = z
+  .object({
+    organizationId: z.string().min(1),
+    sourcingRunId: z.string().min(1),
+    supplierName: z.string().min(1).max(256),
+    sourceType: z.enum(["INVOICE", "PRICE_LIST", "MANUAL"]).optional(),
+    sourceEvidenceId: z.string().optional(),
+    productDescription: z.string().min(1).max(4096),
+    quantity: z.string().optional(),
+    unit: z.string().max(64).optional(),
+    unitPrice: z.string().optional(),
+    currency: z.string().max(8).optional(),
+    frequency: z.string().max(64).optional(),
+    paymentTerms: z.string().max(256).optional(),
+    deliveryTerms: z.string().max(256).optional(),
+    leadTime: z.string().max(128).optional(),
+    minOrderQty: z.string().max(128).optional(),
+  })
+  .strict();
+
+export const createPurchaseBaselineAction = registerAction<
+  z.infer<typeof createPurchaseBaselineSchema>,
+  { id: string }
+>({
+  name: "sourcing.createPurchaseBaseline",
+  description: "Create a purchase baseline snapshot linked to a sourcing run.",
+  riskLevel: "LOW",
+  allowedRoles: DEFAULT_ADMIN_ROLES,
+  requiresApprovalForAI: false,
+  handler: async (input, context) => {
+    const parsed = createPurchaseBaselineSchema.parse(input);
+    const entitlement = await checkEntitlement(
+      parsed.organizationId,
+      "sourcing_runs",
+    );
+    if (!entitlement.allowed) {
+      throw new Error("ENTITLEMENT_EXCEEDED");
+    }
+    const run = await prisma.sourcingRun.findUnique({
+      where: { id: parsed.sourcingRunId },
+      select: { organizationId: true },
+    });
+    validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+
+    const baseline = await prisma.purchaseBaseline.create({
+      data: {
+        organizationId: parsed.organizationId,
+        sourcingRunId: parsed.sourcingRunId,
+        supplierName: parsed.supplierName,
+        sourceType: parsed.sourceType ?? "MANUAL",
+        sourceEvidenceId: parsed.sourceEvidenceId,
+        productDescription: parsed.productDescription,
+        quantity: parsed.quantity,
+        unit: parsed.unit,
+        unitPrice: parsed.unitPrice,
+        currency: parsed.currency,
+        frequency: parsed.frequency,
+        paymentTerms: parsed.paymentTerms,
+        deliveryTerms: parsed.deliveryTerms,
+        leadTime: parsed.leadTime,
+        minOrderQty: parsed.minOrderQty,
+      },
+      select: { id: true },
+    });
+    return { id: baseline.id };
   },
 });
 
@@ -163,7 +232,11 @@ export const addSupplierQuoteAction = registerAction<
         where: { id: parsed.supplierCandidateId },
         select: { organizationId: true, sourcingRunId: true },
       });
-      validateRecordBelongsToOrg(candidate, parsed.organizationId, "SUPPLIER_CANDIDATE");
+      validateRecordBelongsToOrg(
+        candidate,
+        parsed.organizationId,
+        "SUPPLIER_CANDIDATE",
+      );
       if (candidate!.sourcingRunId !== parsed.sourcingRunId) {
         throw new Error("SUPPLIER_CANDIDATE_RUN_MISMATCH");
       }
@@ -333,10 +406,10 @@ export const deliverBuyerReportAction = registerAction<
         relatedId: parsed.sourcingRunId,
         evidenceType: "BUYER_DECISION",
         title: parsed.summary.slice(0, 256),
-        description: [
-          ...(parsed.risks ?? []),
-          ...(parsed.missingInformation ?? []),
-        ].join("; ") || null,
+        description:
+          [...(parsed.risks ?? []), ...(parsed.missingInformation ?? [])].join(
+            "; ",
+          ) || null,
         content: JSON.stringify({
           recommendedSupplierName: parsed.recommendedSupplierName,
           expectedSavings: parsed.expectedSavings,
@@ -667,7 +740,11 @@ export const generateBuyerReportAction = registerAction<
       .sort((a, b) => (a.riskScore ?? 50) - (b.riskScore ?? 50))[0];
 
     const risks: string[] = [];
-    if (!["COMPARED", "READY_FOR_REVIEW", "REPORT_DELIVERED"].includes(run?.status ?? "")) {
+    if (
+      !["COMPARED", "READY_FOR_REVIEW", "REPORT_DELIVERED"].includes(
+        run?.status ?? "",
+      )
+    ) {
       risks.push("Sourcing run has not been delivered as complete");
     }
     const quotesWithHighRisk = quotes.filter((q) => (q.riskScore ?? 0) > 70);
@@ -691,8 +768,16 @@ export const generateBuyerReportAction = registerAction<
       recommendedSupplierName: bestPrice?.supplierCandidate?.name,
       expectedSavings: bestPrice?.totalAmount
         ? quotes.length > 1
-          ? Math.max(...quotes.filter((q) => q.totalAmount).map((q) => Number(q.totalAmount))) -
-            Math.min(...quotes.filter((q) => q.totalAmount).map((q) => Number(q.totalAmount)))
+          ? Math.max(
+              ...quotes
+                .filter((q) => q.totalAmount)
+                .map((q) => Number(q.totalAmount)),
+            ) -
+            Math.min(
+              ...quotes
+                .filter((q) => q.totalAmount)
+                .map((q) => Number(q.totalAmount)),
+            )
           : undefined
         : undefined,
       currency: run?.currency ?? "USD",

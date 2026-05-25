@@ -42,16 +42,16 @@ Do not skip a stage. Do not start later stages until the prior stage is merged, 
 
 ## 3. Issue Sequence Gates
 
-| Gate | Issue | Output                           | Hard Dependency | Must Prove                                                                     |
-| ---- | ----- | -------------------------------- | --------------- | ------------------------------------------------------------------------------ |
-| 1    | `#40` | PurchaseBaseline MVP             | None            | Current spend exists, evidence linked, tenant isolation tested                 |
-| 2    | `#41` | SupplierAlternative + QuoteProof | `#40`           | Alternatives are comparable, evidence linked, cross-tenant blocked             |
-| 3    | `#42` | SwitchDecisionReport             | `#40`, `#41`    | Deterministic `SWITCH` / `NEGOTIATE` / `WAIT`, missing proof lowers confidence |
-| 4    | `#43` | Buyer Approval portal/action     | `#42`           | Buyer can approve, reject/wait, or request more proof safely                   |
-| 5    | `#44` | Checkpoint Billing mapping       | `#43`           | Evidence-before-billing, buyer approval condition, refund/failure semantics    |
-| 6    | `#45` | OutcomeLearning skeleton         | `#43`, `#44`    | Outcome links to baseline/report/case and records actual decision quality      |
+| Gate | Issue | Output                           | Hard Dependency | Status                                                                              |
+| ---- | ----- | -------------------------------- | --------------- | ----------------------------------------------------------------------------------- |
+| 1    | `#40` | PurchaseBaseline MVP             | None            | **LOCALLY IMPLEMENTED** — model, action, API, UI complete. Awaiting migration + PR. |
+| 2    | `#41` | SupplierAlternative + QuoteProof | `#40`           | Not started — blocked on `#40`                                                      |
+| 3    | `#42` | SwitchDecisionReport             | `#40`, `#41`    | Not started — blocked on `#40`, `#41`                                               |
+| 4    | `#43` | Buyer Approval portal/action     | `#42`           | Not started — blocked on `#42`                                                      |
+| 5    | `#44` | Checkpoint Billing mapping       | `#43`           | Not started — blocked on `#43`                                                      |
+| 6    | `#45` | OutcomeLearning skeleton         | `#43`, `#44`    | Not started — blocked on `#43`, `#44`                                               |
 
-## 4. Gate 1 — `#40` PurchaseBaseline
+## 4. Gate 1 — `#40` PurchaseBaseline (LOCALLY IMPLEMENTED)
 
 ### Build Only This
 
@@ -62,13 +62,27 @@ Current unit price
 Currency
 Recurring quantity
 Reorder frequency
-Monthly spend
+Monthly spend estimate
 Payment term
 Lead time
-Warranty/return notes
 Evidence IDs
-Leakage hypothesis fields
 ```
+
+### What Was Built (2026-05-26)
+
+1. **Prisma schema**: `PurchaseBaseline` model with tenant isolation, linked to `SourcingRun`, supporting fields for supplier, product, pricing, terms, risk flags.
+2. **New `EvidenceType` values**: `CURRENT_SUPPLIER_INVOICE`, `CURRENT_SUPPLIER_PRICE_LIST`, `ALTERNATIVE_QUOTE`, `ALTERNATIVE_PROFILE`, `MARKET_BENCHMARK`, `SWITCH_DECISION_REPORT`, `OUTCOME_EVIDENCE`, `NEGOTIATION_LOG`.
+3. **Registered action**: `sourcing.createPurchaseBaseline` (LOW risk, OWNER/ADMIN roles, no AI approval needed, Zod validated, org-scoped via `validateRecordBelongsToOrg`).
+4. **API route**: `POST /api/sourcing-runs/[id]/purchase-baseline` with Zod validation, permission check (`sourcing.manage`), session injection.
+5. **UI**: Inline form on sourcing run detail page — manual entry for supplier name, product, quantity, unit price, currency, frequency, payment/delivery/lead time terms. Display section shows existing baselines.
+6. **Typecheck**: Both `sourcing-core` and `web` pass clean.
+
+### Not Built (Deferred for Phase B)
+
+- EconomicCase model (wrap SourcingRun).
+- AI/parser for invoice/quote extraction.
+- Market benchmark or leakage scoring.
+- Automated alternative discovery.
 
 ### Required Design
 

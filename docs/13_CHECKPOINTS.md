@@ -5,12 +5,12 @@
 
 ## Current Truth
 
-- Open PRs: **none**.
-- Latest `main` commit: `4875f65` (`docs: add Plugin Intake Layer spec`).
+- Open PRs: **none** (PR #46 merged).
+- Latest `main` commit: `7b2d7ea` (`docs: add Supplier Switch Execution Protocol + lock #40→#45 sequence`).
 - Latest CI: check live before merge-sensitive work; recent local pre-commit/typecheck/docs gates passed on doc/spec PRs.
 - Open issues:
-  - `#48` — **P0 (ACTIVE)**: Cloud DB Safety Protocol — blocks all schema work in `#40`–`#45`.
-  - `#40` — P1: PurchaseBaseline MVP — model+action+API+UI built. Awaiting `#48` + migration + final PR.
+  - `#48` — P0 (ACTIVE): Cloud DB Safety Protocol — blocks all schema work in `#40`–`#45`.
+  - `#40` — **IN PROGRESS (local)**: PurchaseBaseline MVP — model+action+API+UI built. Awaiting migration + final PR.
   - `#41` — P1: Implement SupplierAlternative and QuoteProof normalization MVP.
   - `#42` — P1: Implement SwitchDecisionReport generator MVP.
   - `#43` — P2: Add buyer-facing Switch Report portal MVP.
