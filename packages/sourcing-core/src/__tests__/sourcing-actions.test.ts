@@ -24,6 +24,9 @@ const {
   mockLeadFindUnique,
   mockAuditCreate,
   mockOrgFindUnique,
+  mockBaselineFindMany,
+  mockAltFindMany,
+  mockSwitchReportCreate,
 } = vi.hoisted(() => {
   const mockSourcingFindUnique = vi.fn();
   const mockSourcingCreate = vi.fn();
@@ -48,6 +51,9 @@ const {
   const mockLeadFindUnique = vi.fn();
   const mockAuditCreate = vi.fn().mockResolvedValue({ id: "audit-1" });
   const mockOrgFindUnique = vi.fn();
+  const mockBaselineFindMany = vi.fn();
+  const mockAltFindMany = vi.fn();
+  const mockSwitchReportCreate = vi.fn();
   const tx = {
     auditLog: { create: mockAuditCreate },
     organization: { findUnique: mockOrgFindUnique },
@@ -113,6 +119,9 @@ const {
     mockLeadFindUnique,
     mockAuditCreate,
     mockOrgFindUnique,
+    mockBaselineFindMany,
+    mockAltFindMany,
+    mockSwitchReportCreate,
     tx,
   };
 });
@@ -141,6 +150,15 @@ vi.mock("@tradeos/database", () => ({
       count: mockEvidenceCount,
       create: mockEvidenceCreate,
     },
+    purchaseBaseline: {
+      findMany: mockBaselineFindMany,
+    },
+    supplierAlternative: {
+      findMany: mockAltFindMany,
+    },
+    switchDecisionReport: {
+      create: mockSwitchReportCreate,
+    },
     workCheckpoint: {
       findUnique: mockCheckpointFindUnique,
       create: mockCheckpointCreate,
@@ -158,59 +176,66 @@ vi.mock("@tradeos/database", () => ({
     lead: {
       findUnique: mockLeadFindUnique,
     },
-    $transaction: vi.fn(
-      async (arg: unknown) => {
-        const tx = {
-          auditLog: { create: mockAuditCreate },
-          organization: { findUnique: mockOrgFindUnique },
-          sourcingRun: {
-            findUnique: mockSourcingFindUnique,
-            create: mockSourcingCreate,
-            update: mockSourcingUpdate,
-          },
-          supplierCandidate: {
-            create: mockCandidateCreate,
-            findMany: mockCandidateFindMany,
-            findUnique: mockCandidateFindUnique,
-          },
-          supplierQuote: {
-            create: mockQuoteCreate,
-            findMany: mockQuoteFindMany,
-            update: mockQuoteUpdate,
-          },
-    evidenceItem: {
-      findMany: mockEvidenceFindMany,
-      count: mockEvidenceCount,
-      create: mockEvidenceCreate,
-    },
-          workCheckpoint: {
-            findUnique: mockCheckpointFindUnique,
-            create: mockCheckpointCreate,
-            update: mockCheckpointUpdate,
-          },
-          humanHandover: {
-            create: mockHandoverCreate,
-            findUnique: mockHandoverFindUnique,
-            update: mockHandoverUpdate,
-          },
-          payment: {
-            create: mockPaymentCreate,
-            findUnique: mockPaymentFindUnique,
-          },
-          lead: {
-            findUnique: mockLeadFindUnique,
-          },
-        };
-        if (typeof arg === "function") {
-          return arg(tx);
-        }
-        return Promise.all(
-          (arg as Array<Promise<unknown>>).map((p) =>
-            p instanceof Promise ? p : Promise.resolve(p),
-          ),
-        );
-      },
-    ),
+    $transaction: vi.fn(async (arg: unknown) => {
+      const tx = {
+        auditLog: { create: mockAuditCreate },
+        organization: { findUnique: mockOrgFindUnique },
+        sourcingRun: {
+          findUnique: mockSourcingFindUnique,
+          create: mockSourcingCreate,
+          update: mockSourcingUpdate,
+        },
+        supplierCandidate: {
+          create: mockCandidateCreate,
+          findMany: mockCandidateFindMany,
+          findUnique: mockCandidateFindUnique,
+        },
+        supplierQuote: {
+          create: mockQuoteCreate,
+          findMany: mockQuoteFindMany,
+          update: mockQuoteUpdate,
+        },
+        evidenceItem: {
+          findMany: mockEvidenceFindMany,
+          count: mockEvidenceCount,
+          create: mockEvidenceCreate,
+        },
+        purchaseBaseline: {
+          findMany: mockBaselineFindMany,
+        },
+        supplierAlternative: {
+          findMany: mockAltFindMany,
+        },
+        switchDecisionReport: {
+          create: mockSwitchReportCreate,
+        },
+        workCheckpoint: {
+          findUnique: mockCheckpointFindUnique,
+          create: mockCheckpointCreate,
+          update: mockCheckpointUpdate,
+        },
+        humanHandover: {
+          create: mockHandoverCreate,
+          findUnique: mockHandoverFindUnique,
+          update: mockHandoverUpdate,
+        },
+        payment: {
+          create: mockPaymentCreate,
+          findUnique: mockPaymentFindUnique,
+        },
+        lead: {
+          findUnique: mockLeadFindUnique,
+        },
+      };
+      if (typeof arg === "function") {
+        return arg(tx);
+      }
+      return Promise.all(
+        (arg as Array<Promise<unknown>>).map((p) =>
+          p instanceof Promise ? p : Promise.resolve(p),
+        ),
+      );
+    }),
   },
   Prisma: { JsonNull: null },
 }));
@@ -244,7 +269,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockAuditCreate.mockResolvedValue({ id: "audit-1" });
   mockOrgFindUnique.mockResolvedValue({ id: "org-1", mfaRequired: false });
-  mockSourcingFindUnique.mockResolvedValue({ id: "run-1", organizationId: "org-1" });
+  mockSourcingFindUnique.mockResolvedValue({
+    id: "run-1",
+    organizationId: "org-1",
+  });
   mockSourcingCreate.mockResolvedValue({ id: "run-1", status: "DRAFT" });
   mockSourcingUpdate.mockResolvedValue({ status: "READY_FOR_REVIEW" });
   mockCandidateCreate.mockResolvedValue({ id: "candidate-1" });
@@ -253,16 +281,46 @@ beforeEach(() => {
   mockQuoteFindMany.mockResolvedValue([]);
   mockEvidenceFindMany.mockResolvedValue([]);
   mockEvidenceCreate.mockResolvedValue({ id: "evidence-1" });
-  mockCheckpointFindUnique.mockResolvedValue({ id: "cp-1", organizationId: "org-1", status: "DELIVERED", sourcingRunId: "run-1" });
+  mockCheckpointFindUnique.mockResolvedValue({
+    id: "cp-1",
+    organizationId: "org-1",
+    status: "DELIVERED",
+    sourcingRunId: "run-1",
+  });
   mockCheckpointCreate.mockResolvedValue({ id: "cp-1", status: "PENDING" });
   mockCheckpointUpdate.mockResolvedValue({ status: "DELIVERED" });
   mockHandoverCreate.mockResolvedValue({ id: "handover-1", status: "OPEN" });
-  mockHandoverFindUnique.mockResolvedValue({ id: "handover-1", organizationId: "org-1" });
+  mockHandoverFindUnique.mockResolvedValue({
+    id: "handover-1",
+    organizationId: "org-1",
+  });
   mockHandoverUpdate.mockResolvedValue({ status: "RESOLVED" });
   mockPaymentCreate.mockResolvedValue({ id: "payment-1" });
   mockPaymentFindUnique.mockResolvedValue(null);
-  mockLeadFindUnique.mockResolvedValue({ id: "lead-1", organizationId: "org-1" });
-  mockCandidateFindUnique.mockResolvedValue({ id: "candidate-1", organizationId: "org-1", sourcingRunId: "run-1" });
+  mockLeadFindUnique.mockResolvedValue({
+    id: "lead-1",
+    organizationId: "org-1",
+  });
+  mockCandidateFindUnique.mockResolvedValue({
+    id: "candidate-1",
+    organizationId: "org-1",
+    sourcingRunId: "run-1",
+  });
+  mockBaselineFindMany.mockResolvedValue([]);
+  mockAltFindMany.mockResolvedValue([]);
+  mockEvidenceCount.mockResolvedValue(0);
+  mockSwitchReportCreate.mockResolvedValue({
+    id: "report-1",
+    recommendation: "WAIT",
+    confidence: "LOW",
+    overallScore: 0,
+    monthlySavings: null,
+    annualSavings: null,
+    savingsPercent: null,
+    currency: "USD",
+    summary: "No data",
+    nextActions: [],
+  });
 });
 
 describe("sourcing.createRun", () => {
@@ -304,7 +362,10 @@ describe("sourcing.createRun", () => {
 
 describe("sourcing.addSupplierCandidate", () => {
   it("adds a supplier candidate to a sourcing run", async () => {
-    mockSourcingFindUnique.mockResolvedValue({ id: "run-1", organizationId: "org-1" });
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-1",
+      organizationId: "org-1",
+    });
     const result = await executeAction(
       "sourcing.addSupplierCandidate",
       {
@@ -319,7 +380,10 @@ describe("sourcing.addSupplierCandidate", () => {
   });
 
   it("rejects when sourcing run belongs to another org", async () => {
-    mockSourcingFindUnique.mockResolvedValue({ id: "run-1", organizationId: "org-2" });
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-1",
+      organizationId: "org-2",
+    });
     await expect(
       executeAction(
         "sourcing.addSupplierCandidate",
@@ -353,11 +417,11 @@ describe("sourcing.addSupplierQuote", () => {
 describe("sourcing.compareQuotes", () => {
   it("returns empty comparison when no quotes exist", async () => {
     mockQuoteFindMany.mockResolvedValue([]);
-    const result = await executeAction(
+    const result = (await executeAction(
       "sourcing.compareQuotes",
       { organizationId: "org-1", sourcingRunId: "run-1" },
       context,
-    ) as { quoteCount: number; bestPriceQuoteId: string | null };
+    )) as { quoteCount: number; bestPriceQuoteId: string | null };
     expect(result.quoteCount).toBe(0);
   });
 
@@ -366,11 +430,11 @@ describe("sourcing.compareQuotes", () => {
       { id: "q1", totalAmount: 500, riskScore: 30 },
       { id: "q2", totalAmount: 300, riskScore: 70 },
     ]);
-    const result = await executeAction(
+    const result = (await executeAction(
       "sourcing.compareQuotes",
       { organizationId: "org-1", sourcingRunId: "run-1" },
       context,
-    ) as { quoteCount: number; bestPriceQuoteId: string | null };
+    )) as { quoteCount: number; bestPriceQuoteId: string | null };
     expect(result.quoteCount).toBe(2);
     expect(result.bestPriceQuoteId).toBe("q1");
     expect(mockQuoteUpdate).toHaveBeenCalled();
@@ -415,7 +479,10 @@ describe("checkpoint.create", () => {
 
 describe("checkpoint.markDelivered", () => {
   it("marks checkpoint as delivered", async () => {
-    mockCheckpointFindUnique.mockResolvedValue({ id: "cp-1", organizationId: "org-1" });
+    mockCheckpointFindUnique.mockResolvedValue({
+      id: "cp-1",
+      organizationId: "org-1",
+    });
     mockCheckpointUpdate.mockResolvedValue({ status: "DELIVERED" });
     const result = await executeAction(
       "checkpoint.markDelivered",
@@ -425,7 +492,6 @@ describe("checkpoint.markDelivered", () => {
     expect(result).toEqual({ status: "DELIVERED" });
   });
 });
-
 
 describe("checkpoint.markAsBilled", () => {
   it("marks approved checkpoint as billed and creates payment record", async () => {
@@ -563,6 +629,7 @@ describe("checkpoint.approveForBilling", () => {
       sourcingRunId: "run-1",
     });
     mockCheckpointUpdate.mockResolvedValue({ status: "APPROVED" });
+    mockEvidenceCount.mockResolvedValue(5);
     const result = await executeAction(
       "checkpoint.approveForBilling",
       { organizationId: "org-1", checkpointId: "cp-1" },
@@ -574,7 +641,10 @@ describe("checkpoint.approveForBilling", () => {
 
 describe("sourcing.createRun — cross-tenant validation", () => {
   it("rejects when leadId belongs to another org", async () => {
-    mockLeadFindUnique.mockResolvedValue({ id: "lead-1", organizationId: "org-2" });
+    mockLeadFindUnique.mockResolvedValue({
+      id: "lead-1",
+      organizationId: "org-2",
+    });
     await expect(
       executeAction(
         "sourcing.createRun",
@@ -634,7 +704,10 @@ describe("sourcing.addSupplierQuote — cross-tenant validation", () => {
 
 describe("checkpoint.create — tenant validation", () => {
   it("accepts checkpoint with valid sourcingRunId", async () => {
-    mockSourcingFindUnique.mockResolvedValue({ id: "run-1", organizationId: "org-1" });
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-1",
+      organizationId: "org-1",
+    });
     const result = await executeAction(
       "checkpoint.create",
       {
@@ -649,7 +722,10 @@ describe("checkpoint.create — tenant validation", () => {
   });
 
   it("rejects when sourcingRunId belongs to another org", async () => {
-    mockSourcingFindUnique.mockResolvedValue({ id: "run-1", organizationId: "org-2" });
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-1",
+      organizationId: "org-2",
+    });
     await expect(
       executeAction(
         "checkpoint.create",
@@ -667,7 +743,10 @@ describe("checkpoint.create — tenant validation", () => {
 
 describe("handover.create — tenant validation", () => {
   it("accepts handover with valid sourcingRunId", async () => {
-    mockSourcingFindUnique.mockResolvedValue({ id: "run-1", organizationId: "org-1" });
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-1",
+      organizationId: "org-1",
+    });
     const result = await executeAction(
       "handover.create",
       {
@@ -683,7 +762,10 @@ describe("handover.create — tenant validation", () => {
   });
 
   it("rejects when sourcingRunId belongs to another org", async () => {
-    mockSourcingFindUnique.mockResolvedValue({ id: "run-1", organizationId: "org-2" });
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-1",
+      organizationId: "org-2",
+    });
     await expect(
       executeAction(
         "handover.create",
@@ -711,17 +793,29 @@ describe("generateBuyerReport — risk logic", () => {
       currency: "USD",
     });
     mockQuoteFindMany.mockResolvedValue([
-      { id: "q1", supplierCandidate: { name: "A" }, totalAmount: 1000, riskScore: 10, comparisonRank: 1, moq: "1", leadTime: "10", shippingTerm: "FOB", paymentTerm: "TT" },
+      {
+        id: "q1",
+        supplierCandidate: { name: "A" },
+        totalAmount: 1000,
+        riskScore: 10,
+        comparisonRank: 1,
+        moq: "1",
+        leadTime: "10",
+        shippingTerm: "FOB",
+        paymentTerm: "TT",
+      },
     ]);
-mockEvidenceFindMany.mockResolvedValue([]);
-  mockEvidenceCount.mockResolvedValue(5);
-    const result = await executeAction(
+    mockEvidenceFindMany.mockResolvedValue([]);
+    mockEvidenceCount.mockResolvedValue(5);
+    const result = (await executeAction(
       "sourcing.generateBuyerReport",
       { organizationId: "org-1", sourcingRunId: "run-1" },
       context,
-    ) as any;
+    )) as any;
     const riskMessages = result.risks.map((r: string) => r);
-    expect(riskMessages).not.toContain("Sourcing run has not been delivered as complete");
+    expect(riskMessages).not.toContain(
+      "Sourcing run has not been delivered as complete",
+    );
   });
 });
 
@@ -785,20 +879,18 @@ describe("sourcing.generateBuyerReport", () => {
         comparisonRank: 2,
       },
     ]);
-    mockEvidenceFindMany.mockResolvedValue([
-      { id: "ev-1", relatedId: "q1" },
-    ]);
-    const result = await executeAction(
+    mockEvidenceFindMany.mockResolvedValue([{ id: "ev-1", relatedId: "q1" }]);
+    const result = (await executeAction(
       "sourcing.generateBuyerReport",
       { organizationId: "org-1", sourcingRunId: "run-1" },
       context,
-    ) as BuyerDecisionReport;
+    )) as BuyerDecisionReport;
     expect(result.sourcingRunId).toBe("run-1");
     expect(result.quoteTable).toHaveLength(2);
     expect(result.recommendedSupplierName).toBe("Supplier A");
     expect(result.expectedSavings).toBe(5000);
     expect(result.risks).toContain(
-      'High risk supplier: Supplier B (risk score: 80)',
+      "High risk supplier: Supplier B (risk score: 80)",
     );
   });
 });
@@ -863,6 +955,116 @@ describe("sourcing.deliverBuyerReport", () => {
           sourcingRunId: "run-other",
           summary: "Test",
         },
+        context,
+      ),
+    ).rejects.toThrow("SOURCING_RUN_BELONGS_TO_ANOTHER_ORGANIZATION");
+  });
+});
+
+describe("sourcing.generateSwitchDecision", () => {
+  it("generates WAIT report when no baseline or alternatives exist", async () => {
+    mockBaselineFindMany.mockResolvedValue([]);
+    mockAltFindMany.mockResolvedValue([]);
+    mockEvidenceCount.mockResolvedValue(0);
+    mockSwitchReportCreate.mockResolvedValue({
+      id: "report-1",
+      recommendation: "WAIT",
+      confidence: "LOW",
+      overallScore: 0,
+      monthlySavings: null,
+      annualSavings: null,
+      savingsPercent: null,
+      currency: "USD",
+      summary: "No data",
+      nextActions: [],
+    });
+    const result = (await executeAction(
+      "sourcing.generateSwitchDecision",
+      { organizationId: "org-1", sourcingRunId: "run-1" },
+      context,
+    )) as { recommendation: string; overallScore: number };
+    expect(result.recommendation).toBe("WAIT");
+    expect(result.overallScore).toBe(0);
+  });
+
+  it("generates SWITCH report when strong savings and evidence exist", async () => {
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-1",
+      organizationId: "org-1",
+      currency: "USD",
+    });
+    mockBaselineFindMany.mockResolvedValue([
+      {
+        id: "bl-1",
+        unitPrice: 100,
+        quantity: 10,
+        currency: "USD",
+        paymentTerms: "net30",
+        leadTime: "30 days",
+        frequency: "monthly",
+        organizationId: "org-1",
+        sourcingRunId: "run-1",
+      },
+    ]);
+    mockAltFindMany.mockResolvedValue([
+      {
+        id: "alt-1",
+        unitPrice: 65,
+        totalCost: 650,
+        currency: "USD",
+        leadTime: "20 days",
+        paymentTerm: "net30",
+        organizationId: "org-1",
+        sourcingRunId: "run-1",
+      },
+      {
+        id: "alt-2",
+        unitPrice: 70,
+        totalCost: 700,
+        currency: "USD",
+        leadTime: "25 days",
+        paymentTerm: "net30",
+        organizationId: "org-1",
+        sourcingRunId: "run-1",
+      },
+    ]);
+    mockEvidenceCount.mockResolvedValue(3);
+    mockSwitchReportCreate.mockResolvedValue({
+      id: "report-2",
+      recommendation: "SWITCH",
+      confidence: "HIGH",
+      overallScore: 78,
+      monthlySavings: 350,
+      annualSavings: 4200,
+      savingsPercent: 35,
+      currency: "USD",
+      summary:
+        "Recommendation: SWITCH | Monthly savings: $350 | Annual savings: $4,200 | Savings: 35.0%",
+      nextActions: ["Prepare buyer approval request for supplier switch"],
+    });
+    const result = (await executeAction(
+      "sourcing.generateSwitchDecision",
+      { organizationId: "org-1", sourcingRunId: "run-1" },
+      context,
+    )) as {
+      recommendation: string;
+      overallScore: number;
+      monthlySavings: number;
+    };
+    expect(result.recommendation).toBe("SWITCH");
+    expect(result.overallScore).toBeGreaterThanOrEqual(60);
+    expect(result.monthlySavings).toBe(350);
+  });
+
+  it("rejects when sourcing run belongs to another org", async () => {
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-other",
+      organizationId: "org-2",
+    });
+    await expect(
+      executeAction(
+        "sourcing.generateSwitchDecision",
+        { organizationId: "org-1", sourcingRunId: "run-other" },
         context,
       ),
     ).rejects.toThrow("SOURCING_RUN_BELONGS_TO_ANOTHER_ORGANIZATION");

@@ -726,6 +726,7 @@ model SourcingRun {
   handovers          HumanHandover[]
   purchaseBaselines  PurchaseBaseline[]
   supplierAlternatives SupplierAlternative[]
+  switchDecisionReports SwitchDecisionReport[]
 
   @@index([organizationId, status])
   @@index([leadId])
@@ -760,6 +761,44 @@ model PurchaseBaseline {
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  sourcingRun SourcingRun @relation(fields: [sourcingRunId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, sourcingRunId])
+}
+
+model SwitchDecisionReport {
+  id                  String   @id @default(cuid())
+  organizationId      String
+  sourcingRunId       String
+
+  recommendation      String   // SWITCH | NEGOTIATE | WAIT
+  confidence          String   // HIGH | MEDIUM | LOW
+
+  savingsScore        Int?
+  evidenceScore       Int?
+  paymentRiskScore    Int?
+  leadTimeRiskScore   Int?
+  dependencyRiskScore Int?
+  overallScore        Int?
+
+  monthlySavings      Decimal?
+  annualSavings       Decimal?
+  savingsPercent      Decimal?
+  currency            String?
+
+  baselineId          String?
+  topAlternativeId    String?
+
+  evidenceSummary     Json?
+  missingProof        Json?
+  riskFlags           Json?
+
+  summary             String?
+  nextActions         Json?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   sourcingRun SourcingRun @relation(fields: [sourcingRunId], references: [id], onDelete: Cascade)
 
