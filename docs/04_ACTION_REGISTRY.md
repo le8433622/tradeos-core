@@ -104,6 +104,7 @@ Irreversible, legal, financial, or security-sensitive action. (None currently re
 | `sourcing.deliverBuyerReport`         | sourcing-core  | HIGH   | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 | `sourcing.generateBuyerReport`        | sourcing-core  | HIGH   | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 | `sourcing.generateSwitchDecision`     | sourcing-core  | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
+| `sourcing.submitBuyerDecision`        | sourcing-core  | MEDIUM | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 | `evidence.createItem`                 | evidence-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
 | `evidence.attachToRun`                | evidence-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
 | `evidence.exportLedger`               | evidence-core  | MEDIUM | OWNER, ADMIN                  | Yes        | No                | Yes            |
