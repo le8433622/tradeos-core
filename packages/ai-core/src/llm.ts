@@ -79,6 +79,9 @@ const BLOCKED_ACTIONS = [
   "sourcing.markRunReadyForReview",
   "checkpoint.approveForBilling",
   "checkpoint.markDelivered",
+  "checkpoint.markAsBilled",
+  "checkpoint.recordPayment",
+  "user.roleUpdate",
   "handover.resolve",
 ];
 

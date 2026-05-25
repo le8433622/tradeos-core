@@ -511,4 +511,69 @@ describe("runTradeAgent", () => {
         .mock.calls.filter(([name]) => name !== "budget.getStatus"),
     ).toHaveLength(0);
   });
+
+  describe("AI cannot execute procurement actions directly", () => {
+    const procurementActions: {
+      name: string;
+      msg: string;
+      risk: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+    }[] = [
+      { name: "sourcing.deliverBuyerReport", msg: "Deliver buyer report", risk: "HIGH" },
+      { name: "checkpoint.approveForBilling", msg: "Approve checkpoint for billing", risk: "HIGH" },
+      { name: "checkpoint.markAsBilled", msg: "Mark checkpoint as billed", risk: "HIGH" },
+      { name: "checkpoint.recordPayment", msg: "Record payment", risk: "HIGH" },
+      { name: "user.roleUpdate", msg: "Update user role", risk: "HIGH" },
+      { name: "sourcing.generateBuyerReport", msg: "Generate buyer report", risk: "HIGH" },
+      { name: "sourcing.markRunReadyForReview", msg: "Mark run ready for review", risk: "MEDIUM" },
+      { name: "checkpoint.markDelivered", msg: "Mark checkpoint delivered", risk: "MEDIUM" },
+      { name: "handover.resolve", msg: "Resolve handover", risk: "HIGH" },
+    ];
+
+    for (const { name, msg: text, risk } of procurementActions) {
+      it(`routes ${name} through createApprovalRequest instead of executing`, async () => {
+        vi.mocked(planWithLlm).mockResolvedValue({
+          ...defaultLlmPlan,
+          usage: null,
+          plan: {
+            ...defaultLlmPlan.plan,
+            steps: [{
+              action: name,
+              riskLevel: risk,
+              reason: text,
+              input: { organizationId: "test-org" },
+            }],
+          },
+        });
+
+        vi.mocked(getAction).mockReturnValue(
+          actionDef({
+            name,
+            riskLevel: risk,
+            requiresApprovalForAI: true,
+          }),
+        );
+
+        vi.mocked(createApprovalRequest).mockResolvedValue({
+          ...pendingApproval,
+          id: `approval-${name}`,
+          actionName: name,
+        });
+
+        const result = await runTradeAgent(
+          msg({ text }),
+          defaultContext,
+        );
+
+        expect(result.results).toHaveLength(1);
+        expect(result.results[0].status).toBe("PENDING_APPROVAL");
+        expect(result.results[0].step.action).toBe(name);
+        expect(result.results[0].approvalRequest).toBeDefined();
+
+        const stepCalls = vi.mocked(executeAction).mock.calls
+          .filter(([n]) => n !== "budget.getStatus" && n !== "ai.trackUsage");
+        const directCalls = stepCalls.filter(([n]) => n === name);
+        expect(directCalls).toHaveLength(0);
+      });
+    }
+  });
 });

@@ -354,3 +354,54 @@ describe("action registry source of truth", () => {
     expect(getAction("notification.sendAll")).toBeUndefined();
   });
 });
+
+describe("BLOCKED_ACTIONS sync with action registry", () => {
+  const BLOCKED_ACTIONS = [
+    "trade.sendQuotation",
+    "notification.sendBulk",
+    "crm.deleteLead",
+    "crm.deleteCompany",
+    "sourcing.deliverBuyerReport",
+    "sourcing.generateBuyerReport",
+    "sourcing.markRunReadyForReview",
+    "checkpoint.approveForBilling",
+    "checkpoint.markDelivered",
+    "checkpoint.markAsBilled",
+    "checkpoint.recordPayment",
+    "user.roleUpdate",
+    "handover.resolve",
+  ];
+
+  it("registered actions in BLOCKED_ACTIONS require approval for AI", () => {
+    const blockedSet = new Set(BLOCKED_ACTIONS);
+    for (const name of blockedSet) {
+      const action = getAction(name);
+      if (action) {
+        expect(action.requiresApprovalForAI,
+          `${name} must require AI approval to be in BLOCKED_ACTIONS`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("every action with requiresApprovalForAI from imported packages is in BLOCKED_ACTIONS", () => {
+    const blockedSet = new Set(BLOCKED_ACTIONS);
+    const allActions = [
+      getAction("trade.sendQuotation"),
+      getAction("checkpoint.approveForBilling"),
+      getAction("checkpoint.markDelivered"),
+      getAction("checkpoint.markAsBilled"),
+      getAction("checkpoint.recordPayment"),
+      getAction("sourcing.deliverBuyerReport"),
+      getAction("sourcing.generateBuyerReport"),
+      getAction("sourcing.markRunReadyForReview"),
+      getAction("handover.resolve"),
+      getAction("user.roleUpdate"),
+    ];
+    for (const action of allActions) {
+      if (action?.requiresApprovalForAI) {
+        expect(blockedSet.has(action.name)).toBe(true);
+      }
+    }
+  });
+});
