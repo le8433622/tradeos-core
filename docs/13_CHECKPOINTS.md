@@ -184,6 +184,23 @@ All eight MoneyOS/perfection micro-tasks completed in round 1:
 3. Complete #11: apply/verify latest Prisma migrations on staging with rollback evidence.
 4. Update this checkpoint with exact CI/deployment/migration evidence.
 
+## Incident Restoration
+
+| Date       | Action                           | Result | Notes                                                                                                                                                                                                                          |
+| ---------- | -------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-05-25 | Rollback middleware to `2e6eb1c` | pass   | Reverted unnecessary middleware change that removed defensive `X-Request-Id` header set on early-return path (introduced in `b1aac6d`). Middleware restored to last known healthy state. See incident-mode output in task log. |
+
+Last known healthy commit: `2e6eb1c` (PR #3 merge, CI run `26373254906` passed) — equivalent to `9fbd249` (CI run `26359118492` passed) for middleware. Both have explicit `response.headers.set("X-Request-Id", requestId)` on the Supabase env-var early-return path.
+
+Restored middleware pattern:
+
+```
+if (!url || !key) {
+    response.headers.set("X-Request-Id", requestId);
+    return response;
+}
+```
+
 ## Checkpoint Update Template
 
 ```markdown

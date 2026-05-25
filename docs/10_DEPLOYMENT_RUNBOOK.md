@@ -307,6 +307,68 @@ RUN_INTEGRATION_TESTS=true pnpm --filter @tradeos/integration-tests test
 
 This local command is necessary but not sufficient. Production readiness also requires the remote GitHub workflow to pass on the exact commit being deployed.
 
+## Rollback-First Debugging Rule
+
+When debugging a production incident, apply these rules BEFORE attempting any fix in the production or preview environment:
+
+### How to identify the last healthy deployment
+
+1. Check `docs/13_CHECKPOINTS.md` — look for the most recent entry with all verification columns marked "pass" and a passing CI run URL
+2. Check `git log --oneline -10` — correlate with checkpoint dates
+3. Find the most recent commit where:
+   - `pnpm build` passed (53/53 pages)
+   - `pnpm test` passed (all suites)
+   - CI run was green (GitHub Actions URL in checkpoint)
+   - Vercel health endpoint returned 200
+
+### When to rollback
+
+Rollback immediately when:
+
+- A production-affecting fix fails twice (build, test, or runtime check)
+- Middleware/auth/runtime routing was changed without restoring health
+- The fix is iterated more than twice without success
+- The root cause is in infrastructure/environment but code is being patched to work around it
+
+### What must NOT be debugged live
+
+- Middleware runtime behavior (env availability, cookie parsing, redirect logic)
+- Auth session resolution
+- Webhook signature verification
+- Route/API error classification
+- Database connection pooling or migration state
+- The absence of env vars that should be set in production
+
+These are infrastructure concerns. Missing env/auth/deployment access is not a code bug. Patch the environment, not the middleware.
+
+### How to record residual issue after restore
+
+After rolling back to a known healthy deployment, create a checkpoint entry in `docs/13_CHECKPOINTS.md`:
+
+```markdown
+| 2026-05-25 | Rollback to <commit> | pass | Restored from <bad-commit>. Residual: <issue>. Root cause deferred. |
+```
+
+Fields:
+
+- **Rollback to**: commit hash of restored state
+- **Restored from**: commit hash that was reverted
+- **Residual**: one-line description of the unfixed issue
+- **Root cause deferred**: reason production fix was not attempted
+
+### How to resume root-cause analysis safely
+
+Only after production is confirmed healthy on the restored state:
+
+1. Reproduce the issue in a local or staging environment
+2. Isolate the root cause (env, config, code, dependency)
+3. Fix in a branch with a regression test
+4. Run full verification locally
+5. Open PR with evidence
+6. Deploy through normal CI → preview → staging → production flow
+
+Never skip the staging/preview step for production-affecting changes.
+
 ## Rollback Playbook
 
 ### Scenario: Migration fails on production

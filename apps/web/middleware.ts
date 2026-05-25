@@ -9,7 +9,10 @@ export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  if (!url || !key) return response;
+  if (!url || !key) {
+    response.headers.set("X-Request-Id", requestId);
+    return response;
+  }
 
   const supabase = createServerClient(url, key, {
     cookies: {
