@@ -9,6 +9,7 @@
 - Latest `main` commit: `7b2d7ea` (`docs: add Supplier Switch Execution Protocol + lock #40→#45 sequence`).
 - Latest local verification: pre-commit hooks passed on recent doc/spec PRs; latest CI must be checked live before merge-sensitive work.
 - Recently merged PRs (newest first):
+  - `#50` — feat: implement SupplierAlternative and QuoteProof normalization (closes #41).
   - `#49` — feat: add Cloud DB Safety Protocol (closes #48).
   - `#47` — feat: implement PurchaseBaseline MVP (closes #40).
   - `#46` — docs: add Supplier Switch Execution Protocol + lock #40→#45 sequence.
@@ -29,8 +30,8 @@
   - `#44` — P2: Map Supplier Switch checkpoints to billing and paid proof.
   - `#45` — P2: Add OutcomeLearning skeleton for Supplier Switch cases.
 - Closed/completed issues (newest first):
+  - `#41` — ✅ **CLOSED**: SupplierAlternative and QuoteProof normalization — model+action+API+UI merged (PR #50).
   - `#48` — ✅ **CLOSED**: Cloud DB Safety Protocol.
-  - `#40` — ✅ **CLOSED**: PurchaseBaseline MVP — model+action+API+UI+PR merged.
   - `#29` — ✅ **DONE**: Plugin Intake Layer spec at `docs/31_PLUGIN_INTAKE_LAYER.md`.
   - `#28` — ✅ **DONE**: Supplier Switch Intelligence spec at `docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md`.
   - `#27` — ✅ **DONE**: Playwright E2E harness with 10 env-gated tests.
@@ -42,12 +43,12 @@
 
 ## Current Mode
 
-The repo is in **Supplier Switch execution mode** — next gate is `#41`.
+The repo is in **Supplier Switch execution mode** — next gate is `#42` (SwitchDecisionReport).
 
 Allowed now:
 
-1. **`#41`**: Implement SupplierAlternative and QuoteProof normalization — manual input, existing `SupplierCandidate` + `SupplierQuote` mapping, evidence linked.
-2. Proceed to `#42` only after `#41` is merged, tested, and documented.
+1. **`#42`**: Implement deterministic SwitchDecisionReport — SWITCH / NEGOTIATE / WAIT with evidence and missing-proof logic.
+2. Proceed to `#43` only after `#42` is merged, tested, and documented.
 3. Run authenticated E2E locally when needed (`E2E_RUN_ENABLED=true pnpm --filter @tradeos/web test:e2e`).
 4. Use registered actions, tenant isolation, evidence records, approval boundaries, and checkpoint docs for every step.
 
@@ -138,9 +139,11 @@ PurchaseBaseline MVP implemented and merged. Model+action+API+UI built: Prisma s
 - Awaiting migration + final PR.
 >>>>>>> 635ebf1 (feat: implement PurchaseBaseline MVP (#40))
 
-### `#41` — SECOND GATE
+### `#41` — ✅ CLOSED (2026-05-26)
 
-Build Alternative Proof only after `#40` is complete. Use or map to existing `SupplierCandidate`, `SupplierQuote`, and `EvidenceItem`. Manual input first.
+SupplierAlternative and QuoteProof normalization implemented and merged. Model, action, API, UI built: Prisma schema `SupplierAlternative` with tenant isolation linked to SourcingRun + SupplierCandidate, registered action `sourcing.addSupplierAlternative`, POST API route, inline form + display with normalization fields (pricing, MOQ, lead time, payment, warranty, shipping, risk flags).
+
+**Next**: `#42` — SwitchDecisionReport generator.
 
 ### `#42` — THIRD GATE
 
