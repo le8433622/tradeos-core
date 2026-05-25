@@ -2,7 +2,6 @@ let validated = false;
 
 const requiredServerVars = [
   "DATABASE_URL",
-  "DIRECT_URL",
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
   "SUPABASE_URL",
