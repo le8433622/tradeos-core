@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { prisma, type ActionRiskLevel } from "@tradeos/database";
 import {
   executeAction,
@@ -13,6 +14,8 @@ export type CreateApprovalRequestInput = {
   actionName: string;
   input: unknown;
   reason?: string;
+  idempotencyKey?: string;
+  maxRetries?: number;
 };
 
 export const createApprovalRequestSchema = z
@@ -22,6 +25,8 @@ export const createApprovalRequestSchema = z
     actionName: z.string().min(1).max(256),
     input: z.any().optional(),
     reason: z.string().max(2048).optional(),
+    idempotencyKey: z.string().max(256).optional(),
+    maxRetries: z.number().int().min(0).max(10).optional(),
   })
   .strict();
 
@@ -43,6 +48,24 @@ export const rejectRequestSchema = z
   })
   .strict();
 
+export const retryApprovalRequestSchema = z
+  .object({
+    approvalRequestId: z.string().min(1),
+    organizationId: z.string().min(1),
+    requestedById: z.string().min(1).optional(),
+    reason: z.string().max(2048).optional(),
+  })
+  .strict();
+
+export const recoverStaleRequestSchema = z
+  .object({
+    approvalRequestId: z.string().min(1),
+    organizationId: z.string().min(1),
+    reviewedById: z.string().min(1).optional(),
+    reviewNote: z.string().max(2048).optional(),
+  })
+  .strict();
+
 const SESSION_MANAGED_FIELDS = new Set([
   "organizationId",
   "organization_id",
@@ -56,6 +79,14 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   REJECTED: [],
   EXECUTED: ["FAILED"],
   FAILED: [],
+};
+
+const DEFAULT_STALE_TIMEOUT_MS = 5 * 60 * 1000;
+const RISK_TIMEOUT_MS: Record<string, number> = {
+  LOW: 2 * 60 * 1000,
+  MEDIUM: 5 * 60 * 1000,
+  HIGH: 10 * 60 * 1000,
+  CRITICAL: 15 * 60 * 1000,
 };
 
 function assertValidTransition(current: string, next: string) {
@@ -96,6 +127,17 @@ function normalizeApprovalInput(
     return { ...(cloned as Record<string, unknown>), organizationId };
   }
   return { organizationId, value: cloned };
+}
+
+function generateIdempotencyKey(
+  organizationId: string,
+  actionName: string,
+  input: unknown,
+): string {
+  const hash = createHash("sha256")
+    .update(`${organizationId}:${actionName}:${JSON.stringify(input)}`)
+    .digest("hex");
+  return `ik_${hash}`;
 }
 
 async function writeApprovalAudit(params: {
@@ -148,6 +190,22 @@ export async function createApprovalRequest(input: CreateApprovalRequestInput) {
     input.input,
     input.organizationId,
   );
+  const idempotencyKey =
+    input.idempotencyKey ??
+    generateIdempotencyKey(
+      input.organizationId,
+      input.actionName,
+      normalizedInput,
+    );
+
+  const existing = await prisma.approvalRequest.findFirst({
+    where: {
+      organizationId: input.organizationId,
+      idempotencyKey,
+      status: { in: ["EXECUTED", "FAILED"] },
+    },
+  });
+  if (existing) return existing;
 
   return prisma.$transaction(async (tx) => {
     const approval = await tx.approvalRequest.create({
@@ -159,6 +217,8 @@ export async function createApprovalRequest(input: CreateApprovalRequestInput) {
         input: JSON.parse(JSON.stringify(normalizedInput)),
         reason: input.reason,
         status: "PENDING",
+        idempotencyKey,
+        maxRetries: input.maxRetries ?? 3,
       },
     });
 
@@ -275,13 +335,36 @@ export async function executeApprovedRequest(params: {
   organizationId: string;
   context: ActionContext;
 }) {
+  const approval = await getApprovalWithTenantCheck(
+    params.approvalRequestId,
+    params.organizationId,
+  );
+
+  if (approval.idempotencyKey) {
+    const existing = await prisma.approvalRequest.findFirst({
+      where: {
+        organizationId: params.organizationId,
+        idempotencyKey: approval.idempotencyKey,
+        status: { in: ["EXECUTED", "FAILED"] },
+        id: { not: approval.id },
+      },
+    });
+    if (existing) {
+      return existing;
+    }
+  }
+
   const claim = await prisma.approvalRequest.updateMany({
     where: {
       id: params.approvalRequestId,
       organizationId: params.organizationId,
       status: "APPROVED",
     },
-    data: { status: "EXECUTING" },
+    data: {
+      status: "EXECUTING",
+      executingSince: new Date(),
+      lockedBy: params.context.actorUserId ?? "system",
+    },
   });
 
   if (claim.count === 0) {
@@ -388,5 +471,189 @@ export async function failApprovalRequest(params: {
     });
 
     return updated;
+  });
+}
+
+export async function findStaleExecutingRequests(params: {
+  organizationId?: string;
+  timeoutMs?: number;
+}) {
+  const timeout = params.timeoutMs ?? DEFAULT_STALE_TIMEOUT_MS;
+  const cutoff = new Date(Date.now() - timeout);
+
+  return prisma.approvalRequest.findMany({
+    where: {
+      status: "EXECUTING",
+      executingSince: { lt: cutoff },
+      ...(params.organizationId
+        ? { organizationId: params.organizationId }
+        : {}),
+    },
+    orderBy: { executingSince: "asc" },
+  });
+}
+
+export async function recoverStaleRequest(params: {
+  approvalRequestId: string;
+  organizationId: string;
+  reviewedById?: string;
+  reviewNote?: string;
+}) {
+  const request = await getApprovalWithTenantCheck(
+    params.approvalRequestId,
+    params.organizationId,
+  );
+  if (request.status !== "EXECUTING") {
+    throw new Error("APPROVAL_NOT_EXECUTING");
+  }
+
+  const isHighRisk =
+    request.riskLevel === "HIGH" || request.riskLevel === "CRITICAL";
+  const hasRetryBudget =
+    request.retryCount < request.maxRetries;
+
+  if (isHighRisk || !hasRetryBudget) {
+    return prisma.$transaction(async (tx) => {
+      const updated = await tx.approvalRequest.update({
+        where: { id: request.id },
+        data: {
+          status: "FAILED",
+          result: {
+            error: "STALE_EXECUTION",
+            recoveredAt: new Date().toISOString(),
+            riskLevel: request.riskLevel,
+            reviewNote: params.reviewNote ?? "Stale execution recovered",
+          },
+        },
+      });
+
+      await writeApprovalAudit({
+        db: tx as unknown as Pick<typeof prisma, "auditLog">,
+        organizationId: params.organizationId,
+        approvalRequestId: params.approvalRequestId,
+        actionName: request.actionName,
+        riskLevel: request.riskLevel,
+        reviewedById: params.reviewedById,
+        fromStatus: "EXECUTING",
+        toStatus: "FAILED",
+        reviewNote: params.reviewNote,
+        auditActionName: "approval.stale_recovered",
+      });
+
+      return updated;
+    });
+  }
+
+  return retryApprovalRequest({
+    approvalRequestId: request.id,
+    organizationId: params.organizationId,
+    requestedById: params.reviewedById,
+    reason: params.reviewNote ?? "Auto-retry after stale execution",
+  });
+}
+
+export async function retryApprovalRequest(params: {
+  approvalRequestId: string;
+  organizationId: string;
+  requestedById?: string;
+  reason?: string;
+}) {
+  const parent = await getApprovalWithTenantCheck(
+    params.approvalRequestId,
+    params.organizationId,
+  );
+
+  const hasActive = await prisma.approvalRequest.findFirst({
+    where: {
+      organizationId: params.organizationId,
+      parentApprovalRequestId: params.approvalRequestId,
+      status: { in: ["PENDING", "APPROVED", "EXECUTING"] },
+    },
+  });
+  if (hasActive) {
+    throw new Error("RETRY_CHAIN_ACTIVE");
+  }
+
+  const retryChainId = parent.retryChainId ?? parent.id;
+
+  return prisma.$transaction(async (tx) => {
+    await tx.approvalRequest.update({
+      where: { id: parent.id },
+      data: {
+        deprecatedAt: new Date(),
+      },
+    });
+
+    const approval = await tx.approvalRequest.create({
+      data: {
+        organizationId: parent.organizationId,
+        requestedById: params.requestedById,
+        actionName: parent.actionName,
+        riskLevel: parent.riskLevel,
+        input: JSON.parse(JSON.stringify(parent.input)),
+        reason: params.reason ?? `Retry of ${parent.id}`,
+        status: "PENDING",
+        idempotencyKey: parent.idempotencyKey,
+        retryCount: parent.retryCount + 1,
+        maxRetries: parent.maxRetries,
+        parentApprovalRequestId: parent.id,
+        retryChainId,
+      },
+    });
+
+    await tx.approvalRequest.update({
+      where: { id: parent.id },
+      data: { supersededById: approval.id },
+    });
+
+    await writeApprovalAudit({
+      db: tx as unknown as Pick<typeof prisma, "auditLog">,
+      organizationId: params.organizationId,
+      approvalRequestId: approval.id,
+      actionName: parent.actionName,
+      riskLevel: parent.riskLevel,
+      reviewedById: params.requestedById,
+      fromStatus: parent.status,
+      toStatus: "PENDING",
+      reviewNote: params.reason,
+      auditActionName: "approval.retry",
+    });
+
+    return approval;
+  });
+}
+
+export async function getRetryChain(params: {
+  approvalRequestId: string;
+  organizationId: string;
+}) {
+  const request = await getApprovalWithTenantCheck(
+    params.approvalRequestId,
+    params.organizationId,
+  );
+  const chainId = request.retryChainId ?? request.id;
+
+  const chain = await prisma.approvalRequest.findMany({
+    where: {
+      organizationId: params.organizationId,
+      OR: [{ retryChainId: chainId }, { id: chainId }],
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return chain;
+}
+
+export async function getIdempotencyResult(params: {
+  organizationId: string;
+  idempotencyKey: string;
+}) {
+  return prisma.approvalRequest.findFirst({
+    where: {
+      organizationId: params.organizationId,
+      idempotencyKey: params.idempotencyKey,
+      status: { in: ["EXECUTED", "FAILED"] },
+    },
+    orderBy: { createdAt: "desc" },
   });
 }

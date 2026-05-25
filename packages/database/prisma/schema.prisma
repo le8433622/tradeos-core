@@ -396,24 +396,40 @@ model AuditLog {
 }
 
 model ApprovalRequest {
-  id             String          @id @default(cuid())
-  organizationId String
-  requestedById  String?
-  reviewedById   String?
-  actionName     String
-  riskLevel      ActionRiskLevel @default(HIGH)
-  status         ApprovalStatus  @default(PENDING)
-  input          Json
-  reason         String?
-  reviewNote     String?
-  result         Json?
-  createdAt      DateTime        @default(now())
-  reviewedAt     DateTime?
-  executedAt     DateTime?
+  id                     String          @id @default(cuid())
+  organizationId         String
+  requestedById          String?
+  reviewedById           String?
+  actionName             String
+  riskLevel              ActionRiskLevel @default(HIGH)
+  status                 ApprovalStatus  @default(PENDING)
+  input                  Json
+  reason                 String?
+  reviewNote             String?
+  result                 Json?
+  idempotencyKey         String?
+  executingSince         DateTime?
+  lockedBy               String?
+  retryCount             Int             @default(0)
+  maxRetries             Int             @default(3)
+  expiresAt              DateTime?
+  parentApprovalRequestId String?
+  retryChainId           String?
+  supersededById         String?
+  deprecatedAt           DateTime?
+  createdAt              DateTime        @default(now())
+  reviewedAt             DateTime?
+  executedAt             DateTime?
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  requestedBy  User?        @relation("ApprovalRequester", fields: [requestedById], references: [id], onDelete: SetNull)
-  reviewedBy   User?        @relation("ApprovalReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  organization           Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestedBy            User?           @relation("ApprovalRequester", fields: [requestedById], references: [id], onDelete: SetNull)
+  reviewedBy             User?           @relation("ApprovalReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  parentApprovalRequest  ApprovalRequest? @relation("ApprovalRetryChain", fields: [parentApprovalRequestId], references: [id], onDelete: SetNull)
+  childApprovalRequests  ApprovalRequest[] @relation("ApprovalRetryChain")
+  supersededBy           ApprovalRequest? @relation("ApprovalSupersede", fields: [supersededById], references: [id], onDelete: SetNull)
+  supersedingRequests    ApprovalRequest[] @relation("ApprovalSupersede")
+
+  @@unique([organizationId, idempotencyKey])
 }
 
 model WebhookEvent {
