@@ -138,19 +138,21 @@ Next human/operator action:
 
 ## 6. Remaining Current Work
 
-As of 2026-05-26 after PR `#34` (delete middleware), `#35` (env fix), `#36` (docs sync), and `#37` (E2E harness), the open issues are:
+As of 2026-05-26, all 5 incident/spec issues (`#25`–`#29`) are closed:
 
 ```txt
-#29 — Design plugin intake layer for social pain, supplier sources, quote parsing, and evidence
+#25 — Docs sync (done)
+#26 — Production smoke (verified)
+#27 — E2E harness (built)
+#28 — Supplier Switch spec (done)
+#29 — Plugin Intake spec (done)
 ```
-
-`#25`, `#26`, `#27`, and `#28` are all closed.
 
 Therefore:
 
 - Product feature expansion is frozen.
-- Closed issues must not be reworked.
-- `#29` is spec-only. Must not add source-code implementation.
+- No open issues remain in this batch.
+- Next product direction requires a new GitHub issue.
 
 ## 7. Rule For `#26` — ✅ CLOSED
 
@@ -192,31 +194,9 @@ Remaining for full closure:
 
 Supplier Switch Intelligence spec completed at `docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md`. No source-code changes. No schema migration. No product implementation.
 
-## 8.2 Rule For `#29`
+## 8.2 Rule For `#29` — ✅ Spec Done (2026-05-26)
 
-`#29` is a product/spec task only.
-
-Allowed work:
-
-- docs/31_PLUGIN_INTAKE_LAYER.md
-- checkpoint/current-truth updates that classify the docs correctly
-
-````
-
-Disallowed work:
-
-```txt
-- production source-code implementation
-- schema migrations
-- integration code
-- marketplace/social automation features
-````
-
-Stop if:
-
-```txt
-The work starts adding product/source code before production proof gates are resolved or intentionally separated.
-```
+Plugin Intake Layer spec completed at `docs/31_PLUGIN_INTAKE_LAYER.md`. No source-code integrations. No scraping automation. No marketplace pivot.
 
 ## 9. File Change Boundaries
 

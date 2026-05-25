@@ -40,14 +40,13 @@ For the short, agent-readable source of truth, see `docs/CURRENT_TRUTH.md`.
 
 ## Production Readiness Snapshot
 
-| Area                    | Status                      | Notes                                                                                                                                           |
-| ----------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Local code readiness    | High                        | Core product, MoneyOS, procurement safety, integration/migration proof, and hardening issues have been merged/closed.                           |
-| GitHub state integrity  | In progress via `#25`       | Live issues now show `#25-#29` open. Docs must not keep saying only `#10/#12` are open.                                                         |
-| Production availability | ✅ **Pass** via `#26`       | `/api/health` → 200 `{"ok":true,"service":"tradeos-core-web"}`. Home → 307 redirect (unauthenticated). Middleware deleted (platform crash).     |
-| Browser/E2E confidence  | Blocked by `#27`            | Authenticated E2E harness still needs explicit env validation and skip/fail behavior.                                                           |
-| Product direction       | Spec-only through `#28/#29` | Supplier Switch Intelligence and plugin intake are allowed as docs/specs only. No source-code implementation yet.                               |
-| Production 10/10 claim  | **Not yet**                 | Production `api/health` now works but no authenticated session smoke, no E2E, and no middleware. Residual risk: no edge-level auth enforcement. |
+| Area                    | Status                         | Notes                                                                                                                 |
+| ----------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| Local code readiness    | High                           | Core product, MoneyOS, procurement safety, integration/migration proof, and hardening issues have been merged/closed. |
+| Production availability | ✅ **Pass** via `#26`          | `/api/health` → 200. Home → 307 redirect. Middleware deleted (platform crash).                                        |
+| Browser/E2E confidence  | ✅ **Harness built** via `#27` | 10 Playwright tests exist; run locally with `E2E_RUN_ENABLED=true`. Not in CI.                                        |
+| Product direction       | ✅ **Specs done** `#28/#29`    | Supplier Switch and Plugin Intake specs complete. No source-code implementation.                                      |
+| Production 10/10 claim  | **Not yet**                    | No authenticated session smoke in CI, no edge auth.                                                                   |
 
 ## Production Availability Evidence
 
@@ -157,11 +156,11 @@ Covers: target user, case flow, 5 core objects (EconomicCase, PurchaseBaseline, 
 
 No source-code changes. No schema migration. No product implementation.
 
-### `#29` — Plugin intake layer spec
+### `#29` — ✅ Spec Done (2026-05-26)
 
-Task class: product/spec only.
+Plugin Intake Layer spec created at `docs/31_PLUGIN_INTAKE_LAYER.md`.
 
-Allowed output: `docs/31_PLUGIN_INTAKE_LAYER.md` or equivalent. No source-code integrations, no scraping automation, no marketplace pivot.
+Covers: plugin interface design, 5 source-of-truth rules, evidence creation rules, permission/risk levels, 5 plugin categories mapped to existing architecture, plugin lifecycle, human approval boundaries, first 3 plugins to implement, and non-goals.
 
 ## Agent Execution Rules
 
@@ -176,8 +175,8 @@ docs/SUPER_AGENT_RULER.md
 Then follow these rules:
 
 1. Do not rework closed issues `#4-#24` unless a new failing test/issue proves regression.
-2. Do not add marketplace/CRM/ERP/social/product features while `#25/#26/#27` are open.
-3. Treat `#28/#29` as spec-only until production proof gates are explicitly clear or intentionally separated.
+2. Do not add marketplace/CRM/ERP/social/product features.
+3. No source-code implementation of Supplier Switch or Plugin Intake Layer until production proof gates are explicitly clear or intentionally separated.
 4. Do not fake staging/authenticated proof.
 5. Do not treat missing secrets or invalid env values as code bugs.
 6. If blocked by environment, update docs with exact missing inputs and stop.
