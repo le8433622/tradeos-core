@@ -414,7 +414,45 @@ Every non-trivial final response MUST follow this exact structure:
 
 ---
 
-## 10. Agent Plan Contract
+## 10. Anti-Loop / Pivot Protocol
+
+If code debugging or middleware/runtime changes fail to restore production health, agents MUST follow this protocol BEFORE any further edits:
+
+### 10.1 Two-strike rollback trigger
+
+If a production-affecting fix fails twice (build fails, tests fail, runtime error persists, or health check degrades), the agent MUST stop coding and rollback to the last known healthy deployment.
+
+This includes:
+
+- Middleware/auth/runtime routing changes that are iterated without restoring health
+- Env var or config changes that are tuned repeatedly without effect
+- Any debugging series that produces more than 2 failed attempts
+
+### 10.2 Missing access is not a code bug
+
+Missing environment variables, missing auth tokens, missing deployment access, or missing API keys are infrastructure concerns. Do NOT patch middleware to work around missing env vars. Do NOT add fallback/graceful-degradation code paths for missing deployment configuration.
+
+If the code is correct but the environment is not available, report the exact missing requirement and stop.
+
+### 10.3 Rollback-first debugging
+
+Before attempting any new production fix:
+
+1. Identify the last known healthy commit or deployment
+2. If the current state has deviated from it by more than the intended fix, rollback first
+3. Apply the fix on top of the known-good state, not on top of exploratory debris
+4. Verify against the known-good state before considering the fix complete
+
+### 10.4 Pivot condition
+
+If after rolling back to last healthy state the root cause is still unclear, pivot from debugging to observation:
+
+1. Deploy the last healthy state as-is
+2. Record the residual issue in docs/13_CHECKPOINTS.md
+3. Resume root-cause analysis only after production is confirmed healthy on the restored state
+4. Do NOT iterate fixes in production — reproduce locally or in staging
+
+## 11. Agent Plan Contract
 
 ```typescript
 type AgentPlan = {
