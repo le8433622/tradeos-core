@@ -725,6 +725,7 @@ model SourcingRun {
   checkpoints        WorkCheckpoint[]
   handovers          HumanHandover[]
   purchaseBaselines  PurchaseBaseline[]
+  supplierAlternatives SupplierAlternative[]
 
   @@index([organizationId, status])
   @@index([leadId])
@@ -765,6 +766,43 @@ model PurchaseBaseline {
   @@index([organizationId, sourcingRunId])
 }
 
+model SupplierAlternative {
+  id                  String   @id @default(cuid())
+  organizationId      String
+  sourcingRunId       String
+  supplierCandidateId String?
+
+  supplierName        String
+  productDescription  String
+  quantity            Decimal?
+  unit                String?
+  unitPrice           Decimal?
+  totalCost           Decimal?
+  currency            String?
+  moq                 String?
+  leadTime            String?
+  paymentTerm         String?
+  warranty            String?
+  shippingNotes       String?
+  riskFlags           Json?
+
+  estimatedSavings    Decimal?
+  savingsConfidence   Int?
+  switchingCost       String?
+  switchingRisk       String?
+  totalCostComparison Json?
+
+  evidenceId  String?
+  status      String   @default("DISCOVERED")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sourcingRun       SourcingRun        @relation(fields: [sourcingRunId], references: [id], onDelete: Cascade)
+  supplierCandidate SupplierCandidate? @relation(fields: [supplierCandidateId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, sourcingRunId])
+}
+
 model SupplierCandidate {
   id               String         @id @default(cuid())
   organizationId   String
@@ -783,6 +821,7 @@ model SupplierCandidate {
 
   sourcingRun SourcingRun   @relation(fields: [sourcingRunId], references: [id], onDelete: Cascade)
   quotes      SupplierQuote[]
+  supplierAlternatives SupplierAlternative[]
 
   @@index([organizationId, sourcingRunId])
 }

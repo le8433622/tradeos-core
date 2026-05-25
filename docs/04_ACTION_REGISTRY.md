@@ -95,6 +95,7 @@ Irreversible, legal, financial, or security-sensitive action. (None currently re
 | `report.snapshotCreate`               | analytics-core | MEDIUM | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 | `report.snapshotApprove`              | analytics-core | MEDIUM | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 | `sourcing.createPurchaseBaseline`     | sourcing-core  | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
+| `sourcing.addSupplierAlternative`     | sourcing-core  | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
 | `sourcing.createRun`                  | sourcing-core  | MEDIUM | OWNER, ADMIN                  | Yes        | No                | Yes            |
 | `sourcing.addSupplierCandidate`       | sourcing-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
 | `sourcing.addSupplierQuote`           | sourcing-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
