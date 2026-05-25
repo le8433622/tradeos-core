@@ -886,10 +886,10 @@ export const anonymizePiiAction = registerAction<
       quotations,
       approvals,
       webhooks,
+      evidenceItems,
       buyerIntroductions,
       sellerIntroductions,
       proposerIntroductions,
-      evidenceItems,
     ] = await Promise.all([
       client.contact.updateMany({
         where: { organizationId: parsed.organizationId },

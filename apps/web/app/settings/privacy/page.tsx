@@ -171,6 +171,7 @@ export default function PrivacySettingsPage() {
         <a
           href="/api/privacy/export"
           target="_blank"
+          rel="noopener noreferrer"
           style={{
             display: "inline-block",
             padding: "8px 20px",

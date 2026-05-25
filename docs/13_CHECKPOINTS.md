@@ -69,11 +69,6 @@ The main failure modes were:
 | 2026-05-25 | `pnpm --filter @tradeos/analytics-core test` | pass | 27 tests pass including evidence items in export. |
 | 2026-05-25 | TypeScript check crm-core + analytics-core | pass | Both packages compile cleanly. |
 
-| 2026-05-25 | Micro-task round 1 (PR #21) | pass | #4 evidence-before-billing, #5 buyer report delivery, #6 API error classification + 42 tests, #13 monetization UI/API, #15 observability, #16 procurement UX hardening, #19 webhook production readiness, #18 data governance (evidence export/anonymize/legal-hold). All changes committed and pushed. |
-| 2026-05-25 | `pnpm --filter @tradeos/crm-core test` | pass | 22 tests pass including legal-hold guard and evidence anonymization assertions. |
-| 2026-05-25 | `pnpm --filter @tradeos/analytics-core test` | pass | 27 tests pass including evidence items in export. |
-| 2026-05-25 | TypeScript check crm-core + analytics-core | pass | Both packages compile cleanly. |
-
 Not yet verified:
 
 - Full authenticated `docs/20_STAGING_SMOKE_TESTS.md` evidence against Vercel preview/staging (#10)
@@ -171,7 +166,7 @@ Not yet verified:
 
 ### MoneyOS Hardening (Done — see PR #21)
 
-All seven MoneyOS/perfection micro-tasks completed in round 1:
+All eight MoneyOS/perfection micro-tasks completed in round 1:
 
 - #4 evidence-before-billing: `checkpoint.approveForBilling` counts real `EvidenceItem` records.
 - #5 buyer report delivery: JSON body + `BUYER_DECISION` evidence.

@@ -13,7 +13,13 @@ export async function PATCH(request: Request) {
     const { session } = auth;
 
     const body = await request.json();
-    const legalHold = body.legalHold === true;
+    if (typeof body.legalHold !== "boolean") {
+      return NextResponse.json(
+        { error: "INVALID_REQUEST_BODY", message: "legalHold must be a boolean" },
+        { status: 400 },
+      );
+    }
+    const legalHold = body.legalHold;
 
     const result = await executeAction(
       "privacy.legalHold",
