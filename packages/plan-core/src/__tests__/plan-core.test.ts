@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockOrgFindUnique, mockMemberCount, mockSourcingCount, mockCheckpointCount } =
+const { mockOrgFindUnique, mockMemberCount, mockSourcingCount, mockCheckpointCount, mockPlanLimitFindUnique } =
   vi.hoisted(() => ({
     mockOrgFindUnique: vi.fn(),
     mockMemberCount: vi.fn(),
@@ -8,6 +8,7 @@ const { mockOrgFindUnique, mockMemberCount, mockSourcingCount, mockCheckpointCou
     mockIntegrationCount: vi.fn(),
     mockSourcingCount: vi.fn(),
     mockCheckpointCount: vi.fn(),
+    mockPlanLimitFindUnique: vi.fn(),
   }));
 
 vi.mock("@tradeos/database", () => ({
@@ -18,6 +19,7 @@ vi.mock("@tradeos/database", () => ({
     webhookIntegration: { count: vi.fn() },
     sourcingRun: { count: mockSourcingCount },
     workCheckpoint: { count: mockCheckpointCount },
+    planLimit: { findUnique: mockPlanLimitFindUnique, findMany: vi.fn() },
   },
   Prisma: { JsonNull: null },
 }));
@@ -26,6 +28,7 @@ import { checkEntitlement, FEATURE_LIMITS } from "../index";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockPlanLimitFindUnique.mockResolvedValue(null);
 });
 
 describe("checkEntitlement", () => {
@@ -70,6 +73,16 @@ describe("checkEntitlement", () => {
     await expect(checkEntitlement("org-missing", "seats")).rejects.toThrow(
       "ORGANIZATION_NOT_FOUND",
     );
+  });
+
+  it("uses DB PlanLimit when present (override)", async () => {
+    mockOrgFindUnique.mockResolvedValue({ plan: "TEAM" });
+    mockPlanLimitFindUnique.mockResolvedValue({ limitValue: 50 });
+    mockMemberCount.mockResolvedValue(25);
+    const result = await checkEntitlement("org-1", "seats");
+    expect(result.allowed).toBe(true);
+    expect(result.limit).toBe(50);
+    expect(result.current).toBe(25);
   });
 });
 

@@ -488,9 +488,57 @@ async function seedPermissions() {
   }
 }
 
+async function seedPlanLimits() {
+  const planLimits: { plan: string; feature: string; limitValue: number; description: string }[] = [
+    { plan: "FREE", feature: "seats", limitValue: 2, description: "Max active members" },
+    { plan: "FREE", feature: "inbound_messages", limitValue: 100, description: "Max inbound messages per month" },
+    { plan: "FREE", feature: "ai_monthly_budget", limitValue: 0, description: "AI usage budget (USD)" },
+    { plan: "FREE", feature: "integrations", limitValue: 1, description: "Max webhook integrations" },
+    { plan: "FREE", feature: "sourcing_runs", limitValue: 3, description: "Max active sourcing runs" },
+    { plan: "FREE", feature: "checkpoints", limitValue: 3, description: "Max active checkpoints" },
+    { plan: "PILOT", feature: "seats", limitValue: 5, description: "Max active members" },
+    { plan: "PILOT", feature: "inbound_messages", limitValue: 500, description: "Max inbound messages per month" },
+    { plan: "PILOT", feature: "ai_monthly_budget", limitValue: 50, description: "AI usage budget (USD)" },
+    { plan: "PILOT", feature: "integrations", limitValue: 2, description: "Max webhook integrations" },
+    { plan: "PILOT", feature: "sourcing_runs", limitValue: 10, description: "Max active sourcing runs" },
+    { plan: "PILOT", feature: "checkpoints", limitValue: 10, description: "Max active checkpoints" },
+    { plan: "TEAM", feature: "seats", limitValue: 20, description: "Max active members" },
+    { plan: "TEAM", feature: "inbound_messages", limitValue: 2000, description: "Max inbound messages per month" },
+    { plan: "TEAM", feature: "ai_monthly_budget", limitValue: 200, description: "AI usage budget (USD)" },
+    { plan: "TEAM", feature: "integrations", limitValue: 5, description: "Max webhook integrations" },
+    { plan: "TEAM", feature: "sourcing_runs", limitValue: 50, description: "Max active sourcing runs" },
+    { plan: "TEAM", feature: "checkpoints", limitValue: 50, description: "Max active checkpoints" },
+    { plan: "ASSOCIATION", feature: "seats", limitValue: 100, description: "Max active members" },
+    { plan: "ASSOCIATION", feature: "inbound_messages", limitValue: 10000, description: "Max inbound messages per month" },
+    { plan: "ASSOCIATION", feature: "ai_monthly_budget", limitValue: 1000, description: "AI usage budget (USD)" },
+    { plan: "ASSOCIATION", feature: "integrations", limitValue: 10, description: "Max webhook integrations" },
+    { plan: "ASSOCIATION", feature: "sourcing_runs", limitValue: 200, description: "Max active sourcing runs" },
+    { plan: "ASSOCIATION", feature: "checkpoints", limitValue: 200, description: "Max active checkpoints" },
+  ];
+
+  for (const pl of planLimits) {
+    await prisma.planLimit.upsert({
+      where: { plan_feature: { plan: pl.plan as any, feature: pl.feature } },
+      update: { limitValue: pl.limitValue, description: pl.description },
+      create: {
+        plan: pl.plan as any,
+        feature: pl.feature,
+        limitValue: pl.limitValue,
+        unit: "count",
+        description: pl.description,
+      },
+    });
+  }
+
+  console.log(`  Seeded ${planLimits.length} plan limits`);
+}
+
 async function main() {
   console.log("Seeding permissions and roles...");
   await seedPermissions();
+
+  console.log("Seeding plan limits...");
+  await seedPlanLimits();
 
   const organization = await prisma.organization.upsert({
     where: { id: "demo-org" },
@@ -636,6 +684,8 @@ async function main() {
       status: "draft",
     },
   });
+
+  await seedPlanLimits();
 
   console.log("Seed completed for organization:", organization.id);
 }

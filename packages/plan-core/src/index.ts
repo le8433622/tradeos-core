@@ -67,11 +67,15 @@ export async function checkEntitlement(
   if (!org) throw new Error("ORGANIZATION_NOT_FOUND");
 
   const planKey = org.plan as string;
+  const dbLimit = await prisma.planLimit.findUnique({
+    where: { plan_feature: { plan: org.plan, feature } },
+  });
   const planLimits = FEATURE_LIMITS[planKey];
   const limit =
-    planLimits && feature in planLimits
+    dbLimit?.limitValue ??
+    (planLimits && feature in planLimits
       ? planLimits[feature]
-      : FEATURE_LIMITS.FREE[feature];
+      : FEATURE_LIMITS.FREE[feature]);
 
   if (limit === null) return { allowed: true, limit: null, current: 0 };
 
@@ -167,13 +171,23 @@ export const getPlanAction = registerAction<
     if (!org) throw new Error("ORGANIZATION_NOT_FOUND");
 
     const planKey = org.plan as string;
-    const limits = FEATURE_LIMITS[planKey] ?? FEATURE_LIMITS.FREE;
+    const dbLimits = await prisma.planLimit.findMany({
+      where: { plan: org.plan },
+    });
+    const dbLimitMap = Object.fromEntries(
+      dbLimits.map((l) => [l.feature, l.limitValue]),
+    );
+    const hardcodedLimits = FEATURE_LIMITS[planKey] ?? FEATURE_LIMITS.FREE;
+    const limits = Object.fromEntries(
+      Object.entries(hardcodedLimits).map(([k, v]) => [
+        k,
+        k in dbLimitMap ? dbLimitMap[k] : v ?? null,
+      ]),
+    );
 
     return {
       plan: org.plan,
-      limits: Object.fromEntries(
-        Object.entries(limits).map(([k, v]) => [k, v ?? null]),
-      ),
+      limits: limits as Record<string, number | null>,
     };
   },
 });
