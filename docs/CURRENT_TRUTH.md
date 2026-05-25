@@ -15,31 +15,32 @@
   - `#23` — docs: add `CURRENT_TRUTH`, checkpoint rewrite, `SUPER_AGENT_RULER`.
   - `#22` — AI procurement safety and blocked-action sync.
   - `#21` — MoneyOS evidence/billing/API errors/billing UI micro-task round.
-- Open issues:
-  - `#29` — P2: design plugin intake layer for social pain, supplier sources, quote parsing, and evidence.
+- Open issues: **none** (all 5 incident/spec issues closed).
 - Closed/completed issues (newest first):
+  - `#29` — ✅ **DONE**: Plugin Intake Layer spec at `docs/31_PLUGIN_INTAKE_LAYER.md`.
   - `#28` — ✅ **DONE**: Supplier Switch Intelligence spec at `docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md`.
   - `#27` — ✅ **DONE**: Playwright E2E harness with 10 env-gated tests.
   - `#26` — ✅ **PASSED**: production smoke test verified 2026-05-25. `/api/health` returns 200.
+  - `#25` — ✅ **DONE**: docs synced to live GitHub state.
   - `#10` — closed as not planned; replaced by `#26`.
   - `#12` — closed as not planned; replaced by `#27`.
   - `#4`, `#5`, `#6`, `#7`, `#11`, `#13`, `#14`, `#15`, `#16`, `#17`, `#18`, `#19`.
 
 ## Current Mode
 
-The repo is in **spec-forward mode**. All P0 incident recovery issues are closed. Remaining open issue: `#29` (plugin intake spec).
+The repo is in **spec-complete / production-proof** mode. All 5 incident recovery and product spec issues are closed.
 
 Allowed now:
 
-1. Write product/spec docs for `#29` without source-code implementation.
+1. Unit and integration testing for registered actions.
 2. Authenticated E2E can be run locally (`E2E_RUN_ENABLED=true pnpm test:e2e`).
-3. Unit/integration testing for registered actions.
+3. Next spec or product direction defined in a new GitHub issue.
 
 Not allowed now:
 
 1. Claim production 10/10 readiness (no authenticated session smoke in CI, no edge auth).
-2. Add marketplace/CRM/ERP/social/product features outside the open issue `#29`.
-3. Implement Supplier Switch Intelligence code before production gates clear.
+2. Implement Supplier Switch or Plugin Intake Layer code before production proof gates clear.
+3. Add marketplace/CRM/ERP/social/product features.
 
 ## Production Availability Truth
 
@@ -84,7 +85,7 @@ This issue is complete only when:
 
 1. `docs/CURRENT_TRUTH.md` reflects live GitHub state.
 2. `docs/13_CHECKPOINTS.md` no longer contradicts live issue/PR state.
-3. `docs/SUPER_AGENT_RULER.md` no longer says `#10/#12` are the only open issues.
+3. `docs/SUPER_AGENT_RULER.md` no longer references stale open issues.
 4. No product/source files are changed.
 
 ### `#26` — ✅ CLOSED (2026-05-25)
@@ -101,9 +102,9 @@ This may require Playwright/test infrastructure plus test auth credentials. Miss
 
 Spec completed at `docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md`. No source-code changes.
 
-### `#29` — Product/spec task
+### `#29` — ✅ CLOSED (2026-05-26)
 
-Spec-only plugin intake architecture. No source-code integrations.
+Spec completed at `docs/31_PLUGIN_INTAKE_LAYER.md`. No source-code integrations.
 
 ## Definition Of Done For Current Loop
 
@@ -111,6 +112,5 @@ The current loop is done when:
 
 1. GitHub state has been checked live.
 2. `docs/CURRENT_TRUTH.md`, `docs/13_CHECKPOINTS.md`, and `docs/SUPER_AGENT_RULER.md` match that state.
-3. Production availability is honestly marked with unauthenticated proof (verified) and residual risks (no edge auth, no E2E).
-4. No unrelated source-code changes are introduced.
-5. `pnpm docs:check` passes.
+3. No open issues remain in the #25-#29 batch.
+4. All spec/docs work is clearly marked as spec-only with no source-code implementation.

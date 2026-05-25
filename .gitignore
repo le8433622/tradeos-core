@@ -13,3 +13,5 @@ sbom.json
 eval-output/
 *.tsbuildinfo
 next-env.d.ts
+test-results/
+e2e-screenshots/
