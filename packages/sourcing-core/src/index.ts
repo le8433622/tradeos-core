@@ -1,4 +1,4 @@
-import { prisma } from "@tradeos/database";
+import { Prisma, prisma } from "@tradeos/database";
 import {
   DEFAULT_ADMIN_ROLES,
   DEFAULT_LOW_RISK_ROLES,
@@ -8,6 +8,7 @@ import {
 import type { ActionContext } from "@tradeos/policy-core";
 import { checkEntitlement } from "@tradeos/plan-core";
 import { z } from "zod";
+import { computeSwitchDecision } from "./switch-decision";
 
 export const createSourcingRunSchema = z
   .object({
@@ -507,6 +508,174 @@ export const deliverBuyerReportAction = registerAction<
       select: { id: true },
     });
     return { status: updated.status, evidenceId: evidence.id };
+  },
+});
+
+export const generateSwitchDecisionSchema = z
+  .object({
+    organizationId: z.string().min(1),
+    sourcingRunId: z.string().min(1),
+  })
+  .strict();
+
+export type GenerateSwitchDecisionResult = {
+  id: string;
+  recommendation: string;
+  confidence: string;
+  savingsScore: number;
+  evidenceScore: number;
+  paymentRiskScore: number;
+  leadTimeRiskScore: number;
+  dependencyRiskScore: number;
+  overallScore: number;
+  monthlySavings: number | null;
+  annualSavings: number | null;
+  savingsPercent: number | null;
+  currency: string | null;
+  evidenceCount: number;
+  missingProof: string[];
+  riskFlags: string[];
+  summary: string;
+  nextActions: string[];
+};
+
+export const generateSwitchDecisionAction = registerAction<
+  z.infer<typeof generateSwitchDecisionSchema>,
+  GenerateSwitchDecisionResult
+>({
+  name: "sourcing.generateSwitchDecision",
+  description:
+    "Generate a deterministic switch decision report from baseline, alternatives, and evidence. Recommends SWITCH, NEGOTIATE, or WAIT.",
+  riskLevel: "LOW",
+  allowedRoles: DEFAULT_ADMIN_ROLES,
+  requiresApprovalForAI: false,
+  handler: async (input, context) => {
+    const parsed = generateSwitchDecisionSchema.parse(input);
+    const run = await prisma.sourcingRun.findUnique({
+      where: { id: parsed.sourcingRunId },
+      select: {
+        organizationId: true,
+        currency: true,
+      },
+    });
+    validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+
+    const [baselines, alternatives, evidenceCount] = await Promise.all([
+      prisma.purchaseBaseline.findMany({
+        where: { sourcingRunId: parsed.sourcingRunId },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      }),
+      prisma.supplierAlternative.findMany({
+        where: { sourcingRunId: parsed.sourcingRunId },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.evidenceItem.count({
+        where: { sourcingRunId: parsed.sourcingRunId },
+      }),
+    ]);
+
+    const baseline = baselines[0] ?? null;
+    const decision = computeSwitchDecision({
+      baseline: baseline
+        ? {
+            unitPrice: baseline.unitPrice?.toString(),
+            quantity: baseline.quantity?.toString(),
+            currency: baseline.currency,
+            frequency: baseline.frequency,
+            paymentTerms: baseline.paymentTerms,
+            leadTime: baseline.leadTime,
+            riskFlags: baseline.riskFlags,
+          }
+        : null,
+      alternatives: alternatives.map((a) => ({
+        unitPrice: a.unitPrice?.toString(),
+        totalCost: a.totalCost?.toString(),
+        currency: a.currency,
+        moq: a.moq,
+        leadTime: a.leadTime,
+        paymentTerm: a.paymentTerm,
+        estimatedSavings: a.estimatedSavings?.toString(),
+        savingsConfidence: a.savingsConfidence,
+        switchingCost: a.switchingCost,
+        switchingRisk: a.switchingRisk,
+        riskFlags: a.riskFlags,
+        evidenceId: a.evidenceId,
+      })),
+      evidenceCount,
+      defaultCurrency: run?.currency ?? null,
+    });
+
+    const report = await prisma.switchDecisionReport.create({
+      data: {
+        organizationId: parsed.organizationId,
+        sourcingRunId: parsed.sourcingRunId,
+        recommendation: decision.recommendation,
+        confidence: decision.confidence,
+        savingsScore: decision.savingsScore,
+        evidenceScore: decision.evidenceScore,
+        paymentRiskScore: decision.paymentRiskScore,
+        leadTimeRiskScore: decision.leadTimeRiskScore,
+        dependencyRiskScore: decision.dependencyRiskScore,
+        overallScore: decision.overallScore,
+        monthlySavings: decision.monthlySavings,
+        annualSavings: decision.annualSavings,
+        savingsPercent: decision.savingsPercent,
+        currency: decision.currency,
+        topAlternativeId:
+          decision.topAlternativeIndex != null
+            ? alternatives[decision.topAlternativeIndex]?.id
+            : null,
+        baselineId: baseline?.id ?? null,
+        evidenceSummary: { count: decision.evidenceCount },
+        missingProof: JSON.parse(JSON.stringify(decision.missingProof)),
+        riskFlags: JSON.parse(JSON.stringify(decision.riskFlags)),
+        summary: decision.summary,
+        nextActions: JSON.parse(JSON.stringify(decision.nextActions)),
+      },
+      select: {
+        id: true,
+        recommendation: true,
+        confidence: true,
+        savingsScore: true,
+        evidenceScore: true,
+        paymentRiskScore: true,
+        leadTimeRiskScore: true,
+        dependencyRiskScore: true,
+        overallScore: true,
+        monthlySavings: true,
+        annualSavings: true,
+        savingsPercent: true,
+        currency: true,
+        summary: true,
+        nextActions: true,
+      },
+    });
+
+    return {
+      id: report.id,
+      recommendation: report.recommendation,
+      confidence: report.confidence,
+      savingsScore: report.savingsScore ?? 0,
+      evidenceScore: report.evidenceScore ?? 0,
+      paymentRiskScore: report.paymentRiskScore ?? 0,
+      leadTimeRiskScore: report.leadTimeRiskScore ?? 0,
+      dependencyRiskScore: report.dependencyRiskScore ?? 0,
+      overallScore: report.overallScore ?? 0,
+      monthlySavings: report.monthlySavings
+        ? Number(report.monthlySavings)
+        : null,
+      annualSavings: report.annualSavings ? Number(report.annualSavings) : null,
+      savingsPercent: report.savingsPercent
+        ? Number(report.savingsPercent)
+        : null,
+      currency: report.currency,
+      evidenceCount,
+      missingProof: decision.missingProof,
+      riskFlags: decision.riskFlags,
+      summary: report.summary ?? "",
+      nextActions: decision.nextActions,
+    };
   },
 });
 

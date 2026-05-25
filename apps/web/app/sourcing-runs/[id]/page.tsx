@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import "@tradeos/sourcing-core";
 import PurchaseBaselineForm from "./purchase-baseline-form";
 import SupplierAlternativeForm from "./supplier-alternative-form";
+import SwitchDecisionDisplay from "./switch-decision-display";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "#6b7280",
@@ -297,6 +298,11 @@ export default async function SourcingRunDetailPage({
         <div style={{ marginTop: 16 }}>
           <SupplierAlternativeForm sourcingRunId={id} />
         </div>
+      </section>
+
+      <section style={{ marginTop: 32 }}>
+        <h2>Switch Decision Report</h2>
+        <SwitchDecisionDisplay sourcingRunId={id} />
       </section>
 
       <section style={{ marginTop: 32 }}>
