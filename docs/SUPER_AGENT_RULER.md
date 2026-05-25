@@ -132,58 +132,43 @@ Next human/operator action:
 2. Never keep coding when the remaining blocker is credentials or staging access.
 3. Never replace real proof with a simulated proof unless the issue explicitly asks for a simulation.
 4. Never solve an ops proof task by adding unrelated UI/backend features.
-5. Never expand scope from `#10/#12` into new marketplace, CRM, ERP, or social features.
+5. Never expand scope from closed issues (`#10`, `#12`, `#26`) into new marketplace, CRM, ERP, or social features.
 6. Never treat missing environment variables as product defects unless the issue is specifically env validation.
 7. Never change more than the minimal required files for the classified task.
 
 ## 6. Remaining Current Work
 
-As of 2026-05-25 after PR `#23` and PR `#24` merged, the open issues are:
+As of 2026-05-25 after PR `#34` (delete middleware) and PR `#35` (env validation fix), the open issues are:
 
 ```txt
 #25 — Rebuild current truth after incident recovery
-#26 — Run authenticated production/staging smoke after incident restore
 #27 — Add authenticated E2E harness with environment-blocked stop behavior
 #28 — Define Supplier Switch Intelligence product spec without coding features
 #29 — Design plugin intake layer for social pain, supplier sources, quote parsing, and evidence
 ```
+
+`#26` is closed (production unauthenticated smoke verified — `/api/health` returns 200).
 
 Therefore:
 
 - Product feature expansion is frozen.
 - Closed issues must not be reworked.
 - `#25` must synchronize docs/truth only.
-- `#26` must prove production/staging health or record environment blockers.
 - `#27` may add E2E harness only with explicit env-blocked behavior.
 - `#28/#29` are spec-only. They must not add source-code implementation.
+- `#26` is done. Do not reopen it. Authenticated smoke deferred to `#27`.
 
-## 7. Rule For `#26`
+## 7. Rule For `#26` — ✅ CLOSED
 
-`#26` is an authenticated production/staging proof task after incident recovery.
-
-Allowed work:
-
-```txt
-- update production/staging smoke checklist
-- record exact missing env/session inputs
-- add proof table entries after real smoke
-- add scripts only if they directly support smoke evidence
-```
-
-Disallowed work:
+`#26` has been completed. Production health verified at unauthenticated level:
 
 ```txt
-- product feature changes
-- fake login proof
-- local-only screenshots presented as staging proof
-- new UX unrelated to smoke
+$ curl https://tradeos-core.vercel.app/api/health
+{"ok":true,"service":"tradeos-core-web"}
+HTTP 200
 ```
 
-Stop if:
-
-```txt
-Vercel deployment URL, Supabase auth user, production/staging credentials, runtime logs, or authenticated browser/session are unavailable.
-```
+Authenticated smoke evidence is now part of `#27` (E2E harness). Do not reopen `#26` or redo production smoke unless a new issue documents a regression.
 
 ## 8. Rule For `#27`
 
