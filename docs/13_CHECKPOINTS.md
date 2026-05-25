@@ -9,15 +9,15 @@
 - Latest `main` commit: `7b2d7ea` (`docs: add Supplier Switch Execution Protocol + lock #40→#45 sequence`).
 - Latest CI: check live before merge-sensitive work; recent local pre-commit/typecheck/docs gates passed on doc/spec PRs.
 - Open issues:
-  - `#48` — P0 (ACTIVE): Cloud DB Safety Protocol — blocks all schema work in `#40`–`#45`.
-  - `#40` — **IN PROGRESS (local)**: PurchaseBaseline MVP — model+action+API+UI built. Awaiting migration + final PR.
   - `#41` — P1: Implement SupplierAlternative and QuoteProof normalization MVP.
   - `#42` — P1: Implement SwitchDecisionReport generator MVP.
   - `#43` — P2: Add buyer-facing Switch Report portal MVP.
   - `#44` — P2: Map Supplier Switch checkpoints to billing and paid proof.
   - `#45` — P2: Add OutcomeLearning skeleton for Supplier Switch cases.
-- Closed/completed issues:
-  - `#29` — ✅ **DONE**: Plugin Intake Layer spec, no source-code integrations.
+- Closed/completed issues (newest first):
+  - `#48` — ✅ **CLOSED**: Cloud DB Safety Protocol (PR #49).
+  - `#40` — ✅ **CLOSED**: PurchaseBaseline MVP (PR #47).
+  - `#29` — ✅ **DONE**: Plugin Intake Layer spec.
   - `#28` — ✅ **DONE**: Supplier Switch Intelligence spec, no schema/source implementation.
   - `#27` — ✅ **DONE**: Playwright E2E harness with env-gated tests.
   - `#26` — ✅ **PASSED**: production smoke verified 2026-05-25 — `/api/health` → 200 `{"ok":true,"service":"tradeos-core-web"}`, `/` → 307 (unauthenticated redirect expected).
@@ -37,7 +37,10 @@
   - `#17` AI procurement safety.
   - `#18` data governance.
   - `#19` webhook production readiness.
-- Recently merged PRs:
+- Recently merged PRs (newest first):
+  - `#49` — Cloud DB Safety Protocol.
+  - `#47` — PurchaseBaseline MVP.
+  - `#46` — Supplier Switch Execution Protocol + lock #40→#45 sequence.
   - `#39` — Plugin Intake Layer spec.
   - `#38` — Supplier Switch Intelligence spec.
   - `#37` — Playwright E2E harness.

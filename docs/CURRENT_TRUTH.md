@@ -9,6 +9,8 @@
 - Latest `main` commit: `7b2d7ea` (`docs: add Supplier Switch Execution Protocol + lock #40→#45 sequence`).
 - Latest local verification: pre-commit hooks passed on recent doc/spec PRs; latest CI must be checked live before merge-sensitive work.
 - Recently merged PRs (newest first):
+  - `#49` — feat: add Cloud DB Safety Protocol (closes #48).
+  - `#47` — feat: implement PurchaseBaseline MVP (closes #40).
   - `#46` — docs: add Supplier Switch Execution Protocol + lock #40→#45 sequence.
   - `#39` — docs: add Plugin Intake Layer spec.
   - `#38` — docs: add Supplier Switch Intelligence spec.
@@ -21,14 +23,14 @@
   - `#22` — AI procurement safety and blocked-action sync.
   - `#21` — MoneyOS evidence/billing/API errors/billing UI micro-task round.
 - Open issues:
-  - `#48` — **P0**: Cloud DB Safety Protocol — blocks all schema work in `#40`–`#45`.
-  - `#40` — **IN PROGRESS** (local): PurchaseBaseline MVP — model+action+API+UI done, awaiting final PR.
   - `#41` — P1: Implement SupplierAlternative and QuoteProof normalization MVP.
   - `#42` — P1: Implement SwitchDecisionReport generator MVP.
   - `#43` — P2: Add buyer-facing Switch Report portal MVP.
   - `#44` — P2: Map Supplier Switch checkpoints to billing and paid proof.
   - `#45` — P2: Add OutcomeLearning skeleton for Supplier Switch cases.
 - Closed/completed issues (newest first):
+  - `#48` — ✅ **CLOSED**: Cloud DB Safety Protocol.
+  - `#40` — ✅ **CLOSED**: PurchaseBaseline MVP — model+action+API+UI+PR merged.
   - `#29` — ✅ **DONE**: Plugin Intake Layer spec at `docs/31_PLUGIN_INTAKE_LAYER.md`.
   - `#28` — ✅ **DONE**: Supplier Switch Intelligence spec at `docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md`.
   - `#27` — ✅ **DONE**: Playwright E2E harness with 10 env-gated tests.
@@ -40,17 +42,14 @@
 
 ## Current Mode
 
-The repo is in **Cloud DB Safety + Supplier Switch execution mode**.
-
-The safety gate (`#48`) must clear before any schema work.
+The repo is in **Supplier Switch execution mode** — next gate is `#41`.
 
 Allowed now:
 
-1. **`#48`**: Create Cloud DB Safety Protocol — pure docs task, no code/schema changes.
-2. After `#48` is merged: proceed to `#40` (PurchaseBaseline MVP).
-3. Proceed to `#41` only after `#40` is merged, tested, and documented.
-4. Run authenticated E2E locally when needed (`E2E_RUN_ENABLED=true pnpm --filter @tradeos/web test:e2e`).
-5. Use registered actions, tenant isolation, evidence records, approval boundaries, and checkpoint docs for every step.
+1. **`#41`**: Implement SupplierAlternative and QuoteProof normalization — manual input, existing `SupplierCandidate` + `SupplierQuote` mapping, evidence linked.
+2. Proceed to `#42` only after `#41` is merged, tested, and documented.
+3. Run authenticated E2E locally when needed (`E2E_RUN_ENABLED=true pnpm --filter @tradeos/web test:e2e`).
+4. Use registered actions, tenant isolation, evidence records, approval boundaries, and checkpoint docs for every step.
 
 Not allowed now:
 
@@ -120,33 +119,15 @@ Spec completed at `docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md`. No source-code chan
 Spec completed at `docs/31_PLUGIN_INTAKE_LAYER.md`. No source-code integrations.
 
 <<<<<<< HEAD
-### `#48` — P0 ACTIVE (2026-05-26)
+### `#48` — ✅ CLOSED (2026-05-26)
 
-Cloud DB Safety Protocol blocks all schema work in `#40`–`#45`.
+Cloud DB Safety Protocol created. Document covers: Prisma migration safety, Supabase environment isolation (shared DB risk documented), E2E/test data isolation (E2E_RUN_ID + organizationId), Vercel/Supabase connection pool guardrails, deploy trigger safety (verified: no deploy hook, CI safe). Blocks all schema work until enforced.
 
-**Completed locally:**
+### `#40` — ✅ CLOSED (2026-05-26)
 
-- Created `docs/33_CLOUD_DB_SAFETY_PROTOCOL.md`
-- Updated `SUPER_AGENT_RULER.md`, `13_CHECKPOINTS.md`, `CURRENT_TRUTH.md`, `20_DEVELOPER_ONBOARDING.md`
+PurchaseBaseline MVP implemented and merged. Model+action+API+UI built: Prisma schema with tenant isolation, registered action `sourcing.createPurchaseBaseline`, POST API route, inline form + display on sourcing run detail page.
 
-**Blocks**: `#40`–`#45`.
-
-### `#40` — NEXT GATE (BLOCKED ON `#48`)
-=======
-### `#40` — FIRST ACTIVE IMPLEMENTATION GATE (LOCAL: IMPLEMENTED)
->>>>>>> 635ebf1 (feat: implement PurchaseBaseline MVP (#40))
-
-Build Current Spend/PurchaseBaseline only. Manual input first. Existing `EvidenceItem` links only. No marketplace, no social/API integration, no quote scraping.
-
-**Completed locally (2026-05-26):**
-
-<<<<<<< HEAD
-- Prisma schema: `PurchaseBaseline` model + new `EvidenceType` enum values
-- Registered action: `sourcing.createPurchaseBaseline`
-- API route: `POST /api/sourcing-runs/[id]/purchase-baseline`
-- UI: inline form + display on sourcing run detail page
-- Typecheck passes
-- PR #47 sent, blocked until `#48` merges
+**Next**: `#41` — SupplierAlternative + QuoteProof normalization.
 =======
 - Added `PurchaseBaseline` model to Prisma schema (tenant-scoped, linked to SourcingRun)
 - Added new `EvidenceType` enum values (`CURRENT_SUPPLIER_INVOICE`, `CURRENT_SUPPLIER_PRICE_LIST`, `ALTERNATIVE_QUOTE`, `ALTERNATIVE_PROFILE`, `MARKET_BENCHMARK`, `SWITCH_DECISION_REPORT`, `OUTCOME_EVIDENCE`, `NEGOTIATION_LOG`)
