@@ -137,7 +137,13 @@ export async function receiveWebhookEvent(params: {
     });
 
     if (existing) {
-      return { event: existing, duplicate: true };
+      if (existing.status !== "DUPLICATE") {
+        await prisma.webhookEvent.update({
+          where: { id: existing.id },
+          data: { status: "DUPLICATE" },
+        });
+      }
+      return { event: { ...existing, status: "DUPLICATE" }, duplicate: true };
     }
 
     throw error;
