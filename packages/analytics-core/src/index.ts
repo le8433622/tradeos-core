@@ -956,6 +956,7 @@ async function exportTenantDataWithClient(
     webhookEvents,
     integrations,
     snapshots,
+    evidenceItems,
   ] = await Promise.all([
     client.organization.findUnique({ where: { id: organizationId } }),
     client.user.findMany({ where: { organizationId } }),
@@ -972,6 +973,7 @@ async function exportTenantDataWithClient(
     client.webhookEvent.findMany({ where: { organizationId } }),
     client.webhookIntegration.findMany({ where: { organizationId } }),
     client.reportSnapshot.findMany({ where: { organizationId } }),
+    client.evidenceItem.findMany({ where: { organizationId } }),
   ]);
 
   const exported = {
@@ -993,6 +995,7 @@ async function exportTenantDataWithClient(
       webhookEvents: webhookEvents.length,
       integrations: integrations.length,
       snapshots: snapshots.length,
+      evidenceItems: evidenceItems.length,
     },
     users,
     companies,
@@ -1016,6 +1019,13 @@ async function exportTenantDataWithClient(
     })),
     integrations,
     snapshots,
+    evidenceItems: evidenceItems.map((e) => ({
+      ...e,
+      content: undefined,
+      fileUrl: undefined,
+      externalUrl: undefined,
+      metadata: undefined,
+    })),
   };
   return exported;
 }

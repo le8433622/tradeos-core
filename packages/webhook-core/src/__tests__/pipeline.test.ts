@@ -87,7 +87,10 @@ describe("receiveWebhookEvent", () => {
         eventKey: "WHATSAPP:ext-123:msg-456:hello",
       },
     });
-    expect(result).toEqual({ duplicate: true, event: existingEvent });
+    expect(result).toEqual({
+      duplicate: true,
+      event: { ...existingEvent, status: "DUPLICATE" },
+    });
   });
 
   it("re-throws error when Prisma create fails and no existing event found", async () => {

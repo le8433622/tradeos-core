@@ -825,6 +825,7 @@ export const anonymizePiiAction = registerAction<
     anonymizedContacts: number;
     anonymizedLeads: number;
     anonymizedRecords: number;
+    anonymizedEvidenceItems: number;
   }
 >({
   name: "privacy.anonymizePii",
@@ -888,6 +889,7 @@ export const anonymizePiiAction = registerAction<
       buyerIntroductions,
       sellerIntroductions,
       proposerIntroductions,
+      evidenceItems,
     ] = await Promise.all([
       client.contact.updateMany({
         where: { organizationId: parsed.organizationId },
@@ -941,6 +943,17 @@ export const anonymizePiiAction = registerAction<
           error: null,
         },
       }),
+      client.evidenceItem.updateMany({
+        where: { organizationId: parsed.organizationId },
+        data: {
+          title: "[ANONYMIZED]",
+          description: null,
+          content: null,
+          fileUrl: null,
+          externalUrl: null,
+          metadata: Prisma.DbNull,
+        },
+      }),
       client.introductionRequest.updateMany({
         where: { buyerOrgId: parsed.organizationId },
         data: { buyerNote: null, buyerContactId: null },
@@ -974,6 +987,7 @@ export const anonymizePiiAction = registerAction<
       anonymizedUsers: candidateIds.length,
       anonymizedContacts: contacts.count,
       anonymizedLeads: leads.count,
+      anonymizedEvidenceItems: evidenceItems.count,
       anonymizedRecords:
         contacts.count +
         leads.count +
@@ -986,7 +1000,8 @@ export const anonymizePiiAction = registerAction<
         webhooks.count +
         buyerIntroductions.count +
         sellerIntroductions.count +
-        proposerIntroductions.count,
+        proposerIntroductions.count +
+        evidenceItems.count,
     };
   },
 });

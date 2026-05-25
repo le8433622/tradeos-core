@@ -26,6 +26,7 @@ const {
   mockApprovalRequestUpdateMany,
   mockWebhookEventUpdateMany,
   mockIntroductionRequestUpdateMany,
+  mockEvidenceItemUpdateMany,
   mockUserUpdate,
   mockCompanyUpdateMany,
   mockTaskUpdateMany,
@@ -61,6 +62,7 @@ const {
     .mockResolvedValue({ count: 0 });
   const mockUserUpdate = vi.fn();
   const mockTaskUpdateMany = vi.fn().mockResolvedValue({ count: 0 });
+  const mockEvidenceItemUpdateMany = vi.fn().mockResolvedValue({ count: 0 });
   const tx = {
     auditLog: { create: mockAuditCreate },
     company: {
@@ -99,6 +101,7 @@ const {
     approvalRequest: { updateMany: mockApprovalRequestUpdateMany },
     webhookEvent: { updateMany: mockWebhookEventUpdateMany },
     introductionRequest: { updateMany: mockIntroductionRequestUpdateMany },
+    evidenceItem: { updateMany: mockEvidenceItemUpdateMany },
   };
   return {
     mockAuditCreate,
@@ -127,6 +130,7 @@ const {
     mockApprovalRequestUpdateMany,
     mockWebhookEventUpdateMany,
     mockIntroductionRequestUpdateMany,
+    mockEvidenceItemUpdateMany,
     mockUserUpdate,
     mockTaskUpdateMany,
     tx,
@@ -138,7 +142,7 @@ vi.mock("@tradeos/database", () => ({
     ...tx,
     $transaction: vi.fn((cb: (client: unknown) => unknown) => cb(tx)),
   },
-  Prisma: { JsonNull: null },
+  Prisma: { JsonNull: null, DbNull: null },
 }));
 
 import { executeAction, getAction } from "@tradeos/policy-core";
@@ -629,9 +633,14 @@ describe("crm-core registered actions", () => {
     expect(
       (result as Record<string, unknown>).anonymizedRecords,
     ).toBeGreaterThan(0);
+    expect((result as Record<string, unknown>).anonymizedEvidenceItems).toBe(0);
     expect(mockContactUpdateMany).toHaveBeenCalledWith({
       where: { organizationId: "org-1" },
       data: expect.objectContaining({ name: null, email: null, phone: null }),
+    });
+    expect(mockEvidenceItemUpdateMany).toHaveBeenCalledWith({
+      where: { organizationId: "org-1" },
+      data: expect.objectContaining({ title: "[ANONYMIZED]" }),
     });
   });
 
