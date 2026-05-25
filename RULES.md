@@ -552,13 +552,19 @@ Current state: exists. If not, add it.
 
 ### 6.1 Every tenant-scoped Prisma query MUST include `organizationId`
 
+**Enforced by middleware:** A Prisma middleware (`packages/database/src/tenant-guard.ts`) now enforces this automatically. Any `findMany`, `findFirst`, `count`, `aggregate`, `groupBy`, `update`, `updateMany`, `delete`, `deleteMany`, `create`, `createMany`, or `upsert` on a tenant-scoped model **must** include `organizationId` in `where` or `data`, or the middleware throws `TENANT_SCOPE_REQUIRED`.
+
 ```typescript
 // GOOD
 prisma.lead.findMany({ where: { organizationId: session.organizationId } });
 
-// BAD — returns data from ALL orgs (CRITICAL)
+// BAD — throws TENANT_SCOPE_REQUIRED (CRITICAL)
 prisma.lead.findMany();
 ```
+
+**Exempt operations:** `findUnique` is exempt by design — single-record lookups by ID are validated at the application layer. **Exempt models:** `User`, `Organization`, `Role`, `Permission`, `RolePermission`, and global reference data.
+
+See `packages/database/src/tenant-guard.ts` for the complete list of tenant-scoped models.
 
 ### 6.2 Multi-org queries must use `OrganizationMember` join table
 
