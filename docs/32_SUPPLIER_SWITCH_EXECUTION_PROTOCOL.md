@@ -4,6 +4,24 @@
 **Status**: Active execution protocol for issues `#40`–`#45`
 **Purpose**: force TradeOS into the smallest complete buyer-led economic case loop before any marketplace, generic CRM/ERP, or external social/API integration work.
 
+## 0. Reality Lock Priority
+
+This protocol does not authorize new feature work while production survival gates are open. The active order is declared in `docs/CURRENT_TRUTH.md` and currently prioritizes:
+
+```txt
+#65 -> #69 -> #70 -> #53 -> #66 -> #60/status-confirmation
+```
+
+Supplier Switch remains the product direction, but production safety and behavior QA gates must be green before any further expansion, plugin/toolcall implementation, new package creation, or schema-heavy feature work.
+
+**Kill switch policy** (`docs/34_KILL_SWITCH_POLICY.md`) is active: no automation path in this chain may be enabled in production without its OFF switch first being present and tested.
+
+If a requested task violates the active order or attempts expansion outside the current gate, stop and report:
+
+```txt
+BLOCKED_SCOPE_EXPANSION
+```
+
 ## 1. Non-Negotiable Product Chain
 
 Every implementation must preserve this exact order:
@@ -29,44 +47,36 @@ Do not skip a stage. Do not start later stages until the prior stage is merged, 
 3. Social/API integrations: Zernio, Zalo, Facebook, Instagram, TikTok, LinkedIn, Reddit, Telegram, Alibaba, AliExpress, 1688, Shopee, Lazada, payment gateways.
 4. Automated scraping, quote harvesting, or external supplier crawling.
 5. AI auto-purchase, AI auto-switch, AI auto-negotiation, or any external commitment without buyer approval.
+6. New package creation before Supplier Switch paid pilot proof.
+7. Package-boundary refactor before end-to-end behavior is proven by E2E or pilot evidence.
+8. Schema-changing expansion while production safety gates `#53` and `#66` are unfinished.
 
 ### Allowed Now
 
-1. Manual Current Spend capture.
-2. Manual PurchaseBaseline creation.
-3. Manual Alternative Proof and QuoteProof capture.
-4. Deterministic SwitchDecisionReport generation.
-5. Buyer approval or request-more-proof state.
-6. Existing WorkCheckpoint/Payment mapping where sufficient.
-7. OutcomeLearning skeleton tied to the originating case.
+1. Manual Current Spend capture — UI exists.
+2. Manual PurchaseBaseline creation — action + API + UI exist.
+3. Manual Alternative Proof and QuoteProof capture — action + API exist.
+4. Deterministic SwitchDecisionReport generation — generator exists.
+5. Buyer approval or request-more-proof state — portal exists.
+6. Existing WorkCheckpoint/Payment mapping where sufficient — checkpoints exist.
+7. OutcomeLearning skeleton tied to the originating case — skeleton exists.
+8. Paid pilot preparation — define scope, select tenant, execute pilot.
+9. Survival lane documentation and CI enforcement (#65→#66).
 
 ## 3. Issue Sequence Gates
 
-| Gate | Issue | Output                           | Hard Dependency | Status                                                                              |
-| ---- | ----- | -------------------------------- | --------------- | ----------------------------------------------------------------------------------- |
-| 1    | `#40` | PurchaseBaseline MVP             | None            | **LOCALLY IMPLEMENTED** — model, action, API, UI complete. Awaiting migration + PR. |
-| 2    | `#41` | SupplierAlternative + QuoteProof | `#40`           | Not started — blocked on `#40`                                                      |
-| 3    | `#42` | SwitchDecisionReport             | `#40`, `#41`    | Not started — blocked on `#40`, `#41`                                               |
-| 4    | `#43` | Buyer Approval portal/action     | `#42`           | Not started — blocked on `#42`                                                      |
-| 5    | `#44` | Checkpoint Billing mapping       | `#43`           | Not started — blocked on `#43`                                                      |
-| 6    | `#45` | OutcomeLearning skeleton         | `#43`, `#44`    | Not started — blocked on `#43`, `#44`                                               |
+| Gate | Issue | Output                           | Hard Dependency | Status                                                |
+| ---- | ----- | -------------------------------- | --------------- | ----------------------------------------------------- |
+| 1    | `#40` | PurchaseBaseline MVP             | None            | **MERGED** — PR #47. Schema, action, API, UI in main. |
+| 2    | `#41` | SupplierAlternative + QuoteProof | `#40`           | **MERGED** — PR #50.                                  |
+| 3    | `#42` | SwitchDecisionReport             | `#40`, `#41`    | **MERGED** — PR #52.                                  |
+| 4    | `#43` | Buyer Approval portal/action     | `#42`           | **MERGED** — PR #54.                                  |
+| 5    | `#44` | Checkpoint Billing mapping       | `#43`           | **MERGED** — PR #55 (combined with #45).              |
+| 6    | `#45` | OutcomeLearning skeleton         | `#43`, `#44`    | **MERGED** — PR #55 (combined with #44).              |
 
-## 4. Gate 1 — `#40` PurchaseBaseline (LOCALLY IMPLEMENTED)
+Blocked until survival lane (#65→#66) merged + schema migration applied + health gate green.
 
-### Build Only This
-
-```txt
-Current supplier
-Current product/service
-Current unit price
-Currency
-Recurring quantity
-Reorder frequency
-Monthly spend estimate
-Payment term
-Lead time
-Evidence IDs
-```
+## 4. Gate 1 — `#40` PurchaseBaseline (MERGED — PR #47)
 
 ### What Was Built (2026-05-26)
 

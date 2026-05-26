@@ -83,11 +83,30 @@ Or manually if the shadow DB is unavailable.
 `prisma migrate deploy` is only allowed:
 
 - During controlled production deployment
-- After CI passes all gates (typecheck, build, test, lint, docs-check)
+- After CI passes all gates (typecheck, build, test, lint, docs-check, schema-change gate, route-actions-check)
 - After PR is reviewed and merged
 - Never from a preview/PR branch
 
-### 2.4 Pre-Merge Gates
+### 2.4 Migration Apply Safety (Gates #53 + #66)
+
+Before applying any migration to an online database, ALL of the following must be satisfied:
+
+1. **Migration reviewed** — SQL in the migration file has been reviewed by a human
+2. **Health gate green** — `/api/health` returns `200` before and after migration (see `docs/10_DEPLOYMENT_RUNBOOK.md` — Migration Apply Runbook)
+3. **Vercel deployment READY** — latest `main` deployment is READY before migration
+4. **CI pipeline green** — all CI gates pass, including schema-change-check
+5. **Backup exists** — a recent database backup (pg_dump or Supabase snapshot) is confirmed available
+6. **Rollback plan documented** — the rollback migration SQL is prepared or the migration is reversible (additive only, no destructive column drops)
+7. **Explicit sign-off** — human operator confirms the migration is safe to apply
+8. **Applied during low-traffic window** — never during peak usage
+9. **No destructive migration without data migration plan** — if the migration drops columns, renames tables, or changes data type, a data migration script must exist
+10. **No unrelated PRs open** — schema-changing PRs should not overlap
+
+If any requirement is missing, the migration must NOT be applied.
+
+Migration apply records must be logged in `docs/PRODUCTION_STATE.md` using the template in `docs/10_DEPLOYMENT_RUNBOOK.md`.
+
+### 2.5 Pre-Merge Gates
 
 No schema PR may be merged unless:
 

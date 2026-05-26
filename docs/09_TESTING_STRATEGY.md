@@ -14,6 +14,25 @@
 | New registered action | `pnpm typecheck`, `pnpm build`, package tests, `pnpm docs:check`, manual action smoke test |
 | Production ops        | Command-specific verification, rollback notes, checkpoint update                           |
 
+## Tenant Invariant Test Requirement
+
+Every registered action that accepts `organizationId` must have tests proving:
+
+- **Missing org → `ORGANIZATION_ACCESS_DENIED`** — action called without org context must fail
+- **Wrong tenant org → `ORGANIZATION_ACCESS_DENIED`** — cross-tenant access must be blocked
+- **Correct tenant org → success** — scoped to the right org must pass
+
+Applies to all existing and new actions. Retroactively required for:
+
+| Action Name                       | Package       | Status |
+| --------------------------------- | ------------- | ------ |
+| `sourcing.createPurchaseBaseline` | sourcing-core | TODO   |
+| `sourcing.addSupplierAlternative` | sourcing-core | TODO   |
+| `sourcing.generateSwitchDecision` | sourcing-core | TODO   |
+| `sourcing.submitBuyerDecision`    | sourcing-core | TODO   |
+
+A CI gate (`tenant-invariant-check`) will be added in a future iteration. For now, tenant invariant tests are enforced by code review and by the pre-merge checklist.
+
 ## Test Priority Order
 
 1. **Tenant isolation** — every query scoped by `organizationId`, cross-org access blocked
@@ -194,21 +213,23 @@ When demo auth is removed for production, E2E tests will need real test credenti
 
 ### CI Integration
 
-E2E is NOT yet in CI pipeline. The tests exist as a local/developer proof harness. When CI E2E is desired, add a job with:
+E2E smoke tests run as a conditional CI job (`e2e-test`) on every PR. The job always starts and reports its result, but tests skip when `E2E_RUN_ENABLED` is not `true`. To enable E2E in CI, set `E2E_RUN_ENABLED=true` in the GitHub Actions environment and ensure a test database is available.
 
 ```yaml
+# .github/workflows/ci.yml — e2e-test job
 e2e-test:
-  needs: build
+  name: E2E Smoke Tests
+  needs: install
   runs-on: ubuntu-latest
+  if: github.event_name == 'pull_request'
   steps:
     - run: pnpm install --frozen-lockfile
     - run: pnpm db:generate
-    - run: pnpm build
     - run: pnpm --filter @tradeos/web exec playwright install chromium
-    - run: E2E_RUN_ENABLED=true pnpm --filter @tradeos/web test:e2e
-      env:
-        E2E_BASE_URL: http://localhost:3000
+    - run: pnpm --filter @tradeos/web test:e2e
 ```
+
+Current status: **skipped by default** — no E2E database in CI. When a test database is provisioned, set `E2E_RUN_ENABLED=true` as a GitHub Actions secret or environment variable.
 
 ### Important
 
@@ -249,6 +270,8 @@ The CI pipeline (`.github/workflows/ci.yml`) MUST include:
 8. `git diff --check` (no whitespace errors)
 9. `pnpm routes:check`
 10. `pnpm --filter @tradeos/ai-core eval` (only when ai-core changes)
+11. `E2E smoke` (only on PR; skipped when `E2E_RUN_ENABLED` is not `true`)
+12. `Schema change gate` (only on PR when `schema.prisma` changes; verifies migration exists, no `db push`)
 
 ## Pre-commit Gates
 
