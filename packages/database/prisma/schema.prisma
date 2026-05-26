@@ -75,6 +75,22 @@ enum ActionRiskLevel {
   CRITICAL
 }
 
+enum ImmutableAuditEventType {
+  PURCHASE_BASELINE_CREATED
+  SUPPLIER_ALTERNATIVE_ADDED
+  SWITCH_DECISION_GENERATED
+  BUYER_DECISION_SUBMITTED
+  CHECKPOINT_CREATED
+  CHECKPOINT_APPROVED
+  PAYMENT_RECORDED
+  OUTCOME_RECORDED
+  APPROVAL_REQUESTED
+  APPROVAL_EXECUTED
+  APPROVAL_FAILED
+  APPROVAL_STALE
+  APPROVAL_RETRIED
+}
+
 enum ApprovalStatus {
   PENDING
   APPROVED
@@ -163,10 +179,11 @@ model Organization {
   targetIntroductions    IntroductionRequest[] @relation("TargetOrg")
   partnerIntroductions   IntroductionRequest[] @relation("PartnerOrg")
   deals                  Deal[]
-  sourcingRuns           SourcingRun[]
-  payments               Payment[]
+   sourcingRuns           SourcingRun[]
+   payments               Payment[]
+   immutableAuditEvents   ImmutableAuditEvent[]
 
-  @@index([plan])
+   @@index([plan])
 }
 
 model User {
@@ -184,7 +201,8 @@ model User {
   requestedApprovals       ApprovalRequest[]  @relation("ApprovalRequester")
   reviewedApprovals        ApprovalRequest[]  @relation("ApprovalReviewer")
   approvedSnapshots        ReportSnapshot[]   @relation("SnapshotApprover")
-  memberships              OrganizationMember[]
+   memberships              OrganizationMember[]
+   immutableAuditEvents     ImmutableAuditEvent[]
 }
 
 model Company {
@@ -393,6 +411,31 @@ model AuditLog {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   actor        User?         @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+}
+
+model ImmutableAuditEvent {
+  id              String                  @id @default(cuid())
+  organizationId  String
+  actorUserId     String?
+  eventType       ImmutableAuditEventType
+  subjectType     String
+  subjectId       String
+  actionName      String?
+  riskLevel       ActionRiskLevel?
+  inputHash       String?
+  resultHash      String?
+  evidenceIds     String?
+  payload         Json?
+  redactedPayload Json?
+  previousHash    String?
+  eventHash       String
+  createdAt       DateTime                @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor        User?         @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, subjectType, subjectId])
+  @@index([organizationId, createdAt])
 }
 
 model ApprovalRequest {

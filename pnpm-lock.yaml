@@ -205,6 +205,9 @@ importers:
 
   packages/approval-core:
     dependencies:
+      '@tradeos/audit-core':
+        specifier: workspace:*
+        version: link:../audit-core
       '@tradeos/database':
         specifier: workspace:*
         version: link:../database
@@ -214,6 +217,19 @@ importers:
       zod:
         specifier: ^3.24.4
         version: 3.24.4
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.7
+        version: 4.1.7(@types/node@22.19.19)(vite@8.0.13(@types/node@22.19.19)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.3)(yaml@2.9.0))
+
+  packages/audit-core:
+    dependencies:
+      '@tradeos/database':
+        specifier: workspace:*
+        version: link:../database
     devDependencies:
       typescript:
         specifier: ^5.7.2
@@ -272,6 +288,9 @@ importers:
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
+      vitest:
+        specifier: ^4.1.7
+        version: 4.1.7(@types/node@22.19.19)(vite@8.0.13(@types/node@22.19.19)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.3)(yaml@2.9.0))
 
   packages/evidence-core:
     dependencies:
