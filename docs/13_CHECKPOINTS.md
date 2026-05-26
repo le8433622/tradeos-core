@@ -6,10 +6,11 @@
 ## Current Truth
 
 - Live GitHub PR state checked: **no open PRs**.
-- Active issue: `#66` — production health gate and migration apply runbook.
-- Live open survival issues: `#65`, `#69`, `#70`, `#53`, `#66`.
-- `#60` is closed in live GitHub state; do not reopen unless a new regression issue or failing test proves it is broken.
-- Older Supplier Switch and checkpoint text is historical unless it matches live GitHub state and `docs/CURRENT_TRUTH.md`.
+- Active lane: **Supplier Switch pilot verification**.
+- Issues closed: `#60`, `#65`, `#66`, `#69`.
+- Issues open (residual scope): `#70` (runtime enforcement), `#53` (tenant invariant tests).
+- All 87 PRs merged. Main at `e97d11c`.
+- Older docs are historical unless they match live GitHub state and `docs/CURRENT_TRUTH.md`.
 
 ## Active Work Order
 
@@ -47,9 +48,12 @@ BLOCKED_SCOPE_EXPANSION
 
 ## Allowed Work Now
 
-- Docs/policy enforcement for `#66` — production health gate, migration apply runbook.
-- Preparatory verification that does not mutate production data or schema.
-- No source, schema, package, plugin, or product feature expansion for `#66`.
+- Pilot case verification on staging.
+- Smoke/E2E on pilot tenant.
+- Behavior QA documentation (#81) and NVIDIA QA protocol (#82).
+- No source, schema, package, plugin, or product feature expansion until pilot case is fully verified.
+
+## Frozen Until Survival Gates Are Green
 
 ## Frozen Until Survival Gates Are Green
 
@@ -83,26 +87,33 @@ Hard assertions remain deterministic E2E/CI responsibilities. NVIDIA QA reports 
 
 ## Verification Policy
 
-For `#65` (`DOCS_ONLY`):
+For current pilot verification (pilot tenant `pilot-supplier-switch-01`):
 
 ```txt
 pnpm docs:check
-pnpm routes:check if action docs touched
+Programmatic chain verification: SourcingRun → Baseline → Alts → Report → Checkpoints
+Health: /api/health → 200
 ```
 
-For `#66` (`DOCS_ONLY`):
+All checks PASSED on 2026-05-26:
 
-```txt
-pnpm docs:check
-```
-
-For later change classes, use the change-class gates in `docs/CURRENT_TRUTH.md`, `RULES.md`, and the relevant issue body.
+| Check | Result |
+|---|---|
+| `/api/health` | ✅ 200 |
+| SourcingRun | ✅ Steel Coil Procurement (DRAFT) |
+| Baseline | ✅ VSC @ $620/MT |
+| Alternatives | ✅ Baosteel $545 + POSCO $560 |
+| Quotes | ✅ 2 quotes |
+| Report | ✅ NEGOTIATE, HIGH confidence, $450K/yr savings |
+| Checkpoints | ✅ 3 delivered |
+| OutcomeRecord | ⬜ not recorded (buyer decision pending) |
+| E2E browser | ⬜ skipped — no auth session for pilot tenant |
 
 ## Residual Risks
 
-- This file records policy and sequencing only. It is not CI enforcement.
-- `#69` must convert change-class declarations into PR template/enforcement.
-- `#70` must add kill-switch/manual-first enforcement.
-- `#53` must add CI gates for E2E/schema/tenant invariants.
-- `#66` documentation is complete locally (migration apply runbook, health gate, production state). Not yet committed/merged. No migrations have been applied.
-- All changes since `#65`–`#53` are uncommitted; no safety gates are active in CI until the commits land on `main`.
+- No production Supabase DB — Vercel prod points to staging. Real buyer data must not be stored.
+- No Supabase Auth user for pilot tenant — E2E browser tests can't authenticate as pilot user.
+- #70 (kill switch) docs done, runtime enforcement not implemented.
+- #53 CI gates added but E2E/schema/tenant checks are conditional — inactive without env vars.
+- Stale seed data from failed attempts (4 orphaned SourcingRuns) on staging DB.
+- All changes since `#65`–`#87` are committed/merged. No uncommitted work.
