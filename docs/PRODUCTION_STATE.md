@@ -73,8 +73,8 @@ This means:
 ## Last Smoke Test
 
 - **Date**: 2026-05-26
-- **Result**: ✅ `/api/health` → 200 (pre and post migration)
-- **Details**: Pilot case seeded on staging. Full chain: SourcingRun → Baseline → 2 Alts → Report (NEGOTIATE) → 3 Checkpoints. E2E smoke not yet run (no CI DB).
+- **Result**: ✅ `/api/health` 200. ✅ Auth token obtained for `pilot-owner@tradeos.local`.
+- **E2E browser**: ⬜ skipped — app uses SSR cookies, needs Playwright login flow (#81 scope).
 
 ## Last Rollback Point
 
@@ -84,16 +84,24 @@ This means:
 
 ## Residual Issues
 
-- No Supabase Auth user for pilot — demo auth only resolves `owner@tradeos.local`
-- E2E smoke not run against staging (no CI DB; skipped by default)
-- GitHub issues #65 #69 #70 #53 #66 #60 still open — need to close/rescope
+- E2E smoke not run against staging (app uses SSR cookies, not bearer tokens — needs Playwright login flow)
+- GitHub issues #70 (runtime enforcement) and #53 (tenant invariant tests) still open
 - Stale seed data from retries (4 orphaned SourcingRuns) — harmless but messy
 - **No production Supabase project** — Vercel prod reads/writes staging DB. See `docs/ENVIRONMENT_STRATEGY.md`.
 
+## Auth Status
+
+| Field | Value |
+|---|---|
+| Auth user | `pilot-owner@tradeos.local` ✅ |
+| Auth method | Supabase Auth (email/password) |
+| Confirmed | ✅ `2026-05-26T15:25:33Z` |
+| Password | Set via env var, not committed |
+| Bearer token | Works (password grant, 3600s expiry) |
+| API test | `/api/health` 200, authenticated routes return 500 (expects SSR cookies, not bearer) |
+
 ## Next Action
 
-1. Sync/rescope GitHub issues #65 #69 #70 #53 #66 #60
-2. Run smoke/E2E on pilot tenant (requires Supabase Auth user or demo auth extension)
-3. Record results in `docs/13_CHECKPOINTS.md`
-4. Create production Supabase project before real buyer data
-5. Implement #81 behavior fixtures + #82 NVIDIA QA protocol
+1. Implement #81 behavior-driven QA scenarios / fixtures (includes Playwright login flow for real auth)
+2. Then #82 NVIDIA QA Agent protocol
+3. Then create production Supabase project before real buyer data
