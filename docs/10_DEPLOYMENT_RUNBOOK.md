@@ -243,6 +243,99 @@ Preferred order:
 
 Never rollback by deleting tenant data.
 
+## Migration Apply Runbook (Gate #66)
+
+Before applying any migration to an online database, follow this sequence exactly. All gates must be green.
+
+### Pre-Migration Health Gate
+
+1. [ ] Verify the latest `main` Vercel deployment is `READY` — check Vercel dashboard or API
+2. [ ] Verify `/api/health` returns `200` against the target environment (staging or production)
+3. [ ] Verify no unrelated PRs are open that would interfere with the migration state
+4. [ ] Review migration SQL files in order — understand every `ALTER`/`CREATE`/`DROP`
+5. [ ] Confirm `DATABASE_URL` and `DIRECT_URL` point to the INTENDED project (staging vs production)
+6. [ ] Confirm backup exists (pg_dump or Supabase project snapshot)
+7. [ ] Confirm rollback SQL is prepared (or migration is additive-only)
+8. [ ] Document the migration apply plan in a `docs/PRODUCTION_STATE.md` entry
+
+### Migration Apply
+
+```bash
+# 1. Set target environment variables
+export DATABASE_URL="postgresql://postgres.<PROJECT_REF>:<PASSWORD>@pooler-url:6543/postgres?pgbouncer=true"
+export DIRECT_URL="postgresql://postgres.<PROJECT_REF>:<PASSWORD>@db-url:5432/postgres"
+
+# 2. Verify connection is correct
+npx prisma migrate status
+
+# 3. Apply migrations
+npx prisma migrate deploy
+
+# 4. Verify migration was applied
+npx prisma migrate status
+```
+
+### Post-Migration Health Gate
+
+1. [ ] Verify `/api/health` returns `200` — confirms app works with new schema
+2. [ ] Run verification queries (SELECT counts, check constraints, spot-check data)
+3. [ ] Confirm app routes load correctly in the target environment
+4. [ ] Record the migration apply record
+
+### Migration Apply Record
+
+Every migration must be recorded:
+
+```markdown
+## Migration Apply Record
+
+Date: YYYY-MM-DD HH:MM UTC
+Operator: <name>
+Supabase project/ref: <project-ref>
+Git commit: <commit-hash>
+Migrations applied:
+
+- <migration-1>
+- <migration-2>
+  Pre-health check: ✅ /api/health → 200
+  Post-health check: ✅ /api/health → 200
+  Rollback plan: <forward-fix or revert-migration>
+  Residual issue: <none or description>
+```
+
+### Stop Conditions
+
+Stop immediately and do NOT apply migration if:
+
+1. `/api/health` does not return `200` before migration
+2. Vercel deployment is not `READY`
+3. `DATABASE_URL`/`DIRECT_URL` point to the wrong project
+4. Migration SQL has not been reviewed
+5. No backup or rollback plan exists
+6. Migration is destructive (drops columns/tables) with no data migration plan
+7. Unrelated PRs with schema changes are open
+8. The previous migration attempt failed and root cause is not understood
+
+### Migration Failure Incident
+
+If a migration fails on an online database:
+
+1. [ ] STOP all feature work immediately
+2. [ ] Record the failure in `docs/PRODUCTION_STATE.md`
+3. [ ] Do NOT retry until root cause is understood
+4. [ ] Apply forward-fix SQL (e.g., make column nullable, set default)
+5. [ ] Verify DB health with queries
+6. [ ] Create a new migration that fixes the issue
+7. [ ] Document the incident and root cause
+8. [ ] Resume only after post-migration health gate passes
+
+### Environment Distinction
+
+| Environment | Pre-health check | Migration apply          | Post-health check | Notes                      |
+| ----------- | ---------------- | ------------------------ | ----------------- | -------------------------- |
+| Staging     | Required         | Safe to test             | Required          | First prove migration here |
+| Production  | Required         | Only after staging proof | Required          | Requires explicit sign-off |
+
 ## Vercel Configuration
 
 ### Current setup

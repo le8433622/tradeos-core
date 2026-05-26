@@ -47,6 +47,32 @@ Agents must resolve truth in this order:
 
 If older docs conflict with live GitHub state, live GitHub state wins.
 
+## 1.1 Reality Lock Active-Work Limit
+
+Agents must not create their own execution order. The active order is declared in `docs/CURRENT_TRUTH.md` and must be followed unless a human explicitly changes it.
+
+Current survival sequence:
+
+```txt
+#65 -> #69 -> #70 -> #53 -> #66 -> #60/status-confirmation
+```
+
+Hard limits:
+
+1. Only 1 active P0 implementation PR at a time unless explicitly approved.
+2. Only 1 schema-changing PR may be open at a time.
+3. No product feature issue creation while `#53` is open.
+4. No plugin/toolcall product implementation before `#70`, `#53`, and `#66` are complete and pilot proof exists.
+5. No new package creation until Supplier Switch paid pilot proof exists.
+6. No package-boundary refactor until Supplier Switch end-to-end behavior is proven by E2E or pilot evidence.
+7. No schema migration apply until the production health and migration runbook gate in `#66` is satisfied.
+
+If a requested task violates these limits, stop and report:
+
+```txt
+BLOCKED_SCOPE_EXPANSION
+```
+
 ## 2. Pre-Flight Checklist
 
 Before editing files, the agent must answer:
@@ -59,9 +85,14 @@ D. What is the exact acceptance criterion?
 E. What is the stop condition?
 F. Which files are allowed to change?
 G. Which files must not change?
+H. What is the declared active issue order?
+I. Does this PR create schema, package, plugin/toolcall, or product-feature expansion?
+J. What is my change class? (DOCS_ONLY / TEST_ONLY / SCHEMA_CHANGE / RUNTIME_CHANGE / WORKER_CHANGE / AUTH_POLICY_CHANGE / APPROVAL_BILLING_CHANGE / AI_TOOLCALL_CHANGE / PRODUCTION_OPERATION)
+
+If the agent cannot identify the change class, it must stop and classify before editing.
 ```
 
-If the agent cannot answer these, it must stop and ask for the missing state instead of coding.
+If the agent cannot answer these (including the change class), it must stop and ask for the missing state instead of coding.
 
 ## 3. Task Classification
 
@@ -129,6 +160,15 @@ The agent must stop immediately when any condition is true:
 10. The agent is about to run E2E tests with online writes without an isolated DB or `E2E_RUN_ID + organizationId` scope.
 11. The agent is about to delete or update records without `organizationId` scope.
 12. The agent is about to run deploy commands manually without a documented rollback path.
+13. The agent is about to open a second active P0 implementation PR.
+14. The agent is about to open a second active schema-changing PR.
+15. The agent is about to create a new package before Supplier Switch paid pilot proof.
+16. The agent is about to implement plugin/toolcall product behavior before the survival gates and pilot proof.
+17. The agent is about to enable an automation path that has no kill switch documented.
+18. The agent is about to enable a kill switch in production without documented manual flow verification.
+19. The agent is about to implement AI-driven action execution without runtime schema validation of AI output.
+20. The agent is about to create economic side effects (billing, approval, commitment) without human approval and evidence.
+21. Kill switch policy (`docs/34_KILL_SWITCH_POLICY.md`) has not been read before enabling automation.
 
 When stopped, write a blocker note:
 
@@ -152,29 +192,30 @@ Next human/operator action:
 5. Never expand scope from closed issues or Supplier Switch work into marketplace, generic CRM/ERP, or social/API integrations.
 6. Never treat missing environment variables as product defects unless the issue is specifically env validation.
 7. Never change more than the minimal required files for the classified task.
+8. Never enable automation before the corresponding manual flow is proven — if manual flow does not work, auto flow is invalid.
+9. Never enable a kill switch in production without reading `docs/34_KILL_SWITCH_POLICY.md` and confirming the pre-enable verification checklist.
 
 ## 6. Remaining Current Work
 
-As of 2026-05-26, the incident/spec batch (`#25`–`#29`) is closed. The active work is:
+As of 2026-05-26, the active lane is **production survival before more product expansion**:
 
 ```txt
-#48 — P0: Cloud DB Safety Protocol (BEFORE any schema work)
-#40 — PurchaseBaseline MVP
-#41 — SupplierAlternative and QuoteProof normalization
-#42 — SwitchDecisionReport generator
-#43 — Buyer-facing Switch Report portal / approval
-#44 — Supplier Switch checkpoint billing
-#45 — OutcomeLearning skeleton
+#65 — P0: Reality Lock active-work limit
+#69 — P0: production change-class gate and PR template enforcement
+#70 — P0: AI/toolcall kill switch and manual-first enforcement
+#53 — P0: conditional E2E + schema-change + tenant invariant CI gates
+#66 — P0: production health gate + migration apply runbook
+#60 — Closed; status-confirmation only unless a regression issue exists
 ```
 
 Therefore:
 
-- **`#48` blocks `#40`–`#45`**: no schema mutation, no E2E writes, no DB push until protocol is documented and enforced.
-- Product feature expansion is frozen outside `#40`–`#45`.
-- Start with `#48` (safety) then `#40` (baseline only).
-- No marketplace, generic CRM/ERP, or social/API integrations.
-- `docs/32_SUPPLIER_SWITCH_EXECUTION_PROTOCOL.md` is mandatory reading for `#40`–`#45`.
-- `docs/33_CLOUD_DB_SAFETY_PROTOCOL.md` is mandatory reading for any schema/data change.
+- Product feature expansion is frozen while `#65`, `#69`, `#70`, `#53`, and `#66` are open.
+- `#60` is not to be reworked while closed unless a new failing test or issue proves regression.
+- No marketplace, generic CRM/ERP, plugin/toolcall product implementation, social/API integrations, or new packages before survival gates and paid pilot proof.
+- `docs/32_SUPPLIER_SWITCH_EXECUTION_PROTOCOL.md` remains the Supplier Switch product-chain protocol, but production safety gates take priority until this lane is green.
+- `docs/33_CLOUD_DB_SAFETY_PROTOCOL.md` remains mandatory reading for any schema/data change.
+- `docs/34_KILL_SWITCH_POLICY.md` is mandatory reading before enabling any automation kill switch.
 
 ## 7. Rule For `#26` — ✅ CLOSED
 
@@ -254,6 +295,8 @@ docs/CURRENT_TRUTH.md
 docs/13_CHECKPOINTS.md
 docs/SUPER_AGENT_RULER.md
 docs/32_SUPPLIER_SWITCH_EXECUTION_PROTOCOL.md
+docs/33_CLOUD_DB_SAFETY_PROTOCOL.md
+docs/34_KILL_SWITCH_POLICY.md
 agent.md if it conflicts with the ruler
 ```
 
@@ -286,18 +329,36 @@ unrelated UI
 
 ## 10. Verification Rules
 
-Every PR must state:
+Every PR must declare and satisfy its change-class gates from `.github/pull_request_template.md`:
+
+| Class                     | Required gates                                                                           |
+| ------------------------- | ---------------------------------------------------------------------------------------- |
+| `DOCS_ONLY`               | `pnpm docs:check` only                                                                   |
+| `SCHEMA_CHANGE`           | `db:generate`, `typecheck`, `test`, `build`, migration review, no `db push`, health gate |
+| `AUTH_POLICY_CHANGE`      | tenant invariant tests, cross-tenant deny tests, `routes:check`, no unscoped query       |
+| `WORKER_CHANGE`           | timeout/retry/DLQ config proof, queue class impact doc, no unbounded loop                |
+| `APPROVAL_BILLING_CHANGE` | idempotency, stale recovery, audit event, evidence-before-billing                        |
+| `AI_TOOLCALL_CHANGE`      | kill switch, budget cap, max retry/toolcall limit, human takeover boundary               |
+| `PRODUCTION_OPERATION`    | rollback path, pre/post verification steps                                               |
+
+Every PR body must state:
 
 ```txt
 Changed files
 Task classification
-Commands run
+Change class
+Active issue order
+Commands run per class gate
 Commands skipped and why
 Issue status checked
 Stop condition not triggered or recorded
 ```
 
 If no verification can run because access is missing, say so directly.
+
+PRs without a declared change class are invalid and must not be merged.
+
+Any PR that introduces or changes an automation path must also reference the kill switch policy (`docs/34_KILL_SWITCH_POLICY.md`) and confirm the corresponding kill switch exists.
 
 ## 11. Product Ruler
 
@@ -322,6 +383,8 @@ For every task, the agent should output:
 
 ```markdown
 ## Task Classification
+
+## Change Class
 
 ## Live State Checked
 

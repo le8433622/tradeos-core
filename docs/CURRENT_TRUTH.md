@@ -1,172 +1,129 @@
-# CURRENT TRUTH — TradeOS
+# CURRENT TRUTH - TradeOS
 
 **Date**: 2026-05-26
-**Purpose**: single source of truth for AI/code agents before doing any more work.
+**Purpose**: single active-work source of truth for code agents before doing more work.
 
-## Current GitHub State
+## Live State Check
 
-- Open PRs: **none**.
-- Latest `main` commit: `7b2d7ea` (`docs: add Supplier Switch Execution Protocol + lock #40→#45 sequence`).
-- Latest local verification: pre-commit hooks passed on recent doc/spec PRs; latest CI must be checked live before merge-sensitive work.
-- Recently merged PRs (newest first):
-  - `#50` — feat: implement SupplierAlternative and QuoteProof normalization (closes #41).
-  - `#49` — feat: add Cloud DB Safety Protocol (closes #48).
-  - `#47` — feat: implement PurchaseBaseline MVP (closes #40).
-  - `#46` — docs: add Supplier Switch Execution Protocol + lock #40→#45 sequence.
-  - `#39` — docs: add Plugin Intake Layer spec.
-  - `#38` — docs: add Supplier Switch Intelligence spec.
-  - `#37` — feat: add Playwright E2E harness with env-gated tests.
-  - `#36` — docs: sync truth after production fix.
-  - `#35` — fix: remove `DIRECT_URL` from production env validation (false positive crash).
-  - `#34` — fix: delete middleware entirely (Vercel Edge Runtime platform crash).
-  - `#24` — incident recovery: restore middleware pattern, add anti-loop protocol, update runbook.
-  - `#23` — docs: add `CURRENT_TRUTH`, checkpoint rewrite, `SUPER_AGENT_RULER`.
-  - `#22` — AI procurement safety and blocked-action sync.
-  - `#21` — MoneyOS evidence/billing/API errors/billing UI micro-task round.
-- Open issues:
-  - `#41` — P1: Implement SupplierAlternative and QuoteProof normalization MVP.
-  - `#42` — P1: Implement SwitchDecisionReport generator MVP.
-  - `#43` — P2: Add buyer-facing Switch Report portal MVP.
-  - `#44` — P2: Map Supplier Switch checkpoints to billing and paid proof.
-  - `#45` — P2: Add OutcomeLearning skeleton for Supplier Switch cases.
-- Closed/completed issues (newest first):
-  - `#41` — ✅ **CLOSED**: SupplierAlternative and QuoteProof normalization — model+action+API+UI merged (PR #50).
-  - `#48` — ✅ **CLOSED**: Cloud DB Safety Protocol.
-  - `#29` — ✅ **DONE**: Plugin Intake Layer spec at `docs/31_PLUGIN_INTAKE_LAYER.md`.
-  - `#28` — ✅ **DONE**: Supplier Switch Intelligence spec at `docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md`.
-  - `#27` — ✅ **DONE**: Playwright E2E harness with 10 env-gated tests.
-  - `#26` — ✅ **PASSED**: production smoke test verified 2026-05-25. `/api/health` returns 200.
-  - `#25` — ✅ **DONE**: docs synced to live GitHub state.
-  - `#10` — closed as not planned; replaced by `#26`.
-  - `#12` — closed as not planned; replaced by `#27`.
-  - `#4`, `#5`, `#6`, `#7`, `#11`, `#13`, `#14`, `#15`, `#16`, `#17`, `#18`, `#19`.
+- Live GitHub PR state checked: **no open PRs**.
+- Current active issue: `#65` - P0 Reality Lock active-work limit.
+- `#60` is **closed** in live GitHub state. Do not reopen it unless a new failing test or issue proves regression.
+- Stale docs do not override live GitHub issue/PR state.
 
-## Current Mode
+## Reality Lock Active-Work Policy
 
-The repo is in **Supplier Switch execution mode** — next gate is `#42` (SwitchDecisionReport).
+TradeOS is no longer in architecture-expansion mode. Every change must serve one of:
 
-Allowed now:
+1. Production safety.
+2. Behavior QA / E2E confidence.
+3. Supplier Switch pilot validation.
 
-1. **`#42`**: Implement deterministic SwitchDecisionReport — SWITCH / NEGOTIATE / WAIT with evidence and missing-proof logic.
-2. Proceed to `#43` only after `#42` is merged, tested, and documented.
-3. Run authenticated E2E locally when needed (`E2E_RUN_ENABLED=true pnpm --filter @tradeos/web test:e2e`).
-4. Use registered actions, tenant isolation, evidence records, approval boundaries, and checkpoint docs for every step.
+If a task does not serve one of those, defer it.
 
-Not allowed now:
+## Active Issue Order
 
-1. Claim production 10/10 readiness (no authenticated session smoke in CI, no edge auth).
-2. Open marketplace, supplier bidding, public listings, public supplier profiles, or cross-tenant matching.
-3. Build generic CRM/ERP functionality unrelated to the Supplier Switch chain.
-4. Integrate social/API/source plugins before the core chain `#40`→`#45` is complete.
-5. Implement Plugin Intake Layer integrations before the buyer-led proof chain exists.
-
-## Production Availability Truth
-
-Production health is **proven healthy at unauthenticated level**.
-
-Observed evidence:
+Agents must not choose issue order. Use this order unless the human explicitly changes it:
 
 ```txt
-$ curl https://tradeos-core.vercel.app/api/health
-{"ok":true,"service":"tradeos-core-web"}
-HTTP 200
-
-$ curl https://tradeos-core.vercel.app/
-HTTP 307 (unauthenticated redirect — expected)
+#65 -> #69 -> #70 -> #53 -> #66 -> #60/status-confirmation
 ```
 
-**Fixes applied:**
+Interpretation:
 
-1. PR #34 — Deleted `middleware.ts` (Vercel Edge Runtime crashed on ANY middleware, even `NextResponse.next()` only).
-2. PR #35 — Removed `DIRECT_URL` from env validation (optional Prisma var; absence was throwing at server init).
+- `#65` - enforce Reality Lock active-work limit and stop parallel schema expansion.
+- `#69` - add production change-class gate and PR template enforcement.
+- `#70` - add AI/toolcall kill switch and manual-first enforcement.
+- `#53` - add conditional E2E, schema-change, and tenant invariant CI gates.
+- `#66` - add production health gate and migration apply runbook before Supabase schema changes.
+- `#60` - already closed; only confirm status or fix a proven regression.
 
-**Residual risks:**
+## Hard Active-Work Limits
 
-- No middleware = no edge-level auth enforcement. Session refresh handled at page/API route level.
-- Vercel Edge Runtime platform issue not reported to Vercel.
-- No authenticated session smoke yet.
+1. Only one active P0 implementation PR at a time unless explicitly approved.
+2. Only one schema-changing PR may be open at a time.
+3. No new schema-changing PR while another schema PR is open or unverified.
+4. No new product feature issues while `#53` is open.
+5. No plugin/toolcall product implementation before `#70`, `#53`, and `#66` are complete and pilot proof exists.
+6. No new package creation until Supplier Switch paid pilot proof exists.
+7. No package-boundary refactor until Supplier Switch end-to-end behavior is proven by E2E or pilot evidence.
+8. No schema migration apply until production health and migration runbook gates are satisfied by `#66`.
 
-## Non-Negotiable Agent Rules
+If a requested task violates these limits, stop and report:
 
-1. Live GitHub issue/PR state wins over stale docs.
-2. Do **not** reopen or rework closed issues unless a failing test or fresh GitHub issue proves regression.
-3. Do **not** treat missing or invalid env/auth/deployment access as a product-code bug.
-4. Do **not** fake authenticated staging/production proof.
-5. If Vercel/Supabase/env access is unavailable, record the blocker and stop.
-6. Product expansion is frozen outside `#40`–`#45`.
+```txt
+BLOCKED_SCOPE_EXPANSION
+```
 
-## Work Classification
+## Production Change Classes
 
-### `#25` — ✅ CLOSED (2026-05-25)
+Every PR must declare one primary change class and any secondary class:
 
-Docs synced to live GitHub state after incident recovery.
+```txt
+DOCS_ONLY
+TEST_ONLY
+SCHEMA_CHANGE
+RUNTIME_CHANGE
+WORKER_CHANGE
+AUTH_POLICY_CHANGE
+APPROVAL_BILLING_CHANGE
+AI_TOOLCALL_CHANGE
+PRODUCTION_OPERATION
+```
 
-### `#26` — ✅ CLOSED (2026-05-25)
+`#65` is `DOCS_ONLY`.
 
-Production unauthenticated smoke verified. `/api/health` returns 200. Home returns 307 (expected). See production availability evidence above.
+## Current Freeze
 
-Remaining authenticated smoke deferred to `#27` (E2E harness).
+Frozen until the survival gates are complete:
 
-### `#27` — ✅ CLOSED (2026-05-25)
+- marketplace mechanics;
+- generic CRM/ERP expansion;
+- plugin implementation;
+- external source integrations, including Zernio, Alibaba, Shopee, social APIs, scraping, and supplier crawling;
+- AI auto-planning or auto-execution for production flows;
+- new packages;
+- schema-heavy feature work not directly tied to the active survival issue.
 
-Playwright E2E harness created with env-gated skip behavior.
+## Supplier Switch Manual Flow
 
-### `#28` — ✅ CLOSED (2026-05-25)
+Supplier Switch remains manual-first:
 
-Spec completed at `docs/30_SUPPLIER_SWITCH_INTELLIGENCE.md`. No source-code changes.
+```txt
+create sourcing run
+-> create baseline manually
+-> add alternatives manually
+-> generate deterministic report
+-> buyer decision
+-> checkpoint
+-> outcome
+```
 
-### `#29` — ✅ CLOSED (2026-05-26)
+AI may assist with extraction, summarization, missing-proof suggestions, draft text, and QA behavior testing only. AI must not make final economic decisions, auto-switch suppliers, auto-bill, auto-approve, or write production data.
 
-Spec completed at `docs/31_PLUGIN_INTAKE_LAYER.md`. No source-code integrations.
+## NVIDIA QA Boundary
 
-<<<<<<< HEAD
-### `#48` — ✅ CLOSED (2026-05-26)
+NVIDIA API Agent is QA-only in local/test/preview/staging. It must not write production DB, apply migrations, modify source code, create commits, open/merge PRs, run production runtime, send real outbound messages, or approve real business actions.
 
-Cloud DB Safety Protocol created. Document covers: Prisma migration safety, Supabase environment isolation (shared DB risk documented), E2E/test data isolation (E2E_RUN_ID + organizationId), Vercel/Supabase connection pool guardrails, deploy trigger safety (verified: no deploy hook, CI safe). Blocks all schema work until enforced.
+OpenCode builds. NVIDIA QA tests behavior. CI verifies code. Human approves merge/deploy.
 
-### `#40` — ✅ CLOSED (2026-05-26)
+## Unlock Conditions
 
-PurchaseBaseline MVP implemented and merged. Model+action+API+UI built: Prisma schema with tenant isolation, registered action `sourcing.createPurchaseBaseline`, POST API route, inline form + display on sourcing run detail page.
+Before plugin/toolcall/product expansion:
 
-**Next**: `#41` — SupplierAlternative + QuoteProof normalization.
-=======
-- Added `PurchaseBaseline` model to Prisma schema (tenant-scoped, linked to SourcingRun)
-- Added new `EvidenceType` enum values (`CURRENT_SUPPLIER_INVOICE`, `CURRENT_SUPPLIER_PRICE_LIST`, `ALTERNATIVE_QUOTE`, `ALTERNATIVE_PROFILE`, `MARKET_BENCHMARK`, `SWITCH_DECISION_REPORT`, `OUTCOME_EVIDENCE`, `NEGOTIATION_LOG`)
-- Created registered action `sourcing.createPurchaseBaseline` in `sourcing-core` (LOW risk, Zod validated, org-scoped)
-- Created POST API route at `/api/sourcing-runs/[id]/purchase-baseline`
-- Added PurchaseBaseline display + create form to sourcing run detail page
-- Typecheck passes (both `sourcing-core` and `web`)
-- Awaiting migration + final PR.
->>>>>>> 635ebf1 (feat: implement PurchaseBaseline MVP (#40))
+1. `#65`, `#69`, `#70`, `#53`, and `#66` must be complete.
+2. Any closed `#60` behavior must remain verified or have a fresh regression issue.
+3. Migration apply proof must exist before online schema changes.
+4. Supplier Switch paid pilot proof must exist.
+5. Pilot proof ledger must show commercial validation, operator time, evidence quality, buyer decision, and outcome follow-up status.
 
-### `#41` — ✅ CLOSED (2026-05-26)
+## Agent Stop Conditions
 
-SupplierAlternative and QuoteProof normalization implemented and merged. Model, action, API, UI built: Prisma schema `SupplierAlternative` with tenant isolation linked to SourcingRun + SupplierCandidate, registered action `sourcing.addSupplierAlternative`, POST API route, inline form + display with normalization fields (pricing, MOQ, lead time, payment, warranty, shipping, risk flags).
+Stop before editing if:
 
-**Next**: `#42` — SwitchDecisionReport generator.
-
-### `#42` — THIRD GATE
-
-Build deterministic `SwitchDecisionReport` only after baseline and alternatives exist. Report must output `SWITCH`, `NEGOTIATE`, or `WAIT` with evidence and missing-proof logic.
-
-### `#43` — FOURTH GATE
-
-Build buyer approval/review only after report generation exists. Access must be tokenized or permission-safe and must not expose cross-tenant data.
-
-### `#44` — FIFTH GATE
-
-Map delivered proof to checkpoint billing only after buyer approval/report delivery path exists. Evidence-before-billing is mandatory.
-
-### `#45` — SIXTH GATE
-
-Add OutcomeLearning only after buyer approval and checkpoint billing semantics exist. Outcome must link back to baseline/report/case.
-
-## Definition Of Done For Current Loop
-
-The current loop is done when:
-
-1. GitHub state has been checked live.
-2. `docs/CURRENT_TRUTH.md`, `docs/13_CHECKPOINTS.md`, and `docs/SUPER_AGENT_RULER.md` match that state.
-3. Open issues `#40`–`#45` are listed with correct sequence and stop conditions.
-4. Docs explicitly block marketplace, generic CRM/ERP, and social/API integrations before the proof chain is complete.
-5. `docs/32_SUPPLIER_SWITCH_EXECUTION_PROTOCOL.md` is the execution protocol for the next implementation loop.
+- the requested work is out of the active issue order;
+- it creates a new package;
+- it opens schema work while a schema PR is active;
+- it implements plugin/toolcall product behavior;
+- it uses AI/NVIDIA QA as a production agent;
+- it requires production ops without explicit human approval for each command;
+- it treats docs as proof instead of CI/E2E/manual evidence.
