@@ -1,11 +1,11 @@
 # Production State — TradeOS Core
 
-**Last updated**: 2026-05-26 (corrected)
+**Last updated**: 2026-05-26
 **Status**: ⚠️ NO production Supabase database exists. Vercel production points to **staging DB only**. See `docs/ENVIRONMENT_STRATEGY.md` for the full environment plan.
 
 ## Current Production Commit
 
-- `c2980e15` — feat: add pilot seed script and create pilot tenant on staging (#86)
+- `181af5a` — feat: add environment strategy, fix production state, seed pilot case (#87)
 
 ## Vercel Deployment
 
@@ -33,17 +33,19 @@ This means:
 - **Pending migrations**: None
 - **Last backup**: (not recorded — run pg_dump or Supabase snapshot)
 
-## Row Counts (staging)
+## Row Counts (staging — pilot tenant)
 
-| Table | Count |
-|---|---|
-| Organization | 2 (demo-org + pilot-supplier-switch-01) |
-| User | 2 (owner@tradeos.local + pilot-owner@tradeos.local) |
-| SourcingRun | 0 |
-| PurchaseBaseline | 0 |
-| SupplierAlternative | 0 |
-| SwitchDecisionReport | 0 |
-| OutcomeRecord | 0 |
+| Table | Count | Notes |
+|---|---|---|
+| Organization | 2 | demo-org + pilot-supplier-switch-01 |
+| User | 2 | owner@tradeos.local + pilot-owner@tradeos.local |
+| SourcingRun | 5 | 1 active pilot case + 4 stale from seed retries |
+| PurchaseBaseline | 5 | 1 active + 4 stale |
+| SupplierAlternative | 6 | 2 per run (Baosteel + POSCO) + stale |
+| SupplierQuote | 5 | quotes for alternatives |
+| SwitchDecisionReport | 2 | 1 active (NEGOTIATE) + 1 stale |
+| WorkCheckpoint | 3 | Baseline, Shortlist, Report |
+| OutcomeRecord | 0 | not yet recorded
 
 ## Feature Flags / Kill Switches
 
@@ -71,27 +73,27 @@ This means:
 ## Last Smoke Test
 
 - **Date**: 2026-05-26
-- **Result**: `/api/health` → 200 (verified pre and post migration)
-- **Details**: E2E smoke not yet run (no E2E DB configured in CI; skipped by default)
+- **Result**: ✅ `/api/health` → 200 (pre and post migration)
+- **Details**: Pilot case seeded on staging. Full chain: SourcingRun → Baseline → 2 Alts → Report (NEGOTIATE) → 3 Checkpoints. E2E smoke not yet run (no CI DB).
 
 ## Last Rollback Point
 
-- **Commit hash**: `6bf40cf` (#84 survival lane merge)
+- **Commit hash**: `c2980e15` (#86 pilot seed)
 - **Vercel deployment ID**: (record from Vercel dashboard)
 - **Date**: 2026-05-26
 
 ## Residual Issues
 
-- No Supplier Switch case data seeded — pilot tenant has org/user but no SourcingRun, PurchaseBaseline, or SwitchDecisionReport
-- No Supabase Auth user created for pilot — can only access via demo auth as `owner@tradeos.local`
-- E2E smoke not run against staging (no CI DB, skipped by default)
-- GitHub issues (#65, #69, #70, #53, #66) not yet closed despite PR #84 covering them
-- Migration rename (#85) leaves old failed migration name in `_prisma_migrations` history
-- **No production Supabase project** — Vercel production reads/writes staging DB. See `docs/ENVIRONMENT_STRATEGY.md`.
+- No Supabase Auth user for pilot — demo auth only resolves `owner@tradeos.local`
+- E2E smoke not run against staging (no CI DB; skipped by default)
+- GitHub issues #65 #69 #70 #53 #66 #60 still open — need to close/rescope
+- Stale seed data from retries (4 orphaned SourcingRuns) — harmless but messy
+- **No production Supabase project** — Vercel prod reads/writes staging DB. See `docs/ENVIRONMENT_STRATEGY.md`.
 
 ## Next Action
 
-1. Seed pilot Supplier Switch case — SourcingRun → PurchaseBaseline → SupplierAlternative → SwitchDecisionReport
-2. Create Supabase Auth user for pilot team login
-3. Create production Supabase project before any real buyer data
-4. Close/sync GitHub issues with PR merge state
+1. Sync/rescope GitHub issues #65 #69 #70 #53 #66 #60
+2. Run smoke/E2E on pilot tenant (requires Supabase Auth user or demo auth extension)
+3. Record results in `docs/13_CHECKPOINTS.md`
+4. Create production Supabase project before real buyer data
+5. Implement #81 behavior fixtures + #82 NVIDIA QA protocol
