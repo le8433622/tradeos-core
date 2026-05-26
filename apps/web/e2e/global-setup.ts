@@ -1,7 +1,7 @@
 import { FullConfig } from "@playwright/test";
+import { getE2EConfig } from "./env";
 
 async function globalSetup(config: FullConfig) {
-  const { getE2EConfig } = await import("./env");
   const cfg = getE2EConfig();
 
   if (!cfg.enabled) {
