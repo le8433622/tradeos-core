@@ -303,3 +303,92 @@ describe("registerProcessor and worker loop", () => {
     expect(typeof runWorkerLoop).toBe("function");
   });
 });
+
+describe("queue-config validation", () => {
+  it("validateAllConfigs returns no errors for all predefined configs", async () => {
+    const { validateAllConfigs } = await import("../queue-config");
+    const errors = validateAllConfigs();
+    expect(Object.keys(errors)).toHaveLength(0);
+  });
+
+  it("validateQueueConfig returns errors for invalid config", async () => {
+    const { validateQueueConfig } = await import("../queue-config");
+    const errors = validateQueueConfig({
+      concurrency: 0,
+      timeoutMs: 50,
+      maxRetries: -1,
+      backoffBaseMs: 50,
+      backoffCapMs: 10,
+      rateLimitPerOrg: 0,
+      rateLimitWindowMs: 500,
+      maxPayloadSizeBytes: 100,
+      requireIdempotency: false,
+      deadLetterEnabled: false,
+      maxDepth: 0,
+    });
+    expect(errors.length).toBeGreaterThanOrEqual(4);
+    expect(errors).toContain("concurrency must be >= 1");
+    expect(errors).toContain("timeoutMs must be >= 100");
+    expect(errors).toContain("backoffCapMs must be >= backoffBaseMs");
+  });
+
+  it("getQueueForJobType maps correctly", async () => {
+    const { getQueueForJobType } = await import("../queue-config");
+    expect(getQueueForJobType("PROCESS_WEBHOOK_EVENT")).toBe("webhook");
+    expect(getQueueForJobType("AI_EXTRACTION")).toBe("ai-extraction");
+    expect(getQueueForJobType("BILLING_PROCESS")).toBe("billing");
+    expect(getQueueForJobType("NOTIFY_EMAIL")).toBe("notification");
+    expect(getQueueForJobType("ANALYTICS_REPORT")).toBe("analytics");
+    expect(getQueueForJobType("ARCHIVE_WEBHOOK_PAYLOADS")).toBe("maintenance");
+    expect(getQueueForJobType("UNKNOWN_TYPE")).toBe("maintenance");
+  });
+
+  it("RateLimiter allows and then blocks within window", async () => {
+    const { RateLimiter } = await import("../queue-config");
+    const limiter = new RateLimiter();
+    const config = {
+      concurrency: 1,
+      timeoutMs: 1000,
+      maxRetries: 1,
+      backoffBaseMs: 100,
+      backoffCapMs: 1000,
+      rateLimitPerOrg: 2,
+      rateLimitWindowMs: 60000,
+      maxPayloadSizeBytes: 1024,
+      requireIdempotency: false,
+      deadLetterEnabled: false,
+      maxDepth: 5,
+    };
+
+    expect(limiter.isRateLimited("org-1", config)).toBe(false);
+    limiter.record("org-1");
+    expect(limiter.isRateLimited("org-1", config)).toBe(false);
+    limiter.record("org-1");
+    expect(limiter.isRateLimited("org-1", config)).toBe(true);
+
+    limiter.reset();
+    expect(limiter.isRateLimited("org-1", config)).toBe(false);
+  });
+
+  it("validatePayloadSize checks byte length", async () => {
+    const { validatePayloadSize } = await import("../queue-config");
+    expect(validatePayloadSize({ small: "data" }, 1024)).toBe(true);
+    expect(validatePayloadSize({ large: "x".repeat(2000) }, 100)).toBe(false);
+  });
+
+  it("validateDepth enforces max recursion depth", async () => {
+    const { validateDepth } = await import("../queue-config");
+    expect(validateDepth({ parentJobId: "p1", depth: 0, maxDepth: 3 })).toBe(true);
+    expect(validateDepth({ parentJobId: "p1", depth: 2, maxDepth: 3 })).toBe(true);
+    expect(validateDepth({ parentJobId: "p1", depth: 3, maxDepth: 3 })).toBe(false);
+    expect(validateDepth({ parentJobId: null, depth: null, maxDepth: 3 })).toBe(true);
+  });
+
+  it("claimNextJobForQueue filters by queue job types", async () => {
+    const { claimNextJobForQueue, getJobTypesForQueue } = await import("../index");
+    const types = getJobTypesForQueue("webhook");
+    expect(types).toContain("PROCESS_WEBHOOK_EVENT");
+    expect(getJobTypesForQueue("billing")).toContain("BILLING_PROCESS");
+    expect(getJobTypesForQueue("ai-extraction")).toContain("AI_EXTRACTION");
+  });
+});
