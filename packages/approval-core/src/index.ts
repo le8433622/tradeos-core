@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { prisma, type ActionRiskLevel } from "@tradeos/database";
+import { appendAuditEvent } from "@tradeos/audit-core";
 import {
   executeAction,
   getAction,
@@ -410,6 +411,20 @@ export async function executeApprovedRequest(params: {
         toStatus: "EXECUTED",
       });
 
+      appendAuditEvent({
+        organizationId: params.organizationId,
+        actorUserId: params.context.actorUserId,
+        eventType: "APPROVAL_EXECUTED",
+        subjectType: "approvalRequest",
+        subjectId: params.approvalRequestId,
+        actionName: request.actionName,
+        riskLevel: request.riskLevel,
+        inputHash: createHash("sha256").update(JSON.stringify(request.input)).digest("hex"),
+        resultHash: createHash("sha256").update(JSON.stringify(result)).digest("hex"),
+        payload: { fromStatus: "APPROVED", toStatus: "EXECUTED" },
+        redactedPayload: { fromStatus: "APPROVED", toStatus: "EXECUTED" },
+      }).catch(() => {});
+
       return updated;
     });
   } catch (error) {
@@ -435,6 +450,19 @@ export async function executeApprovedRequest(params: {
         toStatus: "FAILED",
       });
     });
+
+    appendAuditEvent({
+      organizationId: params.organizationId,
+      actorUserId: params.context.actorUserId,
+      eventType: "APPROVAL_FAILED",
+      subjectType: "approvalRequest",
+      subjectId: params.approvalRequestId,
+      actionName: request.actionName,
+      riskLevel: request.riskLevel,
+      inputHash: createHash("sha256").update(JSON.stringify(request.input)).digest("hex"),
+      payload: { fromStatus: "EXECUTING", toStatus: "FAILED", error: message },
+      redactedPayload: { fromStatus: "EXECUTING", toStatus: "FAILED", error: message },
+    }).catch(() => {});
 
     throw error;
   }
@@ -513,8 +541,8 @@ export async function recoverStaleRequest(params: {
     request.retryCount < request.maxRetries;
 
   if (isHighRisk || !hasRetryBudget) {
-    return prisma.$transaction(async (tx) => {
-      const updated = await tx.approvalRequest.update({
+    const updated = await prisma.$transaction(async (tx) => {
+      const u = await tx.approvalRequest.update({
         where: { id: request.id },
         data: {
           status: "FAILED",
@@ -540,8 +568,23 @@ export async function recoverStaleRequest(params: {
         auditActionName: "approval.stale_recovered",
       });
 
-      return updated;
+      return u;
     });
+
+    appendAuditEvent({
+      organizationId: params.organizationId,
+      actorUserId: params.reviewedById,
+      eventType: "APPROVAL_STALE",
+      subjectType: "approvalRequest",
+      subjectId: params.approvalRequestId,
+      actionName: request.actionName,
+      riskLevel: request.riskLevel,
+      inputHash: createHash("sha256").update(JSON.stringify(request.input)).digest("hex"),
+      payload: { fromStatus: "EXECUTING", toStatus: "FAILED", reason: "STALE_EXECUTION" },
+      redactedPayload: { fromStatus: "EXECUTING", toStatus: "FAILED", reason: "STALE_EXECUTION" },
+    }).catch(() => {});
+
+    return updated;
   }
 
   return retryApprovalRequest({
@@ -576,7 +619,7 @@ export async function retryApprovalRequest(params: {
 
   const retryChainId = parent.retryChainId ?? parent.id;
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     await tx.approvalRequest.update({
       where: { id: parent.id },
       data: {
@@ -621,6 +664,21 @@ export async function retryApprovalRequest(params: {
 
     return approval;
   });
+
+  appendAuditEvent({
+    organizationId: params.organizationId,
+    actorUserId: params.requestedById,
+    eventType: "APPROVAL_RETRIED",
+    subjectType: "approvalRequest",
+    subjectId: result.id,
+    actionName: parent.actionName,
+    riskLevel: parent.riskLevel,
+    inputHash: createHash("sha256").update(JSON.stringify(parent.input)).digest("hex"),
+    payload: { retryOf: parent.id, retryChainId, retryCount: result.retryCount },
+    redactedPayload: { retryOf: parent.id, retryChainId, retryCount: result.retryCount },
+  }).catch(() => {});
+
+  return result;
 }
 
 export async function getRetryChain(params: {

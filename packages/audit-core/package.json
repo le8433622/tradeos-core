@@ -1,5 +1,5 @@
 {
-  "name": "@tradeos/approval-core",
+  "name": "@tradeos/audit-core",
   "version": "0.1.0",
   "private": true,
   "main": "src/index.ts",
@@ -8,10 +8,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@tradeos/audit-core": "workspace:*",
-    "@tradeos/database": "workspace:*",
-    "@tradeos/policy-core": "workspace:*",
-    "zod": "^3.24.4"
+    "@tradeos/database": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2",
