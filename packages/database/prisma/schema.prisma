@@ -116,6 +116,21 @@ enum IntegrationStatus {
 enum JobType {
   PROCESS_WEBHOOK_EVENT
   ARCHIVE_WEBHOOK_PAYLOADS
+  AI_EXTRACTION
+  EXTRACT_DOCUMENT
+  EXTRACT_EMBEDDING
+  EXTRACT_ANALYZE
+  BILLING_PROCESS
+  INVOICE_GENERATE
+  PAYMENT_PROCESS
+  NOTIFY_EMAIL
+  NOTIFY_SMS
+  SEND_ALERT
+  ANALYTICS_REPORT
+  REPORT_GENERATE
+  ANALYTICS_EXPORT
+  MAINTENANCE_CLEANUP
+  MAINTENANCE_RECONCILE
 }
 
 enum JobStatus {
@@ -124,6 +139,7 @@ enum JobStatus {
   COMPLETED
   FAILED
   CANCELLED
+  DEAD_LETTER
 }
 
 enum TenantPlan {
@@ -520,6 +536,8 @@ model Job {
   maxAttempts    Int       @default(3)
   nextRunAt      DateTime  @default(now())
   lastError      String?
+  parentJobId    String?
+  depth          Int       @default(0)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
