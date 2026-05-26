@@ -29,9 +29,16 @@ export function allowDemoAuth() {
   );
 }
 
-export async function getDemoSession(): Promise<SessionContext> {
+export async function getDemoSession(
+  request?: Request,
+  emailOverride?: string,
+): Promise<SessionContext> {
+  const email =
+    emailOverride ??
+    request?.headers.get("x-demo-auth-email") ??
+    DEMO_USER_EMAIL;
   const user = await prisma.user.findUnique({
-    where: { email: DEMO_USER_EMAIL },
+    where: { email },
   });
 
   if (!user) {

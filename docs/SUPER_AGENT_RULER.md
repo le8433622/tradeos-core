@@ -54,14 +54,14 @@ Agents must not create their own execution order. The active order is declared i
 Current survival sequence:
 
 ```txt
-#65 -> #69 -> #70 -> #53 -> #66 -> #60/status-confirmation
+#81 (done) -> #82 -> production Supabase project -> #70 -> #53
 ```
 
 Hard limits:
 
 1. Only 1 active P0 implementation PR at a time unless explicitly approved.
 2. Only 1 schema-changing PR may be open at a time.
-3. No product feature issue creation while `#53` is open.
+3. No product feature issue creation until pilot proof exists.
 4. No plugin/toolcall product implementation before `#70`, `#53`, and `#66` are complete and pilot proof exists.
 5. No new package creation until Supplier Switch paid pilot proof exists.
 6. No package-boundary refactor until Supplier Switch end-to-end behavior is proven by E2E or pilot evidence.
@@ -169,6 +169,7 @@ The agent must stop immediately when any condition is true:
 19. The agent is about to implement AI-driven action execution without runtime schema validation of AI output.
 20. The agent is about to create economic side effects (billing, approval, commitment) without human approval and evidence.
 21. Kill switch policy (`docs/34_KILL_SWITCH_POLICY.md`) has not been read before enabling automation.
+22. An agent operating as NVIDIA QA Agent is about to modify source code, create commits, open PRs, apply migrations, or write production data.
 
 When stopped, write a blocker note:
 
@@ -197,25 +198,23 @@ Next human/operator action:
 
 ## 6. Remaining Current Work
 
-As of 2026-05-26, the active lane is **production survival before more product expansion**:
+As of 2026-05-26, active lane is **behavior QA + pilot verification**:
 
 ```txt
-#65 — P0: Reality Lock active-work limit
-#69 — P0: production change-class gate and PR template enforcement
-#70 — P0: AI/toolcall kill switch and manual-first enforcement
-#53 — P0: conditional E2E + schema-change + tenant invariant CI gates
-#66 — P0: production health gate + migration apply runbook
-#60 — Closed; status-confirmation only unless a regression issue exists
+#81 — ✅ Behavior QA scenarios & fixtures closed
+#82 — P0: NVIDIA QA Agent protocol
+#70 — Open: kill switch runtime enforcement
+#53 — Open: tenant invariant CI gates
+#60 — Closed
 ```
 
 Therefore:
 
-- Product feature expansion is frozen while `#65`, `#69`, `#70`, `#53`, and `#66` are open.
-- `#60` is not to be reworked while closed unless a new failing test or issue proves regression.
-- No marketplace, generic CRM/ERP, plugin/toolcall product implementation, social/API integrations, or new packages before survival gates and paid pilot proof.
-- `docs/32_SUPPLIER_SWITCH_EXECUTION_PROTOCOL.md` remains the Supplier Switch product-chain protocol, but production safety gates take priority until this lane is green.
+- No marketplace, generic CRM/ERP, plugin/toolcall product implementation, social/API integrations, or new packages before paid pilot proof.
+- `docs/32_SUPPLIER_SWITCH_EXECUTION_PROTOCOL.md` remains the Supplier Switch product-chain protocol.
 - `docs/33_CLOUD_DB_SAFETY_PROTOCOL.md` remains mandatory reading for any schema/data change.
 - `docs/34_KILL_SWITCH_POLICY.md` is mandatory reading before enabling any automation kill switch.
+- `docs/35_NVIDIA_QA_AGENT_PROTOCOL.md` is mandatory reading for any agent operating or configuring the NVIDIA QA Agent.
 
 ## 7. Rule For `#26` — ✅ CLOSED
 
@@ -297,6 +296,7 @@ docs/SUPER_AGENT_RULER.md
 docs/32_SUPPLIER_SWITCH_EXECUTION_PROTOCOL.md
 docs/33_CLOUD_DB_SAFETY_PROTOCOL.md
 docs/34_KILL_SWITCH_POLICY.md
+docs/35_NVIDIA_QA_AGENT_PROTOCOL.md
 agent.md if it conflicts with the ruler
 ```
 

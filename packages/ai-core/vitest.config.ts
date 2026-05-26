@@ -4,5 +4,8 @@ export default defineConfig({
   test: {
     globals: true,
     include: ["src/__tests__/**/*.test.ts"],
+    env: {
+      AI_EXECUTION_ENABLED: "true",
+    },
   },
 });

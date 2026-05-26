@@ -1,5 +1,6 @@
 import { prisma } from "@tradeos/database";
 import {
+  assertKillSwitchEnabled,
   DEFAULT_ADMIN_ROLES,
   executeAction,
   registerAction,
@@ -826,6 +827,7 @@ export const exportBillingUsageAction = registerAction<
   allowedRoles: DEFAULT_ADMIN_ROLES,
   requiresApprovalForAI: true,
   handler: async (input, context) => {
+    assertKillSwitchEnabled("BILLING_SIDE_EFFECTS_ENABLED");
     const parsed = safeParse(exportBillingUsageSchema, input);
     return exportBillingUsageWithClient(db(context), parsed.organizationId);
   },

@@ -1,3 +1,4 @@
+import { assertKillSwitchEnabled } from "@tradeos/policy-core";
 import type {
   AgentPlan,
   AgentPlanStep,
@@ -195,6 +196,7 @@ function validateAgentPlan(raw: unknown): raw is AgentPlan {
 export async function planWithLlm(
   message: IncomingMessage,
 ): Promise<PlanWithLlmResult> {
+  assertKillSwitchEnabled("AI_EXECUTION_ENABLED");
   const config = getLlmConfig();
   if (!config) return null;
 

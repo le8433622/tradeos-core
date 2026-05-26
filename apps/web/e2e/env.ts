@@ -21,7 +21,10 @@ export function getE2EConfig() {
   return {
     enabled: true as const,
     baseUrl: process.env.E2E_BASE_URL || "http://localhost:3000",
-    email: process.env.E2E_USER_EMAIL || "owner@tradeos.local",
+    email: process.env.E2E_USER_EMAIL || "pilot-owner@tradeos.local",
+    password: process.env.E2E_USER_PASSWORD || "",
     orgId: process.env.E2E_ORG_ID || "demo-org",
   };
 }
+
+export type E2EConfig = ReturnType<typeof getE2EConfig>;

@@ -1,10 +1,14 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, applyAuth, getDefaultAuthMode } from "./auth/fixtures";
 import { getE2EConfig } from "./env";
 
 const cfg = getE2EConfig();
 
 test.describe("Permissions — Skeleton", () => {
   test.skip(!cfg.enabled, "E2E_RUN_ENABLED !== true — skipping E2E");
+
+  test.beforeEach(async ({ context }) => {
+    await applyAuth(context, cfg.baseUrl, getDefaultAuthMode());
+  });
 
   test("Dashboard loads without permission errors", async ({ page }) => {
     await page.goto(cfg.baseUrl);

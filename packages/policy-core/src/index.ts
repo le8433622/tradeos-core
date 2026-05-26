@@ -1,4 +1,10 @@
 import { prisma } from "@tradeos/database";
+export {
+  assertKillSwitchEnabled,
+  isKillSwitchEnabled,
+  KILL_SWITCHES,
+  type KillSwitchName,
+} from "./kill-switch";
 
 export type ActorRole = "OWNER" | "ADMIN" | "SALES" | "OPERATOR" | "VIEWER";
 export type RiskLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";

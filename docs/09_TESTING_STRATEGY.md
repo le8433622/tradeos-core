@@ -210,6 +210,7 @@ When demo auth is removed for production, E2E tests will need real test credenti
 | `e2e/smoke.spec.ts`       | 4     | Protected page loads (dashboard, sourcing, leads, settings) |
 | `e2e/procurement.spec.ts` | 3     | Sourcing run list, detail, create page skeleton             |
 | `e2e/permissions.spec.ts` | 3     | Permission check, unauthorized redirect, approvals gate     |
+| `e2e/behavior.spec.ts`    | 10    | Behavior scenario E2E validation (11 messy human patterns)  |
 
 ### CI Integration
 
@@ -238,6 +239,105 @@ Current status: **skipped by default** — no E2E database in CI. When a test da
 - Traces enabled for debugging → view with `npx playwright show-trace`
 - No production database writes
 - No fake proof when env vars are missing
+
+## Behavior QA
+
+Behavior-driven QA validates the system against realistic human buying patterns, not only clean happy paths. See `docs/34_BEHAVIOR_QA_CATALOG.md` for the full scenario library.
+
+### Scenarios (11 total)
+
+| Label | Scenario                  | Expected Outcome   | Evidence Quality |
+| ----- | ------------------------- | ------------------ | ---------------- |
+| B-QB  | Qualified buyer           | SWITCH             | high             |
+| B-NDM | Non-decision-maker        | WAIT               | medium           |
+| B-MI  | Missing invoice           | WAIT               | none             |
+| B-WS  | Weak screenshot           | WAIT               | low              |
+| B-NC  | Non-comparable product    | NEGOTIATE          | medium           |
+| B-CR  | Cheap risky supplier      | NEGOTIATE          | high/low         |
+| B-HS  | High savings weak proof   | NEGOTIATE          | low              |
+| B-LT  | Low savings high trust    | WAIT               | high/low         |
+| B-RMP | Buyer requests more proof | REQUEST_MORE_PROOF | medium           |
+| B-RR  | Buyer rejects report      | REJECTED           | high             |
+| B-BD  | Buyer disappeared (stale) | APPROVED + stale   | high             |
+
+### Fixture Seeding
+
+```bash
+# Seed all 11 behavior scenarios into local/staging DB
+node scripts/seed-behavior-fixtures.cjs
+```
+
+All fixtures are namespaced under org `behavior-qa-01` and can be cleaned up:
+
+```bash
+# Cleanup: remove all behavior QA fixtures
+# prisma.sourcingRun.deleteMany({ where: { organizationId: "behavior-qa-01" } })
+```
+
+### E2E Tests
+
+Behavior scenario E2E tests live in `apps/web/e2e/behavior.spec.ts`. They verify:
+
+1. Each scenario title renders on the sourcing runs page
+2. No error or permission_denied text appears when browsing scenarios
+3. Scenarios are loadable without crashing the UI
+
+### Adding New Scenarios
+
+After real pilot learning:
+
+1. Document the behavior pattern in `docs/34_BEHAVIOR_QA_CATALOG.md`
+2. Add a seed function in `scripts/seed-behavior-fixtures.cjs`
+3. Add an E2E test in `apps/web/e2e/behavior.spec.ts`
+4. Seed and verify locally before staging deploy
+
+## NVIDIA QA Agent Protocol
+
+The NVIDIA QA Agent is a **QA-only behavior tester** for code-stage validation. It is **not** a production runtime component, code generator, or deployment tool. Full protocol: `docs/35_NVIDIA_QA_AGENT_PROTOCOL.md`.
+
+### Role Separation
+
+```txt
+OpenCode          = code agent / builder
+NVIDIA QA Agent   = QA agent / behavior tester / breaker
+CI                = verifies code
+Human             = approves merge/deploy
+```
+
+### Boundaries
+
+NVIDIA QA Agent may:
+
+- Run behavior scenarios against local/test/preview/staging
+- Call `qa.*` namespace tools
+- Seed namespaced test data under `E2E_RUN_ID`
+- Write QA reports
+
+Must never:
+
+- Modify code, create commits, open PRs, apply migrations
+- Write production DB, run in production, call billing side effects
+- Approve business actions, bypass human approval
+
+### Integration
+
+For product-facing PRs:
+
+1. CI checks pass
+2. NVIDIA QA Agent runs against preview/staging
+3. QA report attached as PR comment
+4. Human reviews findings before merge
+
+### Required Env Vars
+
+```txt
+NVIDIA_QA_ENABLED=false           — master switch
+NVIDIA_QA_ALLOWED_ENV=local,test,preview,staging
+NVIDIA_QA_ALLOW_PRODUCTION=false
+NVIDIA_QA_WRITE_MODE=test_only
+NVIDIA_QA_REQUIRE_E2E_RUN_ID=true
+NVIDIA_QA_REQUIRE_TEST_TENANT=true
+```
 
 ## Manual Smoke Tests
 
@@ -310,7 +410,7 @@ When fixing a bug, add a regression test that would have FAILED before the fix:
 | `pnpm db:generate`                                                         | Prisma client generation  | Client regenerated                                                             |
 | `git diff --check`                                                         | Whitespace check          | No errors                                                                      |
 | `RUN_INTEGRATION_TESTS=true pnpm --filter @tradeos/integration-tests test` | Real DB integration suite | Must pass against staging/local DB before production                           |
-| `E2E_RUN_ENABLED=true pnpm --filter @tradeos/web test:e2e`                 | Browser E2E tests         | 10 tests in 3 files; all skip when env vars missing                            |
+| `E2E_RUN_ENABLED=true pnpm --filter @tradeos/web test:e2e`                 | Browser E2E tests         | 20 tests in 4 files; all skip when env vars missing                            |
 
 ## Known Local Caveat
 

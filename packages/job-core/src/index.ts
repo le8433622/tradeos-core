@@ -1,3 +1,4 @@
+import { assertKillSwitchEnabled } from "@tradeos/policy-core";
 import { prisma, type Job, type JobType, type Prisma } from "@tradeos/database";
 import {
   getQueueConfig,
@@ -10,8 +11,18 @@ import {
   type QueueConfig,
 } from "./queue-config";
 
-export { getQueueConfig, getQueueForJobType, RateLimiter, validatePayloadSize, validateDepth };
-export { validateQueueConfig, validateAllConfigs, QUEUE_CONFIGS } from "./queue-config";
+export {
+  getQueueConfig,
+  getQueueForJobType,
+  RateLimiter,
+  validatePayloadSize,
+  validateDepth,
+};
+export {
+  validateQueueConfig,
+  validateAllConfigs,
+  QUEUE_CONFIGS,
+} from "./queue-config";
 export type { QueueClass, QueueConfig } from "./queue-config";
 export type { Job, JobType } from "@tradeos/database";
 
@@ -33,16 +44,22 @@ export async function enqueueJob(input: EnqueueJobInput): Promise<Job> {
 
   if (input.payload) {
     if (!validatePayloadSize(input.payload, config.maxPayloadSizeBytes)) {
-      throw new Error(`PAYLOAD_TOO_LARGE: ${input.type} exceeds ${config.maxPayloadSizeBytes} byte limit`);
+      throw new Error(
+        `PAYLOAD_TOO_LARGE: ${input.type} exceeds ${config.maxPayloadSizeBytes} byte limit`,
+      );
     }
   }
 
-  if (!validateDepth({
-    parentJobId: input.parentJobId,
-    depth: input.depth,
-    maxDepth: config.maxDepth,
-  })) {
-    throw new Error(`DEPTH_EXCEEDED: ${input.type} exceeds max recursion depth of ${config.maxDepth}`);
+  if (
+    !validateDepth({
+      parentJobId: input.parentJobId,
+      depth: input.depth,
+      maxDepth: config.maxDepth,
+    })
+  ) {
+    throw new Error(
+      `DEPTH_EXCEEDED: ${input.type} exceeds max recursion depth of ${config.maxDepth}`,
+    );
   }
 
   return prisma.job.create({
@@ -109,17 +126,34 @@ export async function claimNextJobForQueue(
 export function getJobTypesForQueue(queue: QueueClass): JobType[] {
   switch (queue) {
     case "ai-extraction":
-      return ["AI_EXTRACTION", "EXTRACT_DOCUMENT", "EXTRACT_EMBEDDING", "EXTRACT_ANALYZE"] as JobType[];
+      return [
+        "AI_EXTRACTION",
+        "EXTRACT_DOCUMENT",
+        "EXTRACT_EMBEDDING",
+        "EXTRACT_ANALYZE",
+      ] as JobType[];
     case "webhook":
       return ["PROCESS_WEBHOOK_EVENT"] as JobType[];
     case "billing":
-      return ["BILLING_PROCESS", "INVOICE_GENERATE", "PAYMENT_PROCESS"] as JobType[];
+      return [
+        "BILLING_PROCESS",
+        "INVOICE_GENERATE",
+        "PAYMENT_PROCESS",
+      ] as JobType[];
     case "notification":
       return ["NOTIFY_EMAIL", "NOTIFY_SMS", "SEND_ALERT"] as JobType[];
     case "analytics":
-      return ["ANALYTICS_REPORT", "REPORT_GENERATE", "ANALYTICS_EXPORT"] as JobType[];
+      return [
+        "ANALYTICS_REPORT",
+        "REPORT_GENERATE",
+        "ANALYTICS_EXPORT",
+      ] as JobType[];
     case "maintenance":
-      return ["ARCHIVE_WEBHOOK_PAYLOADS", "MAINTENANCE_CLEANUP", "MAINTENANCE_RECONCILE"] as JobType[];
+      return [
+        "ARCHIVE_WEBHOOK_PAYLOADS",
+        "MAINTENANCE_CLEANUP",
+        "MAINTENANCE_RECONCILE",
+      ] as JobType[];
     default:
       return [];
   }
@@ -155,7 +189,11 @@ export function calculateBackoff(retryCount: number, baseMs = 1000): number {
   return Math.min(delayMs, MAX_BACKOFF_MS);
 }
 
-export async function failJob(id: string, error: string, queue?: QueueClass): Promise<void> {
+export async function failJob(
+  id: string,
+  error: string,
+  queue?: QueueClass,
+): Promise<void> {
   const job = await prisma.job.findUnique({ where: { id } });
   if (!job) return;
 
@@ -202,10 +240,7 @@ export type JobProcessor = (job: ClaimedJob) => Promise<void>;
 
 const processors = new Map<string, JobProcessor>();
 
-export function registerProcessor(
-  type: string,
-  processor: JobProcessor,
-): void {
+export function registerProcessor(type: string, processor: JobProcessor): void {
   processors.set(type, processor);
 }
 
@@ -237,6 +272,7 @@ export type WorkerOptions = {
 };
 
 export async function runWorkerLoop(options?: WorkerOptions): Promise<void> {
+  assertKillSwitchEnabled("WORKER_CONSUMING_ENABLED");
   const allQueues = Object.keys(QUEUE_CONFIGS) as QueueClass[];
   const queues = options?.queues ?? allQueues;
 
@@ -249,7 +285,9 @@ export async function runWorkerLoop(options?: WorkerOptions): Promise<void> {
   process.on("SIGTERM", shutdown);
   process.on("SIGINT", shutdown);
 
-  const loops = queues.map((queue) => runSingleQueueLoop(queue, pollInterval, () => running));
+  const loops = queues.map((queue) =>
+    runSingleQueueLoop(queue, pollInterval, () => running),
+  );
   await Promise.all(loops);
 }
 
@@ -277,7 +315,11 @@ async function runSingleQueueLoop(
     }
 
     if (rateLimiter.isRateLimited(job.organizationId, config)) {
-      await failJob(job.id, `RATE_LIMITED: ${job.organizationId} exceeded rate limit for ${queue}`, queue);
+      await failJob(
+        job.id,
+        `RATE_LIMITED: ${job.organizationId} exceeded rate limit for ${queue}`,
+        queue,
+      );
       continue;
     }
 

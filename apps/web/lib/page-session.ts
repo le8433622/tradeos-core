@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import {
   resolveSessionFromEmail,
   getDemoSession,
@@ -27,7 +28,9 @@ export async function requirePageSession() {
   }
 
   if (allowDemoAuth()) {
-    return getDemoSession();
+    const cookieStore = await cookies();
+    const demoEmail = cookieStore.get("x-demo-auth-email")?.value;
+    return getDemoSession(undefined, demoEmail);
   }
 
   redirect("/login");

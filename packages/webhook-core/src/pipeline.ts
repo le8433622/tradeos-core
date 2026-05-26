@@ -1,3 +1,4 @@
+import { assertKillSwitchEnabled } from "@tradeos/policy-core";
 import { type ChannelType, type UserRole } from "@tradeos/database";
 import {
   buildWebhookEventKey,
@@ -101,6 +102,7 @@ export type WebhookPipelineInput = {
 export async function processWebhookRequest(
   input: WebhookPipelineInput,
 ): Promise<Response> {
+  assertKillSwitchEnabled("WEBHOOK_PROCESSING_ENABLED");
   const { request, channel, extractMessage, tenantResolver, adapters } = input;
   const buildIngestTitle =
     input.buildIngestTitle ??

@@ -5,7 +5,10 @@ import {
   registerAction,
   validateRecordBelongsToOrg,
 } from "@tradeos/policy-core";
-import type { ActionContext } from "@tradeos/policy-core";
+import {
+  assertKillSwitchEnabled,
+  type ActionContext,
+} from "@tradeos/policy-core";
 import { checkEntitlement } from "@tradeos/plan-core";
 import { z } from "zod";
 import { computeSwitchDecision } from "./switch-decision";
@@ -1286,6 +1289,7 @@ export const markAsBilledAction = registerAction<
   allowedRoles: ["OWNER"],
   requiresApprovalForAI: true,
   handler: async (input, context) => {
+    assertKillSwitchEnabled("BILLING_SIDE_EFFECTS_ENABLED");
     const parsed = markAsBilledSchema.parse(input);
     const cp = await prisma.workCheckpoint.findUnique({
       where: { id: parsed.checkpointId },

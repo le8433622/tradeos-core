@@ -80,7 +80,7 @@ export async function requireSessionFromRequest(
   }
 
   if (allowDemoAuth()) {
-    return getDemoSession();
+    return getDemoSession(request);
   }
 
   throw new Error("AUTH_REQUIRED");
