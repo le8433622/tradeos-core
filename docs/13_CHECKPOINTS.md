@@ -53,9 +53,7 @@ BLOCKED_SCOPE_EXPANSION
 - Behavior QA documentation (#81) and NVIDIA QA protocol (#82).
 - No source, schema, package, plugin, or product feature expansion until pilot case is fully verified.
 
-## Frozen Until Survival Gates Are Green
-
-## Frozen Until Survival Gates Are Green
+## Frozen Until Pilot Case Is Fully Verified
 
 - Marketplace mechanics.
 - Generic CRM/ERP expansion.
@@ -107,7 +105,8 @@ All checks PASSED on 2026-05-26:
 | Report | ✅ NEGOTIATE, HIGH confidence, $450K/yr savings |
 | Checkpoints | ✅ 3 delivered |
 | OutcomeRecord | ⬜ not recorded (buyer decision pending) |
-| E2E browser | ⬜ skipped — no auth session for pilot tenant |
+| Auth user | ✅ pilot-owner@tradeos.local (Supabase Auth, confirmed) |
+| E2E browser | ⬜ skipped — needs Playwright login flow (#81) |
 
 ## Residual Risks
 
