@@ -1,6 +1,6 @@
 # Production State — TradeOS Core
 
-**Last updated**: 2026-05-27 (amended for #70, #81, #82, #90, #91, E2E auth infrastructure)
+**Last updated**: 2026-05-27 (amended for RLS + FK migration apply, search_path fix, doc sync)
 **Status**: ⚠️ NO production Supabase database exists. Vercel production points to **staging DB only**. See `docs/ENVIRONMENT_STRATEGY.md` for the full environment plan.
 
 ## Current Production Commit
@@ -28,10 +28,14 @@ This means:
 ## Supabase
 
 - **Project ref**: `ulnjanlaehfmxurreibj` (staging — NO production project)
-- **Prisma migrations total**: 11 rows in `_prisma_migrations`
-- **Supplier Switch applied**: 5 successful
-- **Failed/rolled-back**: 2 historical
-- **Pending migrations**: None
+- **Prisma migrations total**: 12 rows in `_prisma_migrations`
+- **Supplier Switch applied**: 7 successful
+- **Failed/rolled-back**: 5 historical (FK index had 3 retries before final success)
+- **Pending migrations**: None (after `20260527_fix_search_path`)
+- **Key migrations**:
+  - `20260527_add_rls_policies` — RLS for 13 Supplier Switch tables ✅
+  - `20260527_add_fk_covering_indexes` — 87 covering indexes ✅
+  - `20260527_fix_search_path` — locked `current_user_org_id()` search_path to `public` ✅
 
 ## Row Counts (staging)
 
@@ -115,40 +119,43 @@ This means:
 | Quotation            | ✅          | ✅     | Deployed with phase1 schema |
 | ApprovalRequest      | ✅          | ✅     | Deployed with phase1 schema |
 | WebhookEvent         | ✅          | ✅     | Deployed with phase1 schema |
-| SourcingRun          | ❌          | ❌     | **MISSING** — P0 blocker    |
-| PurchaseBaseline     | ❌          | ❌     | **MISSING** — P0 blocker    |
-| SupplierAlternative  | ❌          | ❌     | **MISSING** — P0 blocker    |
-| SupplierCandidate    | ❌          | ❌     | **MISSING** — P0 blocker    |
-| SupplierQuote        | ❌          | ❌     | **MISSING** — P0 blocker    |
-| SwitchDecisionReport | ❌          | ❌     | **MISSING** — P0 blocker    |
-| EvidenceItem         | ❌          | ❌     | **MISSING** — P0 blocker    |
-| WorkCheckpoint       | ❌          | ❌     | **MISSING** — P0 blocker    |
-| OutcomeRecord        | ❌          | ❌     | **MISSING** — P0 blocker    |
-| Payment              | ❌          | ❌     | **MISSING** — P0 blocker    |
-| Job                  | ❌          | ❌     | **MISSING** — P0 blocker    |
-| HumanHandover        | ❌          | ❌     | **MISSING** — P0 blocker    |
-| AiUsageEvent         | ❌          | ❌     | **MISSING** — P0 blocker    |
+| SourcingRun          | ✅          | ✅     | `tenant_sourcingrun` — `20260527_add_rls_policies` |
+| PurchaseBaseline     | ✅          | ✅     | `tenant_purchasebaseline` — `20260527_add_rls_policies` |
+| SupplierAlternative  | ✅          | ✅     | `tenant_supplieralternative` — `20260527_add_rls_policies` |
+| SupplierCandidate    | ✅          | ✅     | `tenant_suppliercandidate` — `20260527_add_rls_policies` |
+| SupplierQuote        | ✅          | ✅     | `tenant_supplierquote` — `20260527_add_rls_policies` |
+| SwitchDecisionReport | ✅          | ✅     | `tenant_switchdecisionreport` — `20260527_add_rls_policies` |
+| EvidenceItem         | ✅          | ✅     | `tenant_evidenceitem` — `20260527_add_rls_policies` |
+| WorkCheckpoint       | ✅          | ✅     | `tenant_workcheckpoint` — `20260527_add_rls_policies` |
+| OutcomeRecord        | ✅          | ✅     | `tenant_outcomerecord` — `20260527_add_rls_policies` |
+| Payment              | ✅          | ✅     | `tenant_payment` — `20260527_add_rls_policies` |
+| Job                  | ✅          | ✅     | `tenant_job` — `20260527_add_rls_policies` |
+| HumanHandover        | ✅          | ✅     | `tenant_humanhandover` — `20260527_add_rls_policies` |
+| AiUsageEvent         | ✅          | ✅     | `tenant_aiusageevent` — `20260527_add_rls_policies` |
 
-Migration SQL ready at `packages/database/prisma/migrations/20260527_add_rls_policies/`.
-Approach: `auth.jwt() ->> 'email'` → look up org from User table (no Auth Hook needed).
-Not yet applied. Blocked until `prisma migrate deploy` or manual SQL run.
+**16 tables still lack RLS policies** (out of scope for Supplier Switch migration): IntroductionRequest, Invitation, OrganizationMember, Permission, PlanLimit, QuotationLineItem, ReportSnapshot, Role, RolePermission, WebhookIntegration, and internal tables. Issue to be created.
+
+**Helper**: `current_user_org_id()` uses `auth.jwt() ->> 'email'` → look up org from User table. Search path locked to `public` (`20260527_fix_search_path`).
 
 ## Residual Issues
 
 1. **No production Supabase project** — Vercel prod reads/writes staging DB. Real buyer data must not be stored.
-2. **RLS policies missing on 12 Supplier Switch tables** — old tables have policies, new ones don't. P0 blocker for production safety.
-3. **FK columns lack covering indexes** — `organizationId`, `sourcingRunId` etc. Migration ready at `20260527_add_fk_covering_indexes/`. Not urgent but will degrade with pilot growth.
-4. **OutcomeRecord exists** — `cmpn5vxyw0001cq626q6wfqtr` (NEGOTIATE). Learning loop closed for pilot case.
-5. **ALLOW_DEMO_AUTH contradiction** — `.env` says `false`, Vercel staging says `true`. Production must be `false`.
-6. **#53** (tenant invariant tests) still open — 20 of 60+ actions tested. New tests added for checkpoint, handover, markRunReadyForReview, compareQuotes, addSupplierQuote cross-tenant validation.
-7. **E2E with real Supabase Auth** — `/api/e2e/login` endpoint ready, `applyAuth` updated. `E2E_USER_PASSWORD` env var not set. Falls back to demo auth.
+2. ✅ **RLS policies applied** — All 13 Supplier Switch tables now have tenant isolation policies via `20260527_add_rls_policies`.
+3. ✅ **FK covering indexes applied** — `20260527_add_fk_covering_indexes` applied (87 total indexes). Missing tables/columns gracefully skipped.
+4. ✅ **`current_user_org_id()` search_path locked** — `20260527_fix_search_path` applied on staging.
+5. **OutcomeRecord exists** — `cmpn5vxyw0001cq626q6wfqtr` (NEGOTIATE). Learning loop closed for pilot case.
+6. **ALLOW_DEMO_AUTH contradiction** — `.env` says `false`, Vercel staging says `true`. Production must be `false`.
+7. **#53** (tenant invariant tests) still open — 30 of 60+ actions tested. sourcing-core now 70/70.
+8. **E2E with real Supabase Auth** — `/api/e2e/login` endpoint ready, `applyAuth` updated. `E2E_USER_PASSWORD` env var not set. Falls back to demo auth.
+9. **10 auxiliary tables lack RLS** — IntroductionRequest, Invitation, OrganizationMember, Permission, PlanLimit, QuotationLineItem, ReportSnapshot, Role, RolePermission, WebhookIntegration. Some (Permission, Role, PlanLimit) may be system-wide. Requires separate issue.
 
 ## Next Action
 
-1. **Apply RLS migration** — run `prisma migrate deploy` or execute migration SQL on Supabase staging. P0.
-2. **Fix ALLOW_DEMO_AUTH** — set `false` on Vercel production env vars.
-3. **Create production Supabase project** before real buyer data.
-4. **Continue #53** — more tenant invariant tests.
-5. **Mark canonical IDs** — document ACTIVE_PILOT_SOURCING_RUN_ID, ACTIVE_REPORT_ID, STALE_RUNS.
-6. **Apply FK indexes** — run `20260527_add_fk_covering_indexes` migration.
-7. **Then #82 NVIDIA QA Agent** — only after RLS + tenant tests + E2E are solid.
+1. ✅ **RLS migration applied** — All 13 Supplier Switch tables protected.
+2. ✅ **FK indexes applied** — 87 covering indexes.
+3. ✅ **search_path fix applied** — `current_user_org_id()` locked.
+4. **Run authenticated E2E** — verify login + SSR cookie + pilot case + cross-tenant block.
+5. **Fix ALLOW_DEMO_AUTH** — set `false` on Vercel production env vars.
+6. **Create production Supabase project** before real buyer data.
+7. **Create issue for auxiliary RLS** — IntroductionRequest, Invitation, OrganizationMember, etc.
+8. **Then #82 NVIDIA QA Agent** — only after RLS + E2E + docs sync are solid.
