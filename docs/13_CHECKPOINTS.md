@@ -7,9 +7,11 @@
 
 - Live GitHub PR state checked: **no open PRs**.
 - Active lane: **Supplier Switch pilot verification**.
-- Issues closed: `#60`, `#65`, `#66`, `#69`.
-- Issues open (residual scope): `#70` (runtime enforcement), `#53` (tenant invariant tests).
-- All 87 PRs merged. Main at `e97d11c`.
+- Current task: **#70** — runtime kill switch enforcement (✅ code done, plan docs updated). Next: close #70, then production Supabase project.
+- Issues closed: `#60`, `#65`, `#66`, `#69`, `#81`, `#82`.
+- Issues open: `#70` (runtime enforcement — code complete), `#53` (tenant invariant tests).
+- Issues completed this session: `#81` (behavior QA), `#82` (NVIDIA QA agent protocol), `#70` (runtime kill switch enforcement).
+- All 93+ PRs merged. Main at `ad93ed2`.
 - Older docs are historical unless they match live GitHub state and `docs/CURRENT_TRUTH.md`.
 
 ## Active Work Order
@@ -17,17 +19,15 @@
 Agents must follow this order and must not choose a different issue sequence:
 
 ```txt
-#65 -> #69 -> #70 -> #53 -> #66 -> #60/status-confirmation
+#70 (done) -> production Supabase project -> #53 -> real buyer pilot
 ```
 
 Meaning:
 
-1. `#65` - enforce Reality Lock active-work limit and stop parallel schema expansion.
-2. `#69` - add production change-class gate and PR template enforcement.
-3. `#70` - add AI/toolcall kill switch and manual-first enforcement.
-4. `#53` - add conditional E2E, schema-change, and tenant invariant CI gates.
-5. `#66` - add production health gate and migration apply runbook before Supabase schema changes.
-6. `#60` - closed; only confirm status or address a proven regression.
+1. `#70` ✅ — runtime kill switch enforcement wired at 6 entry points.
+2. `#82` ✅ — NVIDIA QA Agent protocol (QA-only behavior tester).
+3. Create production Supabase project before real buyer data.
+4. Implement `#53` (tenant invariant tests).
 
 ## Reality Lock Active-Work Policy
 
@@ -88,31 +88,56 @@ Hard assertions remain deterministic E2E/CI responsibilities. NVIDIA QA reports 
 For current pilot verification (pilot tenant `pilot-supplier-switch-01`):
 
 ```txt
+pnpm typecheck
+pnpm test
 pnpm docs:check
-Programmatic chain verification: SourcingRun → Baseline → Alts → Report → Checkpoints
-Health: /api/health → 200
+pnpm build
+pnpm docs:check
 ```
 
-All checks PASSED on 2026-05-26:
+For behavior QA verification:
 
-| Check | Result |
-|---|---|
-| `/api/health` | ✅ 200 |
-| SourcingRun | ✅ Steel Coil Procurement (DRAFT) |
-| Baseline | ✅ VSC @ $620/MT |
-| Alternatives | ✅ Baosteel $545 + POSCO $560 |
-| Quotes | ✅ 2 quotes |
-| Report | ✅ NEGOTIATE, HIGH confidence, $450K/yr savings |
-| Checkpoints | ✅ 3 delivered |
-| OutcomeRecord | ⬜ not recorded (buyer decision pending) |
-| Auth user | ✅ pilot-owner@tradeos.local (Supabase Auth, confirmed) |
-| E2E browser | ⬜ skipped — needs Playwright login flow (#81) |
+```txt
+pnpm test
+E2E_RUN_ENABLED=true pnpm --filter @tradeos/web test:e2e -- apps/web/e2e/behavior.spec.ts
+```
+
+All checks PASSED on 2026-05-27:
+
+| Check                    | Result                                                                                                |
+| ------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `pnpm typecheck`         | ✅ 18/18 — 0 errors                                                                                   |
+| `pnpm test`              | ✅ 447/447 pass (10 skipped integration)                                                              |
+| `pnpm build`             | ✅ 53/53 pages                                                                                        |
+| `pnpm docs:check`        | ✅ 60/60 actions                                                                                      |
+| `/api/health`            | ✅ 200                                                                                                |
+| Pilot SourcingRun        | ✅ Steel Coil Procurement (DRAFT)                                                                     |
+| Pilot Baseline           | ✅ VSC @ $620/MT                                                                                      |
+| Pilot Alternatives       | ✅ Baosteel $545 + POSCO $560                                                                         |
+| Pilot Quotes             | ✅ 2 quotes                                                                                           |
+| Pilot Report             | ✅ NEGOTIATE, HIGH confidence, $450K/yr savings                                                       |
+| Pilot Checkpoints        | ✅ 3 delivered                                                                                        |
+| Pilot OutcomeRecord      | ✅ RECORDED — NEGOTIATE (cmpn5vxyw0001cq626q6wfqtr)                                                   |
+| Pilot Auth user          | ✅ pilot-owner@tradeos.local (Supabase Auth, confirmed)                                               |
+| Behavior QA catalog      | ✅ `docs/34_BEHAVIOR_QA_CATALOG.md` — 15 scenarios documented                                         |
+| Behavior fixtures seed   | ✅ 11 messy scenarios seeded to staging (`behavior-qa-01`)                                            |
+| Behavior E2E             | ✅ 10/10 pass (cookie-based demo auth org override)                                                   |
+| Behavior permissions     | ✅ `sourcing.list`, `sourcing.view` added to `system-owner` role                                      |
+| NVIDIA QA protocol       | ✅ `docs/35_NVIDIA_QA_AGENT_PROTOCOL.md` — role, boundaries, env rules, report format, severity model |
+| Ruler update             | ✅ Stop condition #22 (QA agent writing code), file boundaries, active sequence                       |
+| Testing strategy         | ✅ NVIDIA QA Agent section added                                                                      |
+| `.env.example`           | ✅ `NVIDIA_QA_*` env vars added                                                                       |
+| Kill switch runtime      | ✅ `@tradeos/policy-core/src/kill-switch.ts` — 6 kill switches, 6 wired entry points in 4 packages    |
+| E2E auth infrastructure  | ✅ `apps/web/e2e/auth/supabase-auth.ts` — real Supabase Auth or demo fallback                         |
+| E2E test conversion      | ✅ All 4 spec files use `applyAuth()` from `auth/fixtures.ts`                                         |
+| Pilot OutcomeRecord      | ✅ 1 record (NEGOTIATE) — learning loop closed                                                        |
+| Canonical IDs documented | ✅ `docs/PRODUCTION_STATE.md` — all UUIDs recorded                                                    |
 
 ## Residual Risks
 
 - No production Supabase DB — Vercel prod points to staging. Real buyer data must not be stored.
-- No Supabase Auth user for pilot tenant — E2E browser tests can't authenticate as pilot user.
-- #70 (kill switch) docs done, runtime enforcement not implemented.
+- E2E real auth requires `E2E_USER_PASSWORD` env var (password from PR #90). Without it, tests fall back to demo auth.
+- Kill switches default to `false` in production — all automation paths blocked until explicitly enabled.
 - #53 CI gates added but E2E/schema/tenant checks are conditional — inactive without env vars.
-- Stale seed data from failed attempts (4 orphaned SourcingRuns) on staging DB.
-- All changes since `#65`–`#87` are committed/merged. No uncommitted work.
+- Stale seed data on staging DB (4 orphaned SourcingRuns).
+- All changes since last update are NOT committed — #70, E2E auth, and outcome scripts are pending commit.

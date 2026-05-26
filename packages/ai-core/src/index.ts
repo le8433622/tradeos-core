@@ -1,4 +1,5 @@
 import {
+  assertKillSwitchEnabled,
   executeAction,
   getAction,
   type ActionContext,
@@ -422,6 +423,7 @@ export async function runTradeAgent(
   message: IncomingMessage,
   context: ActionContext,
 ) {
+  assertKillSwitchEnabled("AI_EXECUTION_ENABLED");
   const injectionDetected = detectPromptInjection(message.text);
   const baseSummary = `Incoming ${message.channel} message: ${message.text.slice(0, MAX_SUMMARY_LENGTH)}`;
 

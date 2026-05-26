@@ -1,7 +1,7 @@
 # Kill Switch Policy — TradeOS
 
 **Date**: 2026-05-26
-**Status**: Active
+**Status**: Policy agreed; runtime implementation complete (#70)
 **Issue**: #70
 **Purpose**: every production automation path must have an OFF switch before it has an ON switch.
 
@@ -143,38 +143,27 @@ AI/code agents must stop and declare a blocker if:
 
 ## 7. Kill Switch Implementation Pattern
 
-Each kill switch is checked at runtime via a single environment variable lookup:
+Kill switches are implemented in `@tradeos/policy-core`:
 
-```typescript
-function isEnabled(flag: string): boolean {
-  return process.env[flag] === "true";
-}
+- `assertKillSwitchEnabled(name)` — throws `KILL_SWITCH_BLOCKED` error if flag is not `"true"`
+- `isKillSwitchEnabled(name)` — returns boolean
+- `KILL_SWITCHES` — constant map of all switch names
 
-function requireEnabled(flag: string): void {
-  if (!isEnabled(flag)) {
-    throw new ServiceUnavailableError(`${flag} is disabled`);
-  }
-}
-```
+### Wired Entry Points
 
-Kill switches must be checked at the entry point of the guarded path, before any side effect:
+| Kill Switch                    | File                                        | Function                          |
+| ------------------------------ | ------------------------------------------- | --------------------------------- |
+| `AI_EXECUTION_ENABLED`         | `packages/ai-core/src/index.ts:425`         | `runTradeAgent()`                 |
+| `AI_EXECUTION_ENABLED`         | `packages/ai-core/src/llm.ts:199`           | `planWithLlm()`                   |
+| `WEBHOOK_PROCESSING_ENABLED`   | `packages/webhook-core/src/pipeline.ts:105` | `processWebhookRequest()`         |
+| `WORKER_CONSUMING_ENABLED`     | `packages/job-core/src/index.ts:242`        | `runWorkerLoop()`                 |
+| `BILLING_SIDE_EFFECTS_ENABLED` | `packages/sourcing-core/src/index.ts:1290`  | `checkpoint.markAsBilled` handler |
+| `BILLING_SIDE_EFFECTS_ENABLED` | `packages/analytics-core/src/index.ts:831`  | `billing.export` handler          |
 
-```typescript
-// API route
-export async function POST(req: Request) {
-  requireEnabled("AI_EXECUTION_ENABLED");
-  // ...
-}
+**Not yet wired** (no runtime code exists):
 
-// Worker consumer
-async function consume() {
-  if (!isEnabled("WORKER_CONSUMING_ENABLED")) {
-    console.log("Worker consuming is disabled; shutting down consumer.");
-    return;
-  }
-  // ...
-}
-```
+- `EXTERNAL_TOOLCALL_ENABLED` — wire when external toolcall feature is implemented
+- `PLUGIN_EXECUTION_ENABLED` — wire when plugin sandbox is implemented
 
 ## 8. Verification
 
@@ -189,9 +178,13 @@ Before enabling any kill switch in production:
 [x] No auto-commitment without human approval
 ```
 
-Run before merge:
+Implementation verified (2026-05-27):
 
 ```txt
-pnpm docs:check
-pnpm typecheck   # if runtime kill-switch code changes
+pnpm typecheck   → 18/18
+pnpm test        → 447 passed, 10 skipped
+pnpm build       → 53/53
+pnpm docs:check  → 60/60
 ```
+
+Test environment: all kill switch env vars set to `"true"` in vitest configs (`webhook-core`, `ai-core`, `sourcing-core`, `analytics-core`). Tests mock `assertKillSwitchEnabled` in `ai-core` to ensure the check exists without depending on env.

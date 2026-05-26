@@ -8,7 +8,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@tradeos/database": "workspace:*"
+    "@tradeos/database": "workspace:*",
+    "@tradeos/policy-core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2",
