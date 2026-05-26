@@ -1,17 +1,18 @@
 # Production State — TradeOS Core
 
-**Last updated**: 2026-05-27 (amended for RLS + FK migration apply, search_path fix, doc sync)
+**Last updated**: 2026-05-27 (amended for PR #92 merged, E2E 19/19 pass, behavior test fix)
 **Status**: ⚠️ NO production Supabase database exists. Vercel production points to **staging DB only**. See `docs/ENVIRONMENT_STRATEGY.md` for the full environment plan.
 
 ## Current Production Commit
 
-- `ad93ed2` — 93+ PRs merged. #70 (runtime kill switch), #81 (behavior QA), #82 (NVIDIA QA protocol), #90 (auth user script), #91 (smoke docs update) done.
+- `25e359d` — 94+ PRs merged. #92 (RLS/FK/E2E auth/tenant tests) merged. Commit also includes #70, #81, #82, #90, #91.
 
 ## Vercel Deployment
 
 - **URL**: `https://tradeos-core.vercel.app`
 - **Status**: READY (verified)
-- **Latest deployment commit**: `ad93ed2c` — PR #91
+- **Latest deployment commit**: `25e359d` — PR #92
+- **Latest deployment ID**: `dpl_9FvUbbrzecawz9MA4xtC5U3o3FnM`
 - **Latest deployment ID**: `dpl_ADuwndvXLqueDa3av3XSfdNDgfV2`
 - **Health endpoint**: `/api/health` → 200 `{"ok":true,"service":"tradeos-core-web"}`
 
@@ -75,8 +76,10 @@ This means:
 
 - **Date**: 2026-05-27
 - **Result**: ✅ `pnpm typecheck` (18/18). ✅ `pnpm test` (447/447, 10 skipped). ✅ `pnpm docs:check` (60/60). ✅ `pnpm build` (53/53).
-- **Behavior E2E**: ✅ 10/10 pass (with `x-demo-auth-email` cookie for org switching).
+- **E2E 19/19 pass** (demo auth). Fix: 4 behavior tests matched wrong seed titles.
+- **Auth mode**: Demo auth (`x-demo-auth-email` cookie). Real Supabase Auth blocked: `E2E_USER_PASSWORD` unknown.
 - **API health**: `/api/health` → 200.
+- **Vercel production**: `dpl_9FvUbbrzecawz9MA4xtC5U3o3FnM` — READY.
 
 ## Auth Status
 
@@ -154,8 +157,9 @@ This means:
 1. ✅ **RLS migration applied** — All 13 Supplier Switch tables protected.
 2. ✅ **FK indexes applied** — 87 covering indexes.
 3. ✅ **search_path fix applied** — `current_user_org_id()` locked.
-4. **Run authenticated E2E** — verify login + SSR cookie + pilot case + cross-tenant block.
-5. **Fix ALLOW_DEMO_AUTH** — set `false` on Vercel production env vars.
-6. **Create production Supabase project** before real buyer data.
-7. **Create issue for auxiliary RLS** — IntroductionRequest, Invitation, OrganizationMember, etc.
-8. **Then #82 NVIDIA QA Agent** — only after RLS + E2E + docs sync are solid.
+4. ✅ **E2E 19/19 pass** (demo auth). 4 behavior tests fixed (seed title mismatch).
+5. **Real Supabase Auth E2E** — needs `E2E_USER_PASSWORD` (password from PR #90 unknown). Ask user or reset via Supabase dashboard.
+6. **Fix ALLOW_DEMO_AUTH** — set `false` on Vercel production env vars (currently `true` on staging).
+7. **Create production Supabase project** before real buyer data.
+8. **Create issue for auxiliary RLS** — IntroductionRequest, Invitation, OrganizationMember, etc.
+9. **Then #82 NVIDIA QA Agent** — only after real auth E2E + RLS + docs sync are solid.

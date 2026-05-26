@@ -56,7 +56,7 @@ test.describe("Behavior Scenarios — QA Validation", () => {
     await page.goto(`${cfg.baseUrl}/sourcing-runs`);
     await page.waitForLoadState("networkidle");
     const body = await page.locator("body").innerText();
-    expect(body).toContain("Non Comparable");
+    expect(body).toContain("Non-Comparable");
   });
 
   test("B-CRS: Cheap risky supplier scenario loads", async ({ page }) => {
@@ -64,7 +64,7 @@ test.describe("Behavior Scenarios — QA Validation", () => {
     await page.goto(`${cfg.baseUrl}/sourcing-runs`);
     await page.waitForLoadState("networkidle");
     const body = await page.locator("body").innerText();
-    expect(body).toContain("Cheap Risky Supplier");
+    expect(body).toContain("Cheap But Risky");
   });
 
   test("B-HSWP: High savings weak proof scenario loads", async ({ page }) => {
@@ -72,7 +72,7 @@ test.describe("Behavior Scenarios — QA Validation", () => {
     await page.goto(`${cfg.baseUrl}/sourcing-runs`);
     await page.waitForLoadState("networkidle");
     const body = await page.locator("body").innerText();
-    expect(body).toContain("High Savings Weak Proof");
+    expect(body).toContain("High Savings, Weak Proof");
   });
 
   test("B-LSHT: Low savings high trust scenario loads", async ({ page }) => {
@@ -80,7 +80,7 @@ test.describe("Behavior Scenarios — QA Validation", () => {
     await page.goto(`${cfg.baseUrl}/sourcing-runs`);
     await page.waitForLoadState("networkidle");
     const body = await page.locator("body").innerText();
-    expect(body).toContain("Low Savings High Trust");
+    expect(body).toContain("Low Savings, High Trust");
   });
 
   test("B-BRM: Buyer requests more proof scenario loads", async ({ page }) => {

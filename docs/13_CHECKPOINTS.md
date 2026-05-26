@@ -1,24 +1,24 @@
 # TradeOS Checkpoints - Production Reality Lock Ledger
 
-**Date**: 2026-05-27 (updated after RLS/FK/search_path migration apply)
+**Date**: 2026-05-27 (updated after PR #92 merge, E2E 19/19 pass, behavior test fix)
 **Purpose**: keep production-readiness status aligned with live GitHub issue/PR state and prevent agents from parallelizing schema/product work.
 
 ## Current Truth
 
-- Live GitHub PR state checked: **PR #92 open** (`rls-supplier-switch-policies`).
-- Active lane: **Supplier Switch pilot verification** (RLS/FK applied, search_path fixed, docs synced).
-- Current tasks: **run authenticated E2E**, **fix ALLOW_DEMO_AUTH**, **create production Supabase project**.
-- Issues closed: `#60`, `#65`, `#66`, `#69`, `#81`, `#82`.
+- Live GitHub PR state checked: **PR #92 merged** (`25e359d` on `main`).
+- Active lane: **Supplier Switch pilot verification** (PR merged, E2E 19/19 pass).
+- Current tasks: **real Supabase Auth E2E** (needs password), **fix ALLOW_DEMO_AUTH**, **create production Supabase project**.
+- Issues closed: `#60`, `#65`, `#66`, `#69`, `#81`, `#82`, `#92`.
 - Issues open: `#70` (runtime enforcement — code complete), `#53` (tenant invariant tests — 28 of 60+).
-- Issues completed this session: `#81`, `#82`, `#70`, RLS migration apply, FK index apply, search_path fix.
-- Latest local commit: `2edf88f` — 47 files changed (RLS, FK, E2E auth, outcome seed, docs sync, #53 tests, search_path fix).
+- Issues completed this session: `#81`, `#82`, `#70`, `#92` merged, RLS/FK/search_path migration apply, E2E 19/19 pass.
+- Latest merge commit: `25e359d` — 47 files changed (RLS, FK, E2E auth, outcome seed, docs sync, #53 tests, search_path fix).
 
 ## Active Work Order
 
 Agents must follow this order and must not choose a different issue sequence:
 
 ```txt
-#70 -> RLS+Fk -> search_path fix -> docs sync -> authenticated E2E -> fix ALLOW_DEMO_AUTH -> production Supabase -> auxiliary RLS issue -> #53 -> real pilot
+#70 -> RLS+Fk -> search_path fix -> docs sync -> E2E (demo auth) -> merge #92 -> real auth E2E -> fix ALLOW_DEMO_AUTH -> production Supabase -> auxiliary RLS issue -> #53 -> real pilot
 ```
 
 Meaning:
@@ -30,11 +30,13 @@ Meaning:
 5. `FK indexes` ✅ — Applied to staging (87 covering indexes).
 6. `search_path fix` ✅ — `current_user_org_id()` locked to `public`.
 7. `Sync truth docs` ✅ — PRODUCTION_STATE.md and CHECKPOINTS.md updated.
-8. `Authenticated E2E` ⬜ — verify login + SSR cookie + pilot case + cross-tenant block.
-9. `Fix ALLOW_DEMO_AUTH` ⬜ — set `false` on Vercel production.
-10. Create production Supabase project before real buyer data.
-11. Create issue for auxiliary RLS — IntroductionRequest, Invitation, OrganizationMember, etc.
-12. Implement `#53` (tenant invariant tests) for all 60+ actions.
+8. `E2E (demo auth)` ✅ — 19/19 pass. 4 behavior test seed title mismatches fixed.
+9. `Merge #92` ✅ — `25e359d` on `main`, Vercel production READY.
+10. `Real Supabase Auth E2E` ⬜ — needs `E2E_USER_PASSWORD`.
+11. `Fix ALLOW_DEMO_AUTH` ⬜ — set `false` on Vercel production.
+12. Create production Supabase project before real buyer data.
+13. Create issue for auxiliary RLS — IntroductionRequest, Invitation, OrganizationMember, etc.
+14. Implement `#53` (tenant invariant tests) for all 60+ actions.
 
 ## Reality Lock Active-Work Policy
 
@@ -114,7 +116,7 @@ All checks PASSED on 2026-05-27:
 | Pilot Auth user          | ✅ pilot-owner@tradeos.local (Supabase Auth, confirmed)                                               |
 | Behavior QA catalog      | ✅ `docs/34_BEHAVIOR_QA_CATALOG.md` — 15 scenarios documented                                         |
 | Behavior fixtures seed   | ✅ 11 messy scenarios seeded to staging (`behavior-qa-01`)                                            |
-| Behavior E2E             | ✅ 10/10 pass (cookie-based demo auth org override)                                                   |
+| Behavior E2E             | ✅ 19/19 pass (demo auth). 4 seed title mismatches fixed.                                            |
 | Behavior permissions     | ✅ `sourcing.list`, `sourcing.view` added to `system-owner` role                                      |
 | NVIDIA QA protocol       | ✅ `docs/35_NVIDIA_QA_AGENT_PROTOCOL.md` — role, boundaries, env rules, report format, severity model |
 | Kill switch runtime      | ✅ `@tradeos/policy-core/src/kill-switch.ts` — 6 kill switches, 6 wired entry points in 4 packages    |
