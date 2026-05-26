@@ -130,7 +130,7 @@ All checks PASSED on 2026-05-27:
 | Kill switch runtime      | ✅ `@tradeos/policy-core/src/kill-switch.ts` — 6 kill switches, 6 wired entry points in 4 packages    |
 | E2E auth infrastructure  | ✅ `apps/web/e2e/auth/supabase-auth.ts` — real Supabase Auth or demo fallback                         |
 | E2E test conversion      | ✅ All 4 spec files use `applyAuth()` from `auth/fixtures.ts`                                         |
-| Pilot OutcomeRecord      | ✅ 1 record (NEGOTIATE) — learning loop closed                                                        |
+| Tenant invariant tests   | ✅ 2 new tests for `createPurchaseBaseline` + `addSupplierAlternative`. sourcing-core 62/62 pass.     |
 | Canonical IDs documented | ✅ `docs/PRODUCTION_STATE.md` — all UUIDs recorded                                                    |
 
 ## Residual Risks

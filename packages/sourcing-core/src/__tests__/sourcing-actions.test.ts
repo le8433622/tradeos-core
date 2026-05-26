@@ -1318,3 +1318,45 @@ describe("sourcing.recordOutcome", () => {
     ).rejects.toThrow("SOURCING_RUN_BELONGS_TO_ANOTHER_ORGANIZATION");
   });
 });
+
+describe("sourcing.createPurchaseBaseline — cross-tenant validation", () => {
+  it("rejects when sourcing run belongs to another org", async () => {
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-other",
+      organizationId: "org-2",
+    });
+    await expect(
+      executeAction(
+        "sourcing.createPurchaseBaseline",
+        {
+          organizationId: "org-1",
+          sourcingRunId: "run-other",
+          supplierName: "Test Supplier",
+          productDescription: "Test Product",
+        },
+        context,
+      ),
+    ).rejects.toThrow("SOURCING_RUN_BELONGS_TO_ANOTHER_ORGANIZATION");
+  });
+});
+
+describe("sourcing.addSupplierAlternative — cross-tenant validation", () => {
+  it("rejects when sourcing run belongs to another org", async () => {
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-other",
+      organizationId: "org-2",
+    });
+    await expect(
+      executeAction(
+        "sourcing.addSupplierAlternative",
+        {
+          organizationId: "org-1",
+          sourcingRunId: "run-other",
+          supplierName: "Alt Supplier",
+          productDescription: "Alt Product",
+        },
+        context,
+      ),
+    ).rejects.toThrow("SOURCING_RUN_BELONGS_TO_ANOTHER_ORGANIZATION");
+  });
+});
