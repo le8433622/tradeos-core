@@ -1,63 +1,65 @@
-import { createClient } from "@supabase/supabase-js";
-
-const AUTH_COOKIE_PREFIX = "sb-ulnjanlaehfmxurreibj-auth-token";
-const AUTH_PROJECT_REF = "ulnjanlaehfmxurreibj";
+import type { BrowserContext } from "@playwright/test";
 
 export type AuthSession = {
   accessToken: string;
   refreshToken: string;
 };
 
-export function getSupabaseEnv() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
-  const key =
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-    process.env.SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) {
-    throw new Error(
-      "Missing Supabase env vars: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-    );
-  }
-  return { url, key };
-}
-
-export async function signInWithPassword(
+/**
+ * Sign in via the server-side /api/e2e/login endpoint.
+ * The response includes Set-Cookie headers that the server client
+ * (@supabase/ssr) sets in the exact cookie format it expects.
+ */
+export async function e2eLogin(
+  context: BrowserContext,
+  baseUrl: string,
   email: string,
   password: string,
-): Promise<AuthSession> {
-  const { url, key } = getSupabaseEnv();
-  const supabase = createClient(url, key);
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
+): Promise<void> {
+  const resp = await context.request.post(`${baseUrl}/api/e2e/login`, {
+    data: { email, password },
   });
-  if (error || !data.session) {
+  if (!resp.ok()) {
+    const body = await resp.json().catch(() => ({}));
     throw new Error(
-      `Supabase sign-in failed for ${email}: ${error?.message ?? "no session"}`,
+      `E2E login failed (${resp.status()}): ${body.message ?? body.error ?? "unknown"}`,
     );
   }
-  return {
-    accessToken: data.session.access_token,
-    refreshToken: data.session.refresh_token,
-  };
+
+  const setCookieHeaders = resp
+    .headersArray()
+    .filter((h) => h.name.toLowerCase() === "set-cookie")
+    .map((h) => h.value);
+
+  const cookies = parseSetCookieHeaders(setCookieHeaders, baseUrl);
+  if (cookies.length > 0) {
+    await context.addCookies(cookies);
+  }
 }
 
-export function sessionToAuthCookies(
-  session: AuthSession,
-  domain: string,
+function parseSetCookieHeaders(
+  headers: string[],
+  baseUrl: string,
 ): { name: string; value: string; domain: string; path: string }[] {
-  const value = JSON.stringify({
-    access_token: session.accessToken,
-    refresh_token: session.refreshToken,
-  });
-  return [
-    {
-      name: AUTH_COOKIE_PREFIX,
-      value,
-      domain,
-      path: "/",
-    },
-  ];
+  const domain = getAuthCookieDomain(baseUrl);
+  const result: {
+    name: string;
+    value: string;
+    domain: string;
+    path: string;
+  }[] = [];
+
+  for (const header of headers) {
+    const semi = header.indexOf(";");
+    const nv = semi >= 0 ? header.slice(0, semi) : header;
+    const eq = nv.indexOf("=");
+    if (eq <= 0) continue;
+    const name = nv.slice(0, eq).trim();
+    const value = nv.slice(eq + 1).trim();
+    result.push({ name, value, domain, path: "/" });
+  }
+
+  return result;
 }
 
 export function demoAuthCookies(
@@ -72,14 +74,6 @@ export function demoAuthCookies(
       path: "/",
     },
   ];
-}
-
-export async function trySupabaseAuth(
-  email: string,
-): Promise<AuthSession | null> {
-  const password = process.env.E2E_USER_PASSWORD;
-  if (!password) return null;
-  return signInWithPassword(email, password);
 }
 
 export function getAuthCookieDomain(baseUrl: string): string {

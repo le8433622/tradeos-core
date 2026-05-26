@@ -1,8 +1,7 @@
 import { test as base, type BrowserContext } from "@playwright/test";
 import { getE2EConfig } from "../env";
 import {
-  signInWithPassword,
-  sessionToAuthCookies,
+  e2eLogin,
   demoAuthCookies,
   getAuthCookieDomain,
 } from "./supabase-auth";
@@ -16,13 +15,10 @@ export async function applyAuth(
   baseUrl: string,
   mode: AuthMode,
 ): Promise<void> {
-  const domain = getAuthCookieDomain(baseUrl);
-
   if (mode.type === "supabase") {
-    const session = await signInWithPassword(mode.email, mode.password);
-    const cookies = sessionToAuthCookies(session, domain);
-    await context.addCookies(cookies);
+    await e2eLogin(context, baseUrl, mode.email, mode.password);
   } else {
+    const domain = getAuthCookieDomain(baseUrl);
     const cookies = demoAuthCookies(mode.email, domain);
     await context.addCookies(cookies);
   }

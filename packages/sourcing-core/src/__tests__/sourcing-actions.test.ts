@@ -1360,3 +1360,149 @@ describe("sourcing.addSupplierAlternative — cross-tenant validation", () => {
     ).rejects.toThrow("SOURCING_RUN_BELONGS_TO_ANOTHER_ORGANIZATION");
   });
 });
+
+describe("checkpoint.markDelivered — cross-tenant validation", () => {
+  it("rejects when checkpoint belongs to another org", async () => {
+    mockCheckpointFindUnique.mockResolvedValue({
+      id: "cp-other",
+      organizationId: "org-2",
+    });
+    await expect(
+      executeAction(
+        "checkpoint.markDelivered",
+        { organizationId: "org-1", checkpointId: "cp-other" },
+        context,
+      ),
+    ).rejects.toThrow();
+  });
+});
+
+describe("checkpoint.markAsBilled — cross-tenant validation", () => {
+  it("rejects when checkpoint belongs to another org", async () => {
+    mockCheckpointFindUnique.mockResolvedValue({
+      id: "cp-other",
+      organizationId: "org-2",
+      status: "APPROVED",
+    });
+    await expect(
+      executeAction(
+        "checkpoint.markAsBilled",
+        {
+          organizationId: "org-1",
+          checkpointId: "cp-other",
+          amount: 1000,
+          currency: "USD",
+        },
+        ownerContext,
+      ),
+    ).rejects.toThrow();
+  });
+});
+
+describe("checkpoint.approveForBilling — cross-tenant validation", () => {
+  it("rejects when checkpoint belongs to another org", async () => {
+    mockCheckpointFindUnique.mockResolvedValue({
+      id: "cp-other",
+      organizationId: "org-2",
+      status: "DELIVERED",
+      sourcingRunId: "run-1",
+    });
+    await expect(
+      executeAction(
+        "checkpoint.approveForBilling",
+        { organizationId: "org-1", checkpointId: "cp-other" },
+        ownerContext,
+      ),
+    ).rejects.toThrow();
+  });
+});
+
+describe("checkpoint.recordPayment — cross-tenant validation", () => {
+  it("rejects when checkpoint belongs to another org", async () => {
+    mockCheckpointFindUnique.mockResolvedValue({
+      id: "cp-other",
+      organizationId: "org-2",
+      status: "BILLED",
+    });
+    await expect(
+      executeAction(
+        "checkpoint.recordPayment",
+        {
+          organizationId: "org-1",
+          checkpointId: "cp-other",
+          amount: 1500,
+          provider: "stripe",
+        },
+        ownerContext,
+      ),
+    ).rejects.toThrow();
+  });
+});
+
+describe("handover.resolve — cross-tenant validation", () => {
+  it("rejects when handover belongs to another org", async () => {
+    mockHandoverFindUnique.mockResolvedValue({
+      id: "handover-other",
+      organizationId: "org-2",
+    });
+    await expect(
+      executeAction(
+        "handover.resolve",
+        { organizationId: "org-1", handoverId: "handover-other" },
+        context,
+      ),
+    ).rejects.toThrow();
+  });
+});
+
+describe("sourcing.markRunReadyForReview — cross-tenant validation", () => {
+  it("rejects when sourcing run belongs to another org", async () => {
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-other",
+      organizationId: "org-2",
+    });
+    await expect(
+      executeAction(
+        "sourcing.markRunReadyForReview",
+        { organizationId: "org-1", sourcingRunId: "run-other" },
+        context,
+      ),
+    ).rejects.toThrow("SOURCING_RUN_BELONGS_TO_ANOTHER_ORGANIZATION");
+  });
+});
+
+describe("sourcing.compareQuotes — cross-tenant validation", () => {
+  it("rejects when sourcing run belongs to another org", async () => {
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-other",
+      organizationId: "org-2",
+    });
+    await expect(
+      executeAction(
+        "sourcing.compareQuotes",
+        { organizationId: "org-1", sourcingRunId: "run-other" },
+        context,
+      ),
+    ).rejects.toThrow("SOURCING_RUN_BELONGS_TO_ANOTHER_ORGANIZATION");
+  });
+});
+
+describe("sourcing.addSupplierQuote — cross-tenant sourcing run validation", () => {
+  it("rejects when sourcing run belongs to another org", async () => {
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-other",
+      organizationId: "org-2",
+    });
+    await expect(
+      executeAction(
+        "sourcing.addSupplierQuote",
+        {
+          organizationId: "org-1",
+          sourcingRunId: "run-other",
+          productDescription: "Steel",
+        },
+        context,
+      ),
+    ).rejects.toThrow("SOURCING_RUN_BELONGS_TO_ANOTHER_ORGANIZATION");
+  });
+});

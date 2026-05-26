@@ -1,6 +1,6 @@
 # Production State — TradeOS Core
 
-**Last updated**: 2026-05-27 (amended for #70, #81, #82, #90, #91)
+**Last updated**: 2026-05-27 (amended for #70, #81, #82, #90, #91, E2E auth infrastructure)
 **Status**: ⚠️ NO production Supabase database exists. Vercel production points to **staging DB only**. See `docs/ENVIRONMENT_STRATEGY.md` for the full environment plan.
 
 ## Current Production Commit
@@ -45,7 +45,7 @@ This means:
 | SupplierQuote        | 16    | 11 QA + 5 stale                                                             |
 | SwitchDecisionReport | 13    | 1 active pilot + 1 retry + 11 QA                                            |
 | WorkCheckpoint       | 6     | 3 pilot + 3 QA                                                              |
-| OutcomeRecord        | 1     | 1 pilot (NEGOTIATE, buyer action recorded)                                  |
+| OutcomeRecord        | 1     | `cmpn5vxyw0001cq626q6wfqtr` — NEGOTIATE, pilot case                         |
 
 ### Organization Breakdown
 
@@ -76,12 +76,14 @@ This means:
 
 ## Auth Status
 
-| Field              | Value                                                            |
-| ------------------ | ---------------------------------------------------------------- |
-| Demo auth override | `x-demo-auth-email` cookie supported for E2E org switching       |
-| Pilot auth user    | `pilot-owner@tradeos.local` ✅                                   |
-| Behavior QA user   | `behavior-qa@tradeos.local` ✅                                   |
-| Permissions        | `sourcing.list`, `sourcing.view` created for `system-owner` role |
+| Field              | Value                                                               |
+| ------------------ | ------------------------------------------------------------------- |
+| Demo auth override | `x-demo-auth-email` cookie supported for E2E org switching          |
+| Pilot auth user    | `pilot-owner@tradeos.local` ✅                                      |
+| Behavior QA user   | `behavior-qa@tradeos.local` ✅                                      |
+| Permissions        | `sourcing.list`, `sourcing.view` created for `system-owner` role    |
+| E2E login endpoint | `/api/e2e/login` — gated by `E2E_RUN_ENABLED=true` + non-production |
+| E2E auth mode      | Supabase Auth (if `E2E_USER_PASSWORD` set) or demo auth fallback    |
 
 ## Active Canonical Pilot Case
 
@@ -93,8 +95,7 @@ This means:
 | Alternatives            | Baosteel $545 + POSCO $560                                                            |
 | Report                  | NEGOTIATE, HIGH confidence, $450K/yr savings                                          |
 | Checkpoints             | 3 (DELIVERED, awaiting BILLED)                                                        |
-| Outcome                 | ✅ RECORDED (cmpn5vxyw0001cq626q6wfqtr)                                               |
-| Outcome buyerAction     | NEGOTIATE                                                                             |
+| Outcome                 | ✅ RECORDED — NEGOTIATE (`cmpn5vxyw0001cq626q6wfqtr`)                                 |
 | Status                  | Learning loop closed                                                                  |
 | SourcingRun ID          | `cmpmny3xx0005cqxdjtfklyn1`                                                           |
 | SwitchDecisionReport ID | `cmpmny5qc000hcqxdqt3qrwn3`                                                           |
@@ -103,21 +104,51 @@ This means:
 
 **Note**: The pilot org has 5 SourcingRun rows, but only 1 is active. The other 4 are retries from development. All behavior and E2E assertions must reference this canonical run.
 
+## RLS Policy Status
+
+| Table                | RLS Enabled | Policy | Notes                       |
+| -------------------- | ----------- | ------ | --------------------------- |
+| Organization         | ✅          | ✅     | Deployed with phase1 schema |
+| User                 | ✅          | ✅     | Deployed with phase1 schema |
+| Company              | ✅          | ✅     | Deployed with phase1 schema |
+| Lead                 | ✅          | ✅     | Deployed with phase1 schema |
+| Quotation            | ✅          | ✅     | Deployed with phase1 schema |
+| ApprovalRequest      | ✅          | ✅     | Deployed with phase1 schema |
+| WebhookEvent         | ✅          | ✅     | Deployed with phase1 schema |
+| SourcingRun          | ❌          | ❌     | **MISSING** — P0 blocker    |
+| PurchaseBaseline     | ❌          | ❌     | **MISSING** — P0 blocker    |
+| SupplierAlternative  | ❌          | ❌     | **MISSING** — P0 blocker    |
+| SupplierCandidate    | ❌          | ❌     | **MISSING** — P0 blocker    |
+| SupplierQuote        | ❌          | ❌     | **MISSING** — P0 blocker    |
+| SwitchDecisionReport | ❌          | ❌     | **MISSING** — P0 blocker    |
+| EvidenceItem         | ❌          | ❌     | **MISSING** — P0 blocker    |
+| WorkCheckpoint       | ❌          | ❌     | **MISSING** — P0 blocker    |
+| OutcomeRecord        | ❌          | ❌     | **MISSING** — P0 blocker    |
+| Payment              | ❌          | ❌     | **MISSING** — P0 blocker    |
+| Job                  | ❌          | ❌     | **MISSING** — P0 blocker    |
+| HumanHandover        | ❌          | ❌     | **MISSING** — P0 blocker    |
+| AiUsageEvent         | ❌          | ❌     | **MISSING** — P0 blocker    |
+
+Migration SQL ready at `packages/database/prisma/migrations/20260527_add_rls_policies/`.
+Approach: `auth.jwt() ->> 'email'` → look up org from User table (no Auth Hook needed).
+Not yet applied. Blocked until `prisma migrate deploy` or manual SQL run.
+
 ## Residual Issues
 
 1. **No production Supabase project** — Vercel prod reads/writes staging DB. Real buyer data must not be stored.
-2. **No authenticated E2E** — behavior E2E uses `x-demo-auth-email` cookie override. No Playwright login flow exists.
-3. **No OutcomeRecord** — pilot case has decision + checkpoints but 0 outcomes. Learning loop is open.
-4. **PRODUCTION_STATE.md sync lag** — docs must be updated after every deployment to stay truth.
-5. **Staging data is dirty** — pilot org has 5 runs but only 1 active case; stale runs are indistinguishable from active ones without documentation.
-6. **#53** (tenant invariant tests) still open.
+2. **RLS policies missing on 12 Supplier Switch tables** — old tables have policies, new ones don't. P0 blocker for production safety.
+3. **FK columns lack covering indexes** — `organizationId`, `sourcingRunId` etc. Migration ready at `20260527_add_fk_covering_indexes/`. Not urgent but will degrade with pilot growth.
+4. **OutcomeRecord exists** — `cmpn5vxyw0001cq626q6wfqtr` (NEGOTIATE). Learning loop closed for pilot case.
+5. **ALLOW_DEMO_AUTH contradiction** — `.env` says `false`, Vercel staging says `true`. Production must be `false`.
+6. **#53** (tenant invariant tests) still open — 20 of 60+ actions tested. New tests added for checkpoint, handover, markRunReadyForReview, compareQuotes, addSupplierQuote cross-tenant validation.
+7. **E2E with real Supabase Auth** — `/api/e2e/login` endpoint ready, `applyAuth` updated. `E2E_USER_PASSWORD` env var not set. Falls back to demo auth.
 
 ## Next Action
 
-1. **Sync truth docs** — update PRODUCTION_STATE.md after every deployment (this doc).
-2. **Document canonical active pilot case** — record ACTIVE_PILOT_SOURCING_RUN_ID.
-3. **Record first OutcomeRecord** — close the learning loop for the pilot case.
-4. **Fix authenticated Playwright login flow** — real Supabase Auth login, not demo auth.
-5. **Then create production Supabase project** before real buyer data.
-6. **Then implement #53** tenant invariant tests.
-7. **Then #82 NVIDIA QA Agent protocol** — runtime QA against authenticated, outcome-closed flow.
+1. **Apply RLS migration** — run `prisma migrate deploy` or execute migration SQL on Supabase staging. P0.
+2. **Fix ALLOW_DEMO_AUTH** — set `false` on Vercel production env vars.
+3. **Create production Supabase project** before real buyer data.
+4. **Continue #53** — more tenant invariant tests.
+5. **Mark canonical IDs** — document ACTIVE_PILOT_SOURCING_RUN_ID, ACTIVE_REPORT_ID, STALE_RUNS.
+6. **Apply FK indexes** — run `20260527_add_fk_covering_indexes` migration.
+7. **Then #82 NVIDIA QA Agent** — only after RLS + tenant tests + E2E are solid.

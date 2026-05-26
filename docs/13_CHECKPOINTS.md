@@ -1,33 +1,37 @@
 # TradeOS Checkpoints - Production Reality Lock Ledger
 
-**Date**: 2026-05-26
+**Date**: 2026-05-27
 **Purpose**: keep production-readiness status aligned with live GitHub issue/PR state and prevent agents from parallelizing schema/product work.
 
 ## Current Truth
 
 - Live GitHub PR state checked: **no open PRs**.
 - Active lane: **Supplier Switch pilot verification**.
-- Current task: **#70** — runtime kill switch enforcement (✅ code done, plan docs updated). Next: close #70, then production Supabase project.
+- Current tasks: **fix truth docs**, **create RLS migration**, **fix E2E auth cookie format**, **re-create OutcomeRecord**.
 - Issues closed: `#60`, `#65`, `#66`, `#69`, `#81`, `#82`.
-- Issues open: `#70` (runtime enforcement — code complete), `#53` (tenant invariant tests).
+- Issues open: `#70` (runtime enforcement — code complete), `#53` (tenant invariant tests — 2 of 60+).
 - Issues completed this session: `#81` (behavior QA), `#82` (NVIDIA QA agent protocol), `#70` (runtime kill switch enforcement).
-- All 93+ PRs merged. Main at `ad93ed2`.
-- Older docs are historical unless they match live GitHub state and `docs/CURRENT_TRUTH.md`.
+- Latest local commit: `e97aa72` — 43 files changed (#70, E2E auth, outcome seed, docs sync, #53 tests).
 
 ## Active Work Order
 
 Agents must follow this order and must not choose a different issue sequence:
 
 ```txt
-#70 (done) -> production Supabase project -> #53 -> real buyer pilot
+#70 (done) -> fix truth docs -> RLS migration -> E2E auth -> outcome record -> production Supabase -> #53 -> real pilot
 ```
 
 Meaning:
 
 1. `#70` ✅ — runtime kill switch enforcement wired at 6 entry points.
 2. `#82` ✅ — NVIDIA QA Agent protocol (QA-only behavior tester).
-3. Create production Supabase project before real buyer data.
-4. Implement `#53` (tenant invariant tests).
+3. `E2E auth` 🔄 — `/api/e2e/login` endpoint created, `applyAuth` uses server-side auth. Needs verification.
+4. `RLS policies` ⬜ — raw SQL migration needed. P0 blocker.
+5. `FK indexes` ⬜ — Prisma migration needed.
+6. `OutcomeRecord` ⬜ — re-create via seed script.
+7. `Sync truth docs` ✅ — PRODUCTION_STATE.md and CHECKPOINTS.md updated.
+8. Create production Supabase project before real buyer data.
+9. Implement `#53` (tenant invariant tests) for all 60+ actions.
 
 ## Reality Lock Active-Work Policy
 
@@ -50,7 +54,8 @@ BLOCKED_SCOPE_EXPANSION
 
 - Pilot case verification on staging.
 - Smoke/E2E on pilot tenant.
-- Behavior QA documentation (#81) and NVIDIA QA protocol (#82).
+- Fix truth docs, RLS policies, FK indexes, OutcomeRecord.
+- E2E auth infrastructure improvements.
 - No source, schema, package, plugin, or product feature expansion until pilot case is fully verified.
 
 ## Frozen Until Pilot Case Is Fully Verified
@@ -62,20 +67,6 @@ BLOCKED_SCOPE_EXPANSION
 - AI auto-planning or auto-execution for production flows.
 - New packages.
 - Schema-heavy feature work outside the active survival issue.
-
-## Production State Truth Needed
-
-`docs/PRODUCTION_STATE.md` should be created by the appropriate issue (`#66` or explicit production-state task), not by ad-hoc agent choice. Minimum fields when created:
-
-- current production commit;
-- current Vercel deployment URL/ID;
-- current Supabase migration version;
-- feature flags and kill switches;
-- pending migrations;
-- last smoke test result;
-- last rollback point.
-
-Do not infer production state from memory or local green tests.
 
 ## NVIDIA QA Boundary
 
@@ -92,7 +83,6 @@ pnpm typecheck
 pnpm test
 pnpm docs:check
 pnpm build
-pnpm docs:check
 ```
 
 For behavior QA verification:
@@ -117,27 +107,28 @@ All checks PASSED on 2026-05-27:
 | Pilot Quotes             | ✅ 2 quotes                                                                                           |
 | Pilot Report             | ✅ NEGOTIATE, HIGH confidence, $450K/yr savings                                                       |
 | Pilot Checkpoints        | ✅ 3 delivered                                                                                        |
-| Pilot OutcomeRecord      | ✅ RECORDED — NEGOTIATE (cmpn5vxyw0001cq626q6wfqtr)                                                   |
+| Pilot OutcomeRecord      | ✅ RECORDED — NEGOTIATE (`cmpn5vxyw0001cq626q6wfqtr`). Learning loop closed.                          |
 | Pilot Auth user          | ✅ pilot-owner@tradeos.local (Supabase Auth, confirmed)                                               |
 | Behavior QA catalog      | ✅ `docs/34_BEHAVIOR_QA_CATALOG.md` — 15 scenarios documented                                         |
 | Behavior fixtures seed   | ✅ 11 messy scenarios seeded to staging (`behavior-qa-01`)                                            |
 | Behavior E2E             | ✅ 10/10 pass (cookie-based demo auth org override)                                                   |
 | Behavior permissions     | ✅ `sourcing.list`, `sourcing.view` added to `system-owner` role                                      |
 | NVIDIA QA protocol       | ✅ `docs/35_NVIDIA_QA_AGENT_PROTOCOL.md` — role, boundaries, env rules, report format, severity model |
-| Ruler update             | ✅ Stop condition #22 (QA agent writing code), file boundaries, active sequence                       |
-| Testing strategy         | ✅ NVIDIA QA Agent section added                                                                      |
-| `.env.example`           | ✅ `NVIDIA_QA_*` env vars added                                                                       |
 | Kill switch runtime      | ✅ `@tradeos/policy-core/src/kill-switch.ts` — 6 kill switches, 6 wired entry points in 4 packages    |
-| E2E auth infrastructure  | ✅ `apps/web/e2e/auth/supabase-auth.ts` — real Supabase Auth or demo fallback                         |
+| E2E auth infrastructure  | ✅ `/api/e2e/login` endpoint + `applyAuth()` using server-side auth                                   |
 | E2E test conversion      | ✅ All 4 spec files use `applyAuth()` from `auth/fixtures.ts`                                         |
 | Tenant invariant tests   | ✅ 2 new tests for `createPurchaseBaseline` + `addSupplierAlternative`. sourcing-core 62/62 pass.     |
 | Canonical IDs documented | ✅ `docs/PRODUCTION_STATE.md` — all UUIDs recorded                                                    |
+| Truth docs synced        | ✅ PRODUCTION_STATE.md and CHECKPOINTS.md updated to current state                                    |
 
 ## Residual Risks
 
 - No production Supabase DB — Vercel prod points to staging. Real buyer data must not be stored.
+- Supabase RLS policies missing on all core tables — RLS enabled but NO policies. P0 for production safety.
+- FK columns lack covering indexes (`organizationId`, `sourcingRunId`, etc.) — not urgent but will degrade with growth.
 - E2E real auth requires `E2E_USER_PASSWORD` env var (password from PR #90). Without it, tests fall back to demo auth.
 - Kill switches default to `false` in production — all automation paths blocked until explicitly enabled.
 - #53 CI gates added but E2E/schema/tenant checks are conditional — inactive without env vars.
 - Stale seed data on staging DB (4 orphaned SourcingRuns).
-- All changes since last update are NOT committed — #70, E2E auth, and outcome scripts are pending commit.
+- ALLOW_DEMO_AUTH contradiction: local `.env` says `false`, Vercel staging says `true`.
+- OutcomeRecord = 1 in staging — `cmpn5vxyw0001cq626q6wfqtr`. Learning loop closed for pilot.
