@@ -1,13 +1,13 @@
 # TradeOS Checkpoints - Production Reality Lock Ledger
 
-**Date**: 2026-05-27 (updated after real Supabase Auth E2E 19/19 pass)
+**Date**: 2026-05-27 (updated after password rotation, env flag plan, auxiliary RLS issue)
 **Purpose**: keep production-readiness status aligned with live GitHub issue/PR state and prevent agents from parallelizing schema/product work.
 
 ## Current Truth
 
 - Live GitHub PR state checked: **PR #92 merged** (`25e359d` on `main`).
 - Active lane: **Supplier Switch pilot verification** (PR merged, real auth E2E 19/19 pass).
-- Current tasks: **fix ALLOW_DEMO_AUTH on Vercel**, **create production Supabase project**, **auxiliary RLS issue**.
+- Current tasks: **fix Vercel env flags**, **open auxiliary RLS issue**, **create production Supabase project**.
 - Issues closed: `#60`, `#65`, `#66`, `#69`, `#81`, `#82`, `#92`.
 - Issues open: `#70` (runtime enforcement — code complete), `#53` (tenant invariant tests — 28 of 60+).
 - Issues completed this session: `#81`, `#82`, `#70`, `#92` merged, RLS/FK/search_path migration apply, E2E 19/19 pass.
