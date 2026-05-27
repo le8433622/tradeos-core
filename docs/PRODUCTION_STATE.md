@@ -34,7 +34,12 @@
 - **Latest deployment**: 2026-05-27 (auxiliary RLS migration, final)
 - **`ALLOW_DEMO_AUTH`**: `false` — verified blocked
 - **`E2E_RUN_ENABLED`**: not set — `POST /api/e2e/login` returns 403
-- **Health endpoint**: `GET /api/health` → `{"ok":true,"service":"tradeos-core-web"}`
+- **Health endpoint**: `GET /api/health` → `{"ok":true,"service":"tradeos-core-web"}
+- **Email provider**: Gmail SMTP (App Password) via Supabase Auth SMTP
+- **Sender**: `earthkingdomuniverse@gmail.com`
+- **Status**: Magic link working — verified 2026-05-28
+- **Site URL**: `https://tradeos-core.vercel.app` (updated in Supabase Auth settings)
+- **Redirect URLs**: `https://tradeos-core.vercel.app/auth/callback`, `http://localhost:3000/auth/callback``
 
 ### Migration Baselining
 

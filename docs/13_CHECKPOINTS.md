@@ -30,6 +30,7 @@ NVIDIA QA (#82) COMPLETE — PASS, 12/12 scenarios, no HIGH/CRITICAL bugs.
 | **Issue B (#95)**                       | **🔴 OPEN (P2)**   | **Round savingsPercent to 2 decimals**                               |
 | **Issue C (#96)**                       | **🔴 OPEN (P3)**   | **Demo auth cookie/header alignment**                                |
 | **#99 Auth & Demo Role Accounts**       | **✅ DONE / PASS** | **10/10 E2E tests, 4 roles verified, walkthrough doc**               |
+| **#100 Production email (Gmail SMTP)**  | **✅ DONE**        | **Magic link working on production. Gmail SMTP via Supabase Auth.**   |
 
 ## Verified Production Behaviour (2026-05-27)
 
