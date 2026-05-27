@@ -1,6 +1,6 @@
 # Production State — TradeOS Core
 
-**Last updated**: 2026-05-27 (amended for PR #92 merged, E2E 19/19 pass, behavior test fix)
+**Last updated**: 2026-05-27 (amended for real Supabase Auth E2E 19/19 pass)
 **Status**: ⚠️ NO production Supabase database exists. Vercel production points to **staging DB only**. See `docs/ENVIRONMENT_STRATEGY.md` for the full environment plan.
 
 ## Current Production Commit
@@ -76,8 +76,9 @@ This means:
 
 - **Date**: 2026-05-27
 - **Result**: ✅ `pnpm typecheck` (18/18). ✅ `pnpm test` (447/447, 10 skipped). ✅ `pnpm docs:check` (60/60). ✅ `pnpm build` (53/53).
-- **E2E 19/19 pass** (demo auth). Fix: 4 behavior tests matched wrong seed titles.
-- **Auth mode**: Demo auth (`x-demo-auth-email` cookie). Real Supabase Auth blocked: `E2E_USER_PASSWORD` unknown.
+- **E2E 19/19 pass** — real Supabase Auth via `/api/e2e/login`. SSR cookies set and verified.
+- **Auth mode**: Supabase Auth (pilot-owner@tradeos.local). Demo auth NOT used.
+- **Password**: Set via `pgcrypto` SQL (`crypt() + gen_salt('bf')`). Stored in local `.env` (gitignored).
 - **API health**: `/api/health` → 200.
 - **Vercel production**: `dpl_9FvUbbrzecawz9MA4xtC5U3o3FnM` — READY.
 
@@ -157,8 +158,8 @@ This means:
 1. ✅ **RLS migration applied** — All 13 Supplier Switch tables protected.
 2. ✅ **FK indexes applied** — 87 covering indexes.
 3. ✅ **search_path fix applied** — `current_user_org_id()` locked.
-4. ✅ **E2E 19/19 pass** (demo auth). 4 behavior tests fixed (seed title mismatch).
-5. **Real Supabase Auth E2E** — needs `E2E_USER_PASSWORD` (password from PR #90 unknown). Ask user or reset via Supabase dashboard.
+4. ✅ **E2E 19/19 pass** (real Supabase Auth via `/api/e2e/login`). 4 behavior tests fixed (seed title mismatch).
+5. ✅ **Real Supabase Auth E2E** — pass. SSR cookies set and verified for all 19 tests.
 6. **Fix ALLOW_DEMO_AUTH** — set `false` on Vercel production env vars (currently `true` on staging).
 7. **Create production Supabase project** before real buyer data.
 8. **Create issue for auxiliary RLS** — IntroductionRequest, Invitation, OrganizationMember, etc.
