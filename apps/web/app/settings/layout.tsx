@@ -27,6 +27,11 @@ const SIDEBAR_ITEMS: { label: string; href: string; permission: string }[] = [
     permission: "notification.manage",
   },
   { label: "Audit", href: "/settings/audit", permission: "audit.read" },
+  {
+    label: "Debug",
+    href: "/settings/debug",
+    permission: "settings.profile",
+  },
 ];
 
 export default async function SettingsLayout({

@@ -4,13 +4,42 @@ import { requirePagePermission } from "../../../lib/page-session";
 import { revalidatePath } from "next/cache";
 import "@tradeos/crm-core";
 
+const STATUS_COLORS: Record<string, string> = {
+  ACTIVE: "#16a34a",
+  PENDING: "#ca8a04",
+  SUSPENDED: "#dc2626",
+  INVITED: "#ca8a04",
+};
+
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "2px 8px",
+        borderRadius: 999,
+        fontSize: 12,
+        fontWeight: 500,
+        color: "#fff",
+        background: STATUS_COLORS[status] ?? "#6b7280",
+      }}
+    >
+      {status}
+    </span>
+  );
+}
+
 export default async function TeamSettingsPage() {
   const session = await requirePagePermission("user.invite");
+  const canChangeRole = session.permissions.includes("user.roleUpdate");
 
   const [members, roles] = await Promise.all([
     prisma.organizationMember.findMany({
       where: { organizationId: session.organizationId },
-      include: { user: { select: { name: true, email: true } }, role: true },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        role: true,
+      },
       orderBy: { createdAt: "desc" },
     }),
     prisma.role.findMany({
@@ -27,11 +56,7 @@ export default async function TeamSettingsPage() {
 
     await executeAction(
       "user.invite",
-      {
-        organizationId: s.organizationId,
-        email,
-        roleId: roleId || null,
-      },
+      { organizationId: s.organizationId, email, roleId: roleId || null },
       {
         actorUserId: s.userId,
         organizationId: s.organizationId,
@@ -40,55 +65,217 @@ export default async function TeamSettingsPage() {
         mfaLevel: s.mfaLevel,
       },
     );
-
     revalidatePath("/settings/team");
   }
+
+  async function changeRole(formData: FormData) {
+    "use server";
+    const s = await requirePagePermission("user.roleUpdate");
+    const userId = formData.get("userId") as string;
+    const roleId = formData.get("roleId") as string;
+
+    await executeAction(
+      "user.roleUpdate",
+      { userId, organizationId: s.organizationId, roleId },
+      {
+        actorUserId: s.userId,
+        organizationId: s.organizationId,
+        role: s.role,
+        source: "manual",
+        mfaLevel: s.mfaLevel,
+      },
+    );
+    revalidatePath("/settings/team");
+  }
+
+  const currentMemberId = session.userId;
 
   return (
     <div>
       <h1 style={{ fontSize: 24, margin: "0 0 24px" }}>Team</h1>
 
-      <h2 style={{ fontSize: 18, margin: "0 0 12px" }}>Members</h2>
-      <table
-        style={{ width: "100%", borderCollapse: "collapse", marginBottom: 40 }}
+      <div
+        style={{
+          overflowX: "auto",
+          border: "1px solid #e5e7eb",
+          borderRadius: 8,
+          marginBottom: 40,
+        }}
       >
-        <thead>
-          <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
-            <th style={{ padding: "8px 12px", fontWeight: 600 }}>Name</th>
-            <th style={{ padding: "8px 12px", fontWeight: 600 }}>Email</th>
-            <th style={{ padding: "8px 12px", fontWeight: 600 }}>Role</th>
-            <th style={{ padding: "8px 12px", fontWeight: 600 }}>Status</th>
-            <th style={{ padding: "8px 12px", fontWeight: 600 }}>Joined</th>
-          </tr>
-        </thead>
-        <tbody>
-          {members.map((m) => (
-            <tr key={m.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
-              <td style={{ padding: "8px 12px" }}>{m.user.name || "—"}</td>
-              <td style={{ padding: "8px 12px" }}>{m.user.email}</td>
-              <td style={{ padding: "8px 12px" }}>{m.role?.name ?? "—"}</td>
-              <td style={{ padding: "8px 12px" }}>{m.status}</td>
-              <td style={{ padding: "8px 12px" }}>
-                {(m.acceptedAt ?? m.createdAt).toLocaleDateString()}
-              </td>
-            </tr>
-          ))}
-          {members.length === 0 && (
-            <tr>
-              <td
-                colSpan={5}
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr
+              style={{
+                background: "#f9fafb",
+                borderBottom: "1px solid #e5e7eb",
+              }}
+            >
+              <th
                 style={{
-                  padding: "24px",
-                  textAlign: "center",
-                  color: "#6b7280",
+                  padding: "10px 16px",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  textAlign: "left",
+                  color: "#374151",
                 }}
               >
-                No members found.
-              </td>
+                Name
+              </th>
+              <th
+                style={{
+                  padding: "10px 16px",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  textAlign: "left",
+                  color: "#374151",
+                }}
+              >
+                Email
+              </th>
+              <th
+                style={{
+                  padding: "10px 16px",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  textAlign: "left",
+                  color: "#374151",
+                }}
+              >
+                Role
+              </th>
+              <th
+                style={{
+                  padding: "10px 16px",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  textAlign: "left",
+                  color: "#374151",
+                }}
+              >
+                Status
+              </th>
+              <th
+                style={{
+                  padding: "10px 16px",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  textAlign: "left",
+                  color: "#374151",
+                }}
+              >
+                Joined
+              </th>
+              {canChangeRole && (
+                <th
+                  style={{
+                    padding: "10px 16px",
+                    fontWeight: 600,
+                    fontSize: 13,
+                    textAlign: "left",
+                    color: "#374151",
+                  }}
+                >
+                  Actions
+                </th>
+              )}
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {members.map((m) => {
+              const isSelf = m.user.id === currentMemberId;
+              return (
+                <tr key={m.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                  <td style={{ padding: "10px 16px", fontSize: 14 }}>
+                    {m.user.name || "—"}
+                  </td>
+                  <td style={{ padding: "10px 16px", fontSize: 14 }}>
+                    {m.user.email}
+                  </td>
+                  <td style={{ padding: "10px 16px", fontSize: 14 }}>
+                    {canChangeRole && !isSelf ? (
+                      <form
+                        action={changeRole}
+                        style={{
+                          display: "flex",
+                          gap: 6,
+                          alignItems: "center",
+                        }}
+                      >
+                        <input type="hidden" name="userId" value={m.user.id} />
+                        <select
+                          name="roleId"
+                          defaultValue={m.roleId ?? ""}
+                          style={{
+                            padding: "4px 8px",
+                            border: "1px solid #d1d5db",
+                            borderRadius: 4,
+                            fontSize: 13,
+                          }}
+                          onChange={(e) => e.target.form?.requestSubmit()}
+                        >
+                          {roles.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {r.name}
+                            </option>
+                          ))}
+                        </select>
+                      </form>
+                    ) : (
+                      (m.role?.name ?? "—")
+                    )}
+                    {isSelf && (
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: "#9ca3af",
+                          marginLeft: 6,
+                        }}
+                      >
+                        (you)
+                      </span>
+                    )}
+                  </td>
+                  <td style={{ padding: "10px 16px" }}>
+                    <StatusBadge status={m.status} />
+                  </td>
+                  <td
+                    style={{
+                      padding: "10px 16px",
+                      fontSize: 14,
+                      color: "#6b7280",
+                    }}
+                  >
+                    {(m.acceptedAt ?? m.createdAt).toLocaleDateString()}
+                  </td>
+                  {canChangeRole && (
+                    <td style={{ padding: "10px 16px" }}>
+                      {!isSelf && m.status === "ACTIVE" && (
+                        <span style={{ fontSize: 12, color: "#9ca3af" }}>
+                          Remove
+                        </span>
+                      )}
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
+            {members.length === 0 && (
+              <tr>
+                <td
+                  colSpan={canChangeRole ? 6 : 5}
+                  style={{
+                    padding: "24px",
+                    textAlign: "center",
+                    color: "#6b7280",
+                  }}
+                >
+                  No members found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       <h2 style={{ fontSize: 18, margin: "0 0 12px" }}>Invite Member</h2>
       <form
@@ -98,6 +285,10 @@ export default async function TeamSettingsPage() {
           gap: 12,
           alignItems: "flex-end",
           flexWrap: "wrap",
+          padding: 16,
+          border: "1px solid #e5e7eb",
+          borderRadius: 8,
+          background: "#fafafa",
         }}
       >
         <div>
