@@ -23,7 +23,7 @@ type RegisteredAction<Input, Output> = {
 type ActionContext = {
   actorUserId?: string;
   organizationId?: string;
-  role: "OWNER" | "ADMIN" | "SALES" | "OPERATOR" | "VIEWER";
+  role: "OWNER" | "ADMIN" | "SALES" | "OPERATOR" | "VIEWER" | "BUYER_REVIEWER";
   source: "manual" | "ai" | "system";
   approved?: boolean;
   mfaLevel?: "aal1" | "aal2";
@@ -157,6 +157,7 @@ Direct Prisma mutation outside registered actions is allowed ONLY for:
 | Exception                          | Rationale                                        | Tenant-scoped? | Audit?             |
 | ---------------------------------- | ------------------------------------------------ | -------------- | ------------------ |
 | Auth user bootstrap                | First user creation needs no session             | Yes            | Yes (manual)       |
+| Invitation accept                  | Token bearer flow resolves org before membership | Yes            | Yes (manual)       |
 | Webhook event receipt              | RECEIVED/DUPLICATE status before action planning | Yes            | Via infra path     |
 | Job-core status transitions        | Status changes within job-core                   | Yes            | Via infra path     |
 | Migration / seed scripts           | CLI operations                                   | N/A            | No                 |

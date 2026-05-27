@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "../../lib/supabase-browser";
 
 type Mode = "magic-link" | "password";
@@ -12,6 +12,14 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [nextPath, setNextPath] = useState("/");
+
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get("next");
+    if (next?.startsWith("/") && !next.startsWith("//")) {
+      setNextPath(next);
+    }
+  }, []);
 
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault();
@@ -19,9 +27,11 @@ export default function LoginPage() {
     setMessage("");
     setError("");
     const supabase = createSupabaseBrowserClient();
+    const redirectTo = new URL(`${window.location.origin}/auth/callback`);
+    redirectTo.searchParams.set("next", nextPath);
     const { error: err } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      options: { emailRedirectTo: redirectTo.toString() },
     });
     setLoading(false);
     if (err) {
@@ -45,7 +55,7 @@ export default function LoginPage() {
     if (err) {
       setError(err.message);
     } else {
-      window.location.href = "/";
+      window.location.href = nextPath;
     }
   }
 
@@ -106,10 +116,16 @@ export default function LoginPage() {
         <h1 style={{ fontSize: 22, margin: "0 0 24px" }}>Sign in to TradeOS</h1>
 
         <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-          <button style={tabBtn("magic-link")} onClick={() => setMode("magic-link")}>
+          <button
+            style={tabBtn("magic-link")}
+            onClick={() => setMode("magic-link")}
+          >
             Magic Link
           </button>
-          <button style={tabBtn("password")} onClick={() => setMode("password")}>
+          <button
+            style={tabBtn("password")}
+            onClick={() => setMode("password")}
+          >
             Password
           </button>
         </div>
@@ -129,7 +145,10 @@ export default function LoginPage() {
             </button>
           </form>
         ) : (
-          <form onSubmit={handlePasswordSignIn} style={{ display: "grid", gap: 16 }}>
+          <form
+            onSubmit={handlePasswordSignIn}
+            style={{ display: "grid", gap: 16 }}
+          >
             <input
               type="email"
               required
@@ -152,8 +171,16 @@ export default function LoginPage() {
           </form>
         )}
 
-        {message && <p style={{ color: "#16a34a", fontSize: 14, margin: "12px 0 0" }}>{message}</p>}
-        {error && <p style={{ color: "#dc2626", fontSize: 14, margin: "12px 0 0" }}>{error}</p>}
+        {message && (
+          <p style={{ color: "#16a34a", fontSize: 14, margin: "12px 0 0" }}>
+            {message}
+          </p>
+        )}
+        {error && (
+          <p style={{ color: "#dc2626", fontSize: 14, margin: "12px 0 0" }}>
+            {error}
+          </p>
+        )}
 
         <div style={{ display: "flex", gap: 16, marginTop: 24, fontSize: 13 }}>
           {mode === "password" && (

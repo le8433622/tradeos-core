@@ -1,77 +1,114 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@tradeos/database";
+import { ensureSystemRoles, prisma, type Prisma } from "@tradeos/database";
+import { redactForAudit } from "@tradeos/policy-core";
+import { z, ZodError } from "zod";
+import { createLogger, getRequestId } from "../../../lib/logger";
 import { createSupabaseServerClient } from "../../../lib/supabase-server";
 
+const onboardingSchema = z
+  .object({
+    orgName: z.string().trim().min(1).max(256),
+    country: z.string().trim().max(128).default("Vietnam"),
+    industry: z.string().trim().max(256).optional(),
+  })
+  .strict();
+
 export async function POST(request: NextRequest) {
+  const requestId = getRequestId(request);
+  const logger = createLogger(requestId);
+
   try {
     const supabase = await createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user?.email) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const orgName = (body.orgName ?? "").trim();
-    const country = (body.country ?? "Vietnam").trim();
-    const industry = (body.industry ?? "").trim();
-
-    if (!orgName) {
-      return NextResponse.json({ error: "Organization name is required" }, { status: 400 });
-    }
+    const body = onboardingSchema.parse(await request.json());
+    const email = user.email.trim().toLowerCase();
 
     const existingUser = await prisma.user.findUnique({
-      where: { email: user.email },
+      where: { email },
     });
     if (existingUser) {
-      return NextResponse.json({ error: "User already exists" }, { status: 409 });
+      return NextResponse.json(
+        { error: "User already exists" },
+        { status: 409 },
+      );
     }
 
-    const orgId = `org-${Date.now()}`;
-    const userId = `user-${Date.now()}`;
+    await ensureSystemRoles(prisma);
 
-    await prisma.$transaction([
-      prisma.organization.create({
+    const result = await prisma.$transaction(async (tx) => {
+      const org = await tx.organization.create({
         data: {
-          id: orgId,
-          name: orgName,
+          name: body.orgName,
           type: "ASSOCIATION",
-          country,
+          country: body.country,
+          plan: "PILOT",
           website: "",
+          metadata: body.industry ? { industry: body.industry } : undefined,
         },
-      }),
-      prisma.user.create({
+      });
+
+      const appUser = await tx.user.create({
         data: {
-          id: userId,
-          organizationId: orgId,
-          email: user.email,
-          name: user.user_metadata?.name ?? user.email.split("@")[0],
+          organizationId: org.id,
+          email,
+          name: user.user_metadata?.name ?? email.split("@")[0],
           role: "OWNER",
         },
-      }),
-      prisma.organizationMember.create({
+      });
+
+      await tx.organizationMember.create({
         data: {
-          userId,
-          organizationId: orgId,
+          userId: appUser.id,
+          organizationId: org.id,
           roleId: "system-owner",
           status: "ACTIVE",
           acceptedAt: new Date(),
         },
-      }),
-      prisma.auditLog.create({
-        data: {
-          organizationId: orgId,
-          actorUserId: userId,
-          actionName: "organization.create",
-          input: { email: user.email, orgName, method: "onboarding" },
-          riskLevel: "LOW",
-        },
-      }),
-    ]);
+      });
 
-    return NextResponse.json({ orgId, userId });
+      await tx.auditLog.create({
+        data: {
+          organizationId: org.id,
+          actorUserId: appUser.id,
+          actionName: "organization.create",
+          input: redactForAudit({
+            email,
+            orgName: body.orgName,
+            method: "onboarding",
+          }) as Prisma.InputJsonValue,
+          result: { created: true },
+          riskLevel: "LOW",
+          approved: true,
+        },
+      });
+
+      return { orgId: org.id, userId: appUser.id };
+    });
+
+    return NextResponse.json(result, {
+      headers: { "X-Request-Id": requestId },
+    });
   } catch (err) {
-    console.error("Onboarding error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    if (err instanceof ZodError) {
+      return NextResponse.json(
+        { error: "INVALID_REQUEST_BODY", issues: err.issues, requestId },
+        { status: 400, headers: { "X-Request-Id": requestId } },
+      );
+    }
+
+    logger.error("onboarding_failed", {
+      code: err instanceof Error ? err.message : "UNKNOWN_ERROR",
+    });
+    return NextResponse.json(
+      { error: "Internal server error", requestId },
+      { status: 500, headers: { "X-Request-Id": requestId } },
+    );
   }
 }

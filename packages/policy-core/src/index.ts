@@ -6,7 +6,13 @@ export {
   type KillSwitchName,
 } from "./kill-switch";
 
-export type ActorRole = "OWNER" | "ADMIN" | "SALES" | "OPERATOR" | "VIEWER";
+export type ActorRole =
+  | "OWNER"
+  | "ADMIN"
+  | "SALES"
+  | "OPERATOR"
+  | "VIEWER"
+  | "BUYER_REVIEWER";
 export type RiskLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
 type TransactionClient = Record<

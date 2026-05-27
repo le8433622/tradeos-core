@@ -3,19 +3,20 @@
 ## Prerequisites
 
 - Staging environment running with seed data
-- 4 demo accounts live (see below)
+- 5 demo accounts live (see below)
 - Demo auth enabled (`ALLOW_DEMO_AUTH=true` or `NODE_ENV !== "production"`)
 
 ## Demo Accounts
 
 All belong to `demo-supplier-switch-org`. Each uses a distinct role for testing the access control layer.
 
-| Email                         | Role     | Land Page                  | Can access Settings?       |
-| ----------------------------- | -------- | -------------------------- | -------------------------- |
-| `owner-demo@tradeos.local`    | OWNER    | `/settings/team`           | Yes (all)                  |
-| `admin-demo@tradeos.local`    | ADMIN    | `/sourcing-runs`           | Yes (not security/billing) |
-| `operator-demo@tradeos.local` | OPERATOR | `/sourcing-runs`           | No                         |
-| `viewer-demo@tradeos.local`   | VIEWER   | `/sourcing-runs?mode=view` | No                         |
+| Email                         | Role           | Land Page                  | Can access Settings?       |
+| ----------------------------- | -------------- | -------------------------- | -------------------------- |
+| `owner-demo@tradeos.local`    | OWNER          | `/settings/team`           | Yes (all)                  |
+| `admin-demo@tradeos.local`    | ADMIN          | `/sourcing-runs`           | Yes (not security/billing) |
+| `operator-demo@tradeos.local` | OPERATOR       | `/sourcing-runs`           | No                         |
+| `viewer-demo@tradeos.local`   | VIEWER         | `/sourcing-runs?mode=view` | No                         |
+| `buyer-demo@tradeos.local`    | BUYER_REVIEWER | `/buyer/reports`           | No                         |
 
 ## How to use
 
@@ -35,6 +36,7 @@ Seed the DB first, then invite each email via `/settings/team`. Users sign up wi
 2. **Login as ADMIN** — lands on `/sourcing-runs`. Can navigate to settings team and roles (has `user.invite`, `settings.profile`).
 3. **Login as OPERATOR** — lands on `/sourcing-runs`. Can view case detail. Cannot access any settings page (redirected to `/?error=permission_denied`).
 4. **Login as VIEWER** — lands on `/sourcing-runs?mode=view`. Cannot access settings. Read-only experience on sourcing runs.
+5. **Login as BUYER_REVIEWER** — lands on `/buyer/reports`. Can only view assigned buyer reports and buyer-safe evidence summaries.
 
 ## Role definitions
 
@@ -42,10 +44,11 @@ See `packages/database/prisma/seed.ts` for exact permission lists per role.
 
 Key differences:
 
-- **OWNER** — all 52 permissions
-- **ADMIN** — 47 permissions (excludes `billing.manage`, `privacy.anonymize`, `privacy.legalHold`, `user.roleUpdate`, `settings.security`)
-- **OPERATOR** — 17 permissions (operations-focused: inbox, approvals, sourcing read)
-- **VIEWER** — 9 read-only permissions
+- **OWNER** — all permissions
+- **ADMIN** — all operational permissions except owner-only security/billing/privacy/role-update
+- **OPERATOR** — sourcing operations, quote/evidence upload, draft report generation, no publish/billing/roles
+- **VIEWER** — internal read-only, buyer-safe evidence summaries, no mutation
+- **BUYER_REVIEWER** — external assigned buyer reports only, buyer-safe evidence summaries only
 
 ## What to verify during demo
 

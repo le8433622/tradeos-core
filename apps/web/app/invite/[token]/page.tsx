@@ -1,18 +1,49 @@
-import { prisma } from "@tradeos/database";
+import {
+  ensureSystemRoles,
+  prisma,
+  type Prisma,
+  type UserRole,
+} from "@tradeos/database";
+import { redactForAudit } from "@tradeos/policy-core";
 import crypto from "crypto";
 import { redirect } from "next/navigation";
-import { requirePageSession } from "../../../lib/page-session";
+import { createSupabaseServerClient } from "../../../lib/supabase-server";
+
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+function legacyRoleFor(roleName?: string | null): UserRole {
+  if (
+    roleName === "OWNER" ||
+    roleName === "ADMIN" ||
+    roleName === "SALES" ||
+    roleName === "OPERATOR" ||
+    roleName === "VIEWER"
+  ) {
+    return roleName;
+  }
+  return "VIEWER";
+}
 
 async function acceptInvite(formData: FormData) {
   "use server";
   const token = formData.get("token") as string;
   if (!token) throw new Error("INVALID_REQUEST_BODY");
 
-  const session = await requirePageSession();
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  if (!authUser?.email) {
+    redirect(`/login?next=/invite/${token}`);
+  }
+
   const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
   const invitation = await prisma.invitation.findFirst({
     where: { tokenHash },
+    include: { role: { select: { id: true, name: true } } },
   });
   if (
     !invitation ||
@@ -21,15 +52,44 @@ async function acceptInvite(formData: FormData) {
   ) {
     throw new Error("INVITATION_INVALID_OR_EXPIRED");
   }
-  if (session.email !== invitation.email) {
+  const authEmail = normalizeEmail(authUser.email);
+  const invitedEmail = normalizeEmail(invitation.email);
+
+  if (authEmail !== invitedEmail) {
     throw new Error("INVITATION_EMAIL_MISMATCH");
   }
 
+  await ensureSystemRoles(prisma);
+
   await prisma.$transaction(async (tx) => {
+    let appUser = await tx.user.findUnique({ where: { email: authEmail } });
+    if (!appUser) {
+      appUser = await tx.user.create({
+        data: {
+          organizationId: invitation.organizationId,
+          email: authEmail,
+          name: authUser.user_metadata?.name ?? authEmail.split("@")[0],
+          role: legacyRoleFor(invitation.role?.name),
+        },
+      });
+    }
+
+    const claim = await tx.invitation.updateMany({
+      where: {
+        id: invitation.id,
+        organizationId: invitation.organizationId,
+        acceptedAt: null,
+      },
+      data: { acceptedAt: new Date() },
+    });
+    if (claim.count !== 1) {
+      throw new Error("INVITATION_INVALID_OR_EXPIRED");
+    }
+
     const existing = await tx.organizationMember.findUnique({
       where: {
         userId_organizationId: {
-          userId: session.userId,
+          userId: appUser.id,
           organizationId: invitation.organizationId,
         },
       },
@@ -38,9 +98,9 @@ async function acceptInvite(formData: FormData) {
     if (!existing) {
       await tx.organizationMember.create({
         data: {
-          userId: session.userId,
+          userId: appUser.id,
           organizationId: invitation.organizationId,
-          roleId: invitation.roleId,
+          roleId: invitation.roleId ?? "system-viewer",
           status: "ACTIVE",
           invitedAt: invitation.createdAt,
           acceptedAt: new Date(),
@@ -48,23 +108,27 @@ async function acceptInvite(formData: FormData) {
       });
     } else if (existing.status === "INVITED") {
       await tx.organizationMember.update({
-        where: { id: existing.id },
+        where: {
+          userId_organizationId: {
+            userId: appUser.id,
+            organizationId: invitation.organizationId,
+          },
+        },
         data: { status: "ACTIVE", acceptedAt: new Date() },
       });
     }
 
-    await tx.invitation.update({
-      where: { id: invitation.id },
-      data: { acceptedAt: new Date() },
-    });
-
     await tx.auditLog.create({
       data: {
         organizationId: invitation.organizationId,
-        actorUserId: session.userId,
+        actorUserId: appUser.id,
         actionName: "user.acceptInvite",
         riskLevel: "LOW",
-        input: { invitationId: invitation.id, email: invitation.email },
+        input: redactForAudit({
+          invitationId: invitation.id,
+          email: invitation.email,
+          roleId: invitation.roleId,
+        }) as Prisma.InputJsonValue,
         result: { accepted: true },
         approved: true,
       },
@@ -92,6 +156,10 @@ export default async function InviteAcceptPage({
 
   const invitation = await prisma.invitation.findFirst({
     where: { tokenHash },
+    include: {
+      organization: { select: { name: true } },
+      role: { select: { name: true } },
+    },
   });
 
   if (!invitation || invitation.expiresAt < new Date()) {
@@ -132,15 +200,44 @@ export default async function InviteAcceptPage({
     );
   }
 
-  const session = await requirePageSession();
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
 
-  if (session.email !== invitation.email) {
+  if (!authUser?.email) {
+    return layout(
+      <>
+        <h1>Sign in to accept invitation</h1>
+        <p>
+          This invitation was sent to <strong>{invitation.email}</strong>. Sign
+          in with that email to accept.
+        </p>
+        <a
+          href={`/login?next=/invite/${token}`}
+          style={{
+            display: "inline-block",
+            marginTop: 16,
+            padding: "10px 24px",
+            background: "#2563eb",
+            color: "#fff",
+            borderRadius: 6,
+            textDecoration: "none",
+          }}
+        >
+          Sign in
+        </a>
+      </>,
+    );
+  }
+
+  if (normalizeEmail(authUser.email) !== normalizeEmail(invitation.email)) {
     return layout(
       <>
         <h1>Invitation mismatch</h1>
         <p>
           This invitation was sent to <strong>{invitation.email}</strong>, but
-          you are signed in as <strong>{session.email}</strong>.
+          you are signed in as <strong>{authUser.email}</strong>.
         </p>
         <p>Please sign in with the invited email address and try again.</p>
       </>,
@@ -151,7 +248,9 @@ export default async function InviteAcceptPage({
     <>
       <h1>You are invited to join</h1>
       <p>
-        You have been invited to join the organization as a team member. Click
+        You have been invited to join{" "}
+        <strong>{invitation.organization.name}</strong>
+        {invitation.role?.name ? ` as ${invitation.role.name}` : ""}. Click
         below to accept.
       </p>
       <form action={acceptInvite}>

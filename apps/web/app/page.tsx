@@ -10,5 +10,8 @@ export default async function Page() {
   if (session.role === "VIEWER") {
     redirect("/sourcing-runs?mode=view");
   }
+  if (session.roleName === "BUYER_REVIEWER") {
+    redirect("/buyer/reports");
+  }
   redirect("/sourcing-runs");
 }

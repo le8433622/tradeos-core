@@ -64,6 +64,30 @@ describe("tenantGuard", () => {
     );
   });
 
+  it("allows exact invitation token lookup before organization is known", async () => {
+    await expectPass(
+      makeParams("Invitation", "findFirst", {
+        where: { tokenHash: "hash-1" },
+      }),
+    );
+  });
+
+  it("blocks non-token invitation lookup without organizationId", async () => {
+    await expectBlock(
+      makeParams("Invitation", "findFirst", {
+        where: { email: "buyer@example.com" },
+      }),
+    );
+  });
+
+  it("blocks broad invitation token lookup without organizationId", async () => {
+    await expectBlock(
+      makeParams("Invitation", "findFirst", {
+        where: { tokenHash: { contains: "hash" } },
+      }),
+    );
+  });
+
   // ── findUnique ──
   it("allows findUnique without organizationId (by design)", async () => {
     await expectPass(

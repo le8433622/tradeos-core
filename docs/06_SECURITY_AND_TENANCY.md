@@ -26,6 +26,8 @@ Use `OrganizationMember` join table, not `User.organizationId` (legacy field).
 
 Verify the current user has an ACTIVE membership in that org, OR that data sharing is explicitly authorized via opt-in consent.
 
+Invitation acceptance is the only token-bearer exception: `/invite/[token]` may resolve an `Invitation` by exact `tokenHash` before the accepting user has an organization membership. All follow-up writes still include `organizationId` and create an audit log.
+
 ## Auth Requirements
 
 Production auth requirements:
@@ -81,15 +83,23 @@ Unexpected failures MUST return `INTERNAL_ERROR` without stack traces. Server-si
 
 ## Role Model
 
-Current roles (5):
+Current roles (6):
 
 - `OWNER` — full access, risk settings, approvals, billing
 - `ADMIN` — manage team, approve actions, moderation
 - `SALES` — manage leads, quotations, products, contacts
 - `OPERATOR` — process inbox, follow-ups, introductions
 - `VIEWER` — read-only access to allowed tenant data
+- `BUYER_REVIEWER` — external buyer reviewer, assigned reports and buyer-safe evidence only
 
 Each role maps to a set of permission keys in the seed (`packages/database/prisma/seed.ts`).
+
+Signup and invitation assignment rules:
+
+- First user creating an organization becomes `OWNER` through `OrganizationMember.roleId = system-owner`.
+- Invited users never choose organization or role. The invitation token fixes `organizationId` and `roleId`.
+- Buyer-side reviewers should use `BUYER_REVIEWER`; they do not receive internal member permissions, raw evidence access, or org-wide sourcing access.
+- Every request must resolve identity → organization → role → permission → object ownership; menu visibility is not an authorization boundary.
 
 ## AI Safety Gates
 

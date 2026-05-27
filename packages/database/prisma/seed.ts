@@ -265,6 +265,12 @@ const PERMISSIONS: {
     description: "Approve report snapshots",
     group: "report",
   },
+  {
+    key: "report.publish",
+    name: "Publish reports",
+    description: "Publish buyer-facing reports",
+    group: "report",
+  },
   // Introduction
   {
     key: "introduction.read",
@@ -343,6 +349,44 @@ const PERMISSIONS: {
     description: "Generate and deliver buyer decision report",
     group: "sourcing",
   },
+  // Evidence
+  {
+    key: "evidence.view_summary",
+    name: "View evidence summary",
+    description: "View buyer-safe evidence summaries",
+    group: "evidence",
+  },
+  {
+    key: "evidence.view_raw",
+    name: "View raw evidence",
+    description: "View unredacted supplier/source evidence",
+    group: "evidence",
+  },
+  {
+    key: "evidence.upload",
+    name: "Upload evidence",
+    description: "Attach evidence to sourcing work",
+    group: "evidence",
+  },
+  {
+    key: "evidence.redact",
+    name: "Redact evidence",
+    description: "Create buyer-safe redactions",
+    group: "evidence",
+  },
+  // Buyer
+  {
+    key: "buyerReport.view_assigned",
+    name: "View assigned buyer reports",
+    description: "View only buyer reports assigned to this reviewer",
+    group: "buyer",
+  },
+  {
+    key: "buyerDecision.submit_assigned",
+    name: "Submit assigned buyer decision",
+    description: "Approve, reject, or request proof for assigned buyer reports",
+    group: "buyer",
+  },
 ];
 
 type RoleDef = {
@@ -397,6 +441,7 @@ const ROLES: RoleDef[] = [
       "sourcing.view",
       "sourcing.create",
       "sourcing.manage",
+      "evidence.view_summary",
     ],
   },
   {
@@ -421,6 +466,10 @@ const ROLES: RoleDef[] = [
       "ai.use",
       "sourcing.list",
       "sourcing.view",
+      "sourcing.create",
+      "sourcing.manage",
+      "evidence.view_summary",
+      "evidence.upload",
     ],
   },
   {
@@ -436,6 +485,17 @@ const ROLES: RoleDef[] = [
       "report.generate",
       "sourcing.list",
       "sourcing.view",
+      "evidence.view_summary",
+    ],
+  },
+  {
+    name: "BUYER_REVIEWER",
+    description:
+      "External buyer reviewer: assigned buyer reports and buyer-safe evidence only",
+    permissions: [
+      "buyerReport.view_assigned",
+      "buyerDecision.submit_assigned",
+      "evidence.view_summary",
     ],
   },
 ];
@@ -813,7 +873,7 @@ async function main() {
 
   await seedPlanLimits();
 
-  // Demo Supplier Switch org — 4 role accounts for pilot walkthrough (#99)
+  // Demo Supplier Switch org — role accounts for pilot walkthrough (#99)
   const switchOrg = await prisma.organization.upsert({
     where: { id: "demo-supplier-switch-org" },
     update: {},
@@ -854,6 +914,12 @@ async function main() {
       name: "Demo Viewer",
       role: "VIEWER",
       roleId: "system-viewer",
+    },
+    {
+      email: "buyer-demo@tradeos.local",
+      name: "Demo Buyer Reviewer",
+      role: "VIEWER",
+      roleId: "system-buyer_reviewer",
     },
   ];
 

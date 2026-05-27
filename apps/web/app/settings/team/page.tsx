@@ -1,6 +1,7 @@
 import { prisma } from "@tradeos/database";
 import { executeAction } from "@tradeos/policy-core";
 import { requirePagePermission } from "../../../lib/page-session";
+import { createLogger } from "../../../lib/logger";
 import { revalidatePath } from "next/cache";
 import "@tradeos/crm-core";
 import { RoleSelect } from "./role-select";
@@ -34,7 +35,7 @@ export default async function TeamSettingsPage() {
   const session = await requirePagePermission("user.invite");
   const canChangeRole = session.permissions.includes("user.roleUpdate");
 
-  const [members, roles] = await Promise.all([
+  const [members, roles, org] = await Promise.all([
     prisma.organizationMember.findMany({
       where: { organizationId: session.organizationId },
       include: {
@@ -47,13 +48,20 @@ export default async function TeamSettingsPage() {
       where: { isSystem: true },
       orderBy: { name: "asc" },
     }),
+    prisma.organization.findUnique({
+      where: { id: session.organizationId },
+      select: { name: true },
+    }),
   ]);
 
   async function inviteMember(formData: FormData) {
     "use server";
     const s = await requirePagePermission("user.invite");
-    const email = formData.get("email") as string;
+    const email = String(formData.get("email") ?? "")
+      .trim()
+      .toLowerCase();
     const roleId = formData.get("roleId") as string;
+    const logger = createLogger();
 
     const result = await executeAction<
       Record<string, unknown>,
@@ -77,21 +85,28 @@ export default async function TeamSettingsPage() {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${process.env.RESEND_API_KEY ?? ""}`,
+          Authorization: `Bearer ${process.env.RESEND_API_KEY ?? ""}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           from: "TradeOS Core <noreply@resend.dev>",
           to: email,
           subject: "You have been invited to TradeOS Core",
-          text: `You have been invited to join ${s.organizationId} on TradeOS Core.\n\nClick the link below to accept:\n${inviteLink}\n\nThis invitation expires in 7 days.`,
+          text: `You have been invited to join ${org?.name ?? "a TradeOS organization"} on TradeOS Core.\n\nClick the link below to accept:\n${inviteLink}\n\nThis invitation expires in 7 days.`,
         }),
       });
       if (!res.ok) {
-        console.error("Failed to send invitation email:", await res.text());
+        logger.error("invitation_email_failed", {
+          status: res.status,
+          body: await res.text(),
+        });
+        throw new Error("INVITATION_EMAIL_SEND_FAILED");
       }
     } catch (mailErr) {
-      console.error("Failed to send invitation email:", mailErr);
+      logger.error("invitation_email_failed", {
+        code: mailErr instanceof Error ? mailErr.message : "UNKNOWN_ERROR",
+      });
+      throw new Error("INVITATION_EMAIL_SEND_FAILED");
     }
 
     revalidatePath("/settings/team");

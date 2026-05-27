@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { applyTenantGuard } from "./tenant-guard";
+export * from "./system-roles";
 
 export { PrismaClient } from "@prisma/client";
 export * from "@prisma/client";

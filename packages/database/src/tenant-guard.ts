@@ -78,7 +78,11 @@ function hasOrgInWhere(args: unknown): boolean {
   for (const val of Object.values(where)) {
     if (Array.isArray(val)) {
       for (const item of val) {
-        if (typeof item === "object" && item != null && "organizationId" in (item as Record<string, unknown>)) {
+        if (
+          typeof item === "object" &&
+          item != null &&
+          "organizationId" in (item as Record<string, unknown>)
+        ) {
           return true;
         }
       }
@@ -96,7 +100,12 @@ function hasOrgInData(args: unknown): boolean {
   const data = a.data ?? a.create;
   if (!data) return false;
   if (Array.isArray(data)) {
-    return data.length > 0 && typeof data[0] === "object" && data[0] != null && "organizationId" in (data[0] as Record<string, unknown>);
+    return (
+      data.length > 0 &&
+      typeof data[0] === "object" &&
+      data[0] != null &&
+      "organizationId" in (data[0] as Record<string, unknown>)
+    );
   }
   if (typeof data === "object") {
     return "organizationId" in (data as Record<string, unknown>);
@@ -104,16 +113,45 @@ function hasOrgInData(args: unknown): boolean {
   return false;
 }
 
+function isInvitationTokenLookup(
+  model: string,
+  action: PrismaAction,
+  args: unknown,
+): boolean {
+  if (model !== "Invitation" || action !== "findFirst") return false;
+  if (!args || typeof args !== "object") return false;
+
+  const where = (args as { where?: unknown }).where;
+  if (!where || typeof where !== "object") return false;
+
+  const keys = Object.keys(where);
+  return (
+    keys.length === 1 &&
+    typeof (where as { tokenHash?: unknown }).tokenHash === "string"
+  );
+}
+
 export function createTenantGuard() {
   return async (
     params: { model?: string; action: string; args: unknown },
-    next: (params: { model?: string; action: string; args: unknown }) => Promise<unknown>,
+    next: (params: {
+      model?: string;
+      action: string;
+      args: unknown;
+    }) => Promise<unknown>,
   ): Promise<unknown> => {
     const { model, action } = params;
-    if (!model || !(TENANT_SCOPED_MODELS as readonly string[]).includes(model)) {
+    if (
+      !model ||
+      !(TENANT_SCOPED_MODELS as readonly string[]).includes(model)
+    ) {
       return next(params);
     }
     const prismaAction = action as PrismaAction;
+
+    if (isInvitationTokenLookup(model, prismaAction, params.args)) {
+      return next(params);
+    }
 
     if (MULTI_RECORD_ACTIONS.includes(prismaAction)) {
       if (!hasOrgInWhere(params.args)) {

@@ -30,7 +30,8 @@ NVIDIA QA (#82) COMPLETE — PASS, 12/12 scenarios, no HIGH/CRITICAL bugs.
 | **Issue B (#95)**                       | **🔴 OPEN (P2)**   | **Round savingsPercent to 2 decimals**                               |
 | **Issue C (#96)**                       | **🔴 OPEN (P3)**   | **Demo auth cookie/header alignment**                                |
 | **#99 Auth & Demo Role Accounts**       | **✅ DONE / PASS** | **10/10 E2E tests, 4 roles verified, walkthrough doc**               |
-| **#100 Production email (Gmail SMTP)**  | **✅ DONE**        | **Magic link working on production. Gmail SMTP via Supabase Auth.**   |
+| **#100 Production email (Gmail SMTP)**  | **✅ DONE**        | **Magic link working on production. Gmail SMTP via Supabase Auth.**  |
+| **Auth role foundation**                | **✅ DONE**        | **Signup/invite bootstrap system roles, added BUYER_REVIEWER**       |
 
 ## Verified Production Behaviour (2026-05-27)
 
@@ -59,18 +60,19 @@ NVIDIA QA (#82) COMPLETE — PASS, 12/12 scenarios, no HIGH/CRITICAL bugs.
 - [x] All 38 tables have RLS enabled on production
 - [x] No Security Advisor application-table warnings
 - [x] **NVIDIA QA (#82) completed — PASS, no HIGH/CRITICAL bugs**
-- [x] **#99 Auth & Demo Role Accounts — seeded 4 accounts, role-based landing, 10/10 E2E tests PASS, walkthrough doc**
+- [x] **#99 Auth & Demo Role Accounts — seeded 5 accounts, 4 internal roles covered by 10/10 E2E tests, walkthrough doc**
+- [x] **Auth signup/invite role bootstrap — OWNER assigned on org creation, invitations assign fixed role, BUYER_REVIEWER added**
 
 ## Residual Risks
 
-| Risk                                           | Severity | Mitigation                                                                       |
-| ---------------------------------------------- | -------- | -------------------------------------------------------------------------------- |
-| Production DB password in `/tmp` file          | MEDIUM   | Move to 1Password, then wipe `/tmp/.tradeos_prod_db_pass`                        |
-| `SUPABASE_SERVICE_ROLE_KEY` in Vercel env      | HIGH     | Server-side only; never exposed to client                                        |
-| No production seed data                        | LOW      | Users start with empty workspace                                                 |
-| Magic link email delivery not configured       | MEDIUM   | SES/SMTP must be set up in Supabase production project before real users sign up |
-| Stale APPROVED no auto-follow-up (#94)         | MEDIUM   | Open issue — blocks outcome tracking until resolved                              |
-| `savingsPercent` floating-point artifact (#95) | LOW      | Cosmetic — report shows 8.300000000000001%                                       |
+| Risk                                           | Severity | Mitigation                                                                     |
+| ---------------------------------------------- | -------- | ------------------------------------------------------------------------------ |
+| Production DB password in `/tmp` file          | MEDIUM   | Move to 1Password, then wipe `/tmp/.tradeos_prod_db_pass`                      |
+| `SUPABASE_SERVICE_ROLE_KEY` in Vercel env      | HIGH     | Server-side only; never exposed to client                                      |
+| No production business seed data               | LOW      | Users start with empty workspace; system roles/permissions bootstrap on signup |
+| Gmail SMTP is pilot-grade                      | MEDIUM   | Replace with domain-verified Resend/SES before scaled buyer onboarding         |
+| Stale APPROVED no auto-follow-up (#94)         | MEDIUM   | Open issue — blocks outcome tracking until resolved                            |
+| `savingsPercent` floating-point artifact (#95) | LOW      | Cosmetic — report shows 8.300000000000001%                                     |
 
 ## Next Steps
 
@@ -79,6 +81,5 @@ NVIDIA QA (#82) COMPLETE — PASS, 12/12 scenarios, no HIGH/CRITICAL bugs.
 3. #95 (P2) Round savingsPercent — cosmetic
 4. #96 (P3) Demo auth cookie/header — low priority
 5. **Real pilot validation**: 1 real buyer, 1 real case, 1 real outcome
-6. Configure production email (SES/SMTP) for Supabase magic links
-7. Rotate and store production secrets in 1Password
-8. E2E per-role tests with demo auth (OWNER, ADMIN, OPERATOR, VIEWER) — verify landing redirects + permission gates
+6. Rotate and store production secrets in 1Password
+7. E2E per-role tests with real auth, including BUYER_REVIEWER and invitation acceptance

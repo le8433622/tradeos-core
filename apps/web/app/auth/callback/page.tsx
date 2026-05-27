@@ -11,7 +11,10 @@ export default function AuthCallbackPage() {
       const supabase = createSupabaseBrowserClient();
       const { data } = await supabase.auth.getSession();
       if (data.session) {
-        window.location.href = "/";
+        const next = new URLSearchParams(window.location.search).get("next");
+        const nextPath =
+          next?.startsWith("/") && !next.startsWith("//") ? next : "/";
+        window.location.href = nextPath;
         return;
       }
       setStatus("No active session found. Please try login again.");

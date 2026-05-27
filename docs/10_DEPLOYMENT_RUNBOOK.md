@@ -53,7 +53,12 @@ Do NOT mix staging and production database URLs.
 
 ### Production
 
-- (Define when production project is created)
+- Organization: TradeOS AI
+- Project: TradeOS Core Production (`tradeos-core-prod`)
+- Project ref: `okkzfmtwrjkfjzyprrwh`
+- Region: ap-southeast-2
+- Database host: `db.okkzfmtwrjkfjzyprrwh.supabase.co`
+- Pooler host: production Supabase pooler for project ref `okkzfmtwrjkfjzyprrwh`
 
 ## Required Environment Variables
 
@@ -75,6 +80,16 @@ SUPABASE_URL="https://<PROJECT_REF>.supabase.co"
 SUPABASE_PUBLISHABLE_KEY="<publishable-key>"
 ALLOW_DEMO_AUTH="false"
 ```
+
+Production Supabase Auth SMTP is currently configured through Gmail SMTP for pilot magic links. Replace it with a domain-verified transactional provider before scaled buyer onboarding.
+
+### Email
+
+```
+RESEND_API_KEY="<resend-api-key-for-invite-emails>"
+```
+
+`RESEND_API_KEY` is used by the web app to send invitation emails. Supabase Auth magic-link SMTP is configured in the Supabase dashboard and must not be committed to source.
 
 ### Webhooks
 
