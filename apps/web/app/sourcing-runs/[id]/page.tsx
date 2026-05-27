@@ -20,6 +20,8 @@ const STATUS_COLORS: Record<string, string> = {
   BILLED: "#7c3aed",
 };
 
+const STALE_DAYS = 14;
+
 function StatusBadge({ status }: { status: string }) {
   return (
     <span
@@ -77,9 +79,30 @@ export default async function SourcingRunDetailPage({
     },
   });
 
+  const [latestReport, outcome] = await Promise.all([
+    prisma.switchDecisionReport.findFirst({
+      where: { sourcingRunId: id, organizationId: session.organizationId },
+      orderBy: { createdAt: "desc" },
+      select: { buyerDecision: true, buyerDecidedAt: true, id: true },
+    }),
+    prisma.outcomeRecord.findFirst({
+      where: { sourcingRunId: id },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, buyerAction: true, createdAt: true },
+    }),
+  ]);
+
   if (!run || run.organizationId !== session.organizationId) {
     notFound();
   }
+
+  const isStaleApproved =
+    latestReport?.buyerDecision === "APPROVED" &&
+    latestReport.buyerDecidedAt &&
+    !outcome &&
+    (Date.now() - new Date(latestReport.buyerDecidedAt).getTime()) /
+      (1000 * 60 * 60 * 24) >=
+      STALE_DAYS;
 
   return (
     <main style={{ padding: 32, fontFamily: "Arial, sans-serif" }}>
@@ -107,6 +130,98 @@ export default async function SourcingRunDetailPage({
         </div>
       </div>
 
+      {isStaleApproved && (
+        <div
+          style={{
+            background: "#fef2f2",
+            border: "1px solid #dc2626",
+            borderRadius: 8,
+            padding: "12px 16px",
+            marginTop: 16,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div>
+            <strong style={{ color: "#dc2626", fontSize: 14 }}>
+              Stale APPROVED — no outcome recorded
+            </strong>
+            <p style={{ color: "#991b1b", fontSize: 13, margin: "4px 0 0" }}>
+              Buyer approved {STALE_DAYS}+ days ago but no outcome follow-up.
+              Record outcome now.
+            </p>
+          </div>
+          <a
+            href={`/sourcing-runs/${id}/outcome`}
+            style={{
+              padding: "8px 16px",
+              background: "#dc2626",
+              color: "#fff",
+              borderRadius: 6,
+              textDecoration: "none",
+              fontSize: 13,
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Record Outcome
+          </a>
+        </div>
+      )}
+
+      {latestReport?.buyerDecision && (
+        <div
+          style={{
+            marginTop: 16,
+            display: "flex",
+            gap: 12,
+            alignItems: "center",
+          }}
+        >
+          <span style={{ fontSize: 14, color: "#6b7280" }}>
+            Buyer decision:{" "}
+            <strong
+              style={{
+                color:
+                  latestReport.buyerDecision === "APPROVED"
+                    ? "#059669"
+                    : latestReport.buyerDecision === "REJECTED"
+                      ? "#dc2626"
+                      : "#ca8a04",
+              }}
+            >
+              {latestReport.buyerDecision.replace(/_/g, " ")}
+            </strong>
+          </span>
+          {latestReport.buyerDecidedAt && (
+            <span style={{ fontSize: 13, color: "#9ca3af" }}>
+              {new Date(latestReport.buyerDecidedAt).toLocaleDateString()}
+            </span>
+          )}
+          {outcome ? (
+            <a
+              href={`/sourcing-runs/${id}/outcome`}
+              style={{
+                color: "#059669",
+                fontSize: 13,
+                fontWeight: 600,
+                textDecoration: "none",
+              }}
+            >
+              View outcome &rarr;
+            </a>
+          ) : (
+            <a
+              href={`/sourcing-runs/${id}/outcome`}
+              style={{ color: "#0070f3", fontSize: 13, textDecoration: "none" }}
+            >
+              Record outcome &rarr;
+            </a>
+          )}
+        </div>
+      )}
+
       {run.requirement && (
         <p>
           <strong>Requirement:</strong> {run.requirement}
@@ -117,6 +232,26 @@ export default async function SourcingRunDetailPage({
         {run.sourceCountry && `| Source: ${run.sourceCountry} `}
         {run.productCategory && `| Category: ${run.productCategory}`}
       </p>
+
+      {latestReport && !latestReport.buyerDecision && (
+        <div style={{ marginTop: 16 }}>
+          <a
+            href={`/sourcing-runs/${id}/decision`}
+            style={{
+              display: "inline-block",
+              padding: "10px 24px",
+              background: "#2563eb",
+              color: "#fff",
+              borderRadius: 8,
+              textDecoration: "none",
+              fontSize: 14,
+              fontWeight: 600,
+            }}
+          >
+            Go to Buyer Decision
+          </a>
+        </div>
+      )}
 
       <section style={{ marginTop: 32 }}>
         <h2>Supplier Candidates ({run.supplierCandidates.length})</h2>
