@@ -55,7 +55,10 @@ export default async function TeamSettingsPage() {
     const email = formData.get("email") as string;
     const roleId = formData.get("roleId") as string;
 
-    await executeAction(
+    const result = await executeAction<
+      Record<string, unknown>,
+      { invitationId: string; token: string }
+    >(
       "user.invite",
       { organizationId: s.organizationId, email, roleId: roleId || null },
       {
@@ -66,6 +69,31 @@ export default async function TeamSettingsPage() {
         mfaLevel: s.mfaLevel,
       },
     );
+
+    const appUrl = process.env.APP_URL ?? "https://tradeos-core.vercel.app";
+    const inviteLink = `${appUrl}/invite/${result.token}`;
+
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.RESEND_API_KEY ?? ""}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "TradeOS Core <noreply@resend.dev>",
+          to: email,
+          subject: "You have been invited to TradeOS Core",
+          text: `You have been invited to join ${s.organizationId} on TradeOS Core.\n\nClick the link below to accept:\n${inviteLink}\n\nThis invitation expires in 7 days.`,
+        }),
+      });
+      if (!res.ok) {
+        console.error("Failed to send invitation email:", await res.text());
+      }
+    } catch (mailErr) {
+      console.error("Failed to send invitation email:", mailErr);
+    }
+
     revalidatePath("/settings/team");
   }
 
