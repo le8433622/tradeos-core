@@ -1,21 +1,16 @@
 import { prisma } from "@tradeos/database";
 import { requirePagePermission } from "../../../lib/page-session";
-
-const ORG_TYPE_LABELS: Record<string, string> = {
-  IMPORTER: "Importer",
-  EXPORTER: "Exporter",
-  DISTRIBUTOR: "Distributor",
-  LOGISTICS: "Logistics",
-  SERVICE: "Service",
-  ASSOCIATION: "Association",
-  OTHER: "Other",
-};
+import { OrgProfileForm } from "./org-profile-form";
 
 export default async function ProfileSettingsPage() {
   const session = await requirePagePermission("settings.profile");
   const org = await prisma.organization.findUnique({
     where: { id: session.organizationId },
-    select: { name: true, type: true, country: true, plan: true },
+    select: { id: true, name: true, type: true, country: true },
+  });
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { name: true, email: true },
   });
 
   return (
@@ -30,68 +25,10 @@ export default async function ProfileSettingsPage() {
           maxWidth: 480,
         }}
       >
-        <dl style={{ margin: 0, display: "grid", gap: 16 }}>
-          <div>
-            <dt
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: "#6b7280",
-                textTransform: "uppercase",
-              }}
-            >
-              Name
-            </dt>
-            <dd style={{ margin: "4px 0 0", fontSize: 16 }}>
-              {org?.name ?? "—"}
-            </dd>
-          </div>
-          <div>
-            <dt
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: "#6b7280",
-                textTransform: "uppercase",
-              }}
-            >
-              Type
-            </dt>
-            <dd style={{ margin: "4px 0 0", fontSize: 16 }}>
-              {org ? (ORG_TYPE_LABELS[org.type] ?? org.type) : "—"}
-            </dd>
-          </div>
-          <div>
-            <dt
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: "#6b7280",
-                textTransform: "uppercase",
-              }}
-            >
-              Country
-            </dt>
-            <dd style={{ margin: "4px 0 0", fontSize: 16 }}>
-              {org?.country ?? "—"}
-            </dd>
-          </div>
-          <div>
-            <dt
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: "#6b7280",
-                textTransform: "uppercase",
-              }}
-            >
-              Plan
-            </dt>
-            <dd style={{ margin: "4px 0 0", fontSize: 16 }}>
-              {org?.plan ?? "—"}
-            </dd>
-          </div>
-        </dl>
+        <OrgProfileForm
+          org={{ id: org?.id ?? "", name: org?.name ?? "", type: org?.type ?? "ASSOCIATION", country: org?.country ?? "" }}
+          user={{ name: user?.name ?? session.email, email: session.email }}
+        />
       </div>
     </div>
   );

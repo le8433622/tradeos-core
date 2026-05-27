@@ -1,5 +1,6 @@
 import { prisma } from "@tradeos/database";
 import { requirePagePermission } from "../../../lib/page-session";
+import { ChangePasswordForm } from "./change-password-form";
 
 export default async function SecuritySettingsPage() {
   const session = await requirePagePermission("settings.security");
@@ -51,6 +52,7 @@ export default async function SecuritySettingsPage() {
           border: "1px solid #e5e7eb",
           borderRadius: 12,
           padding: 24,
+          marginBottom: 24,
         }}
       >
         <h2 style={{ fontSize: 18, marginTop: 0 }}>MFA Policy</h2>
@@ -80,6 +82,17 @@ export default async function SecuritySettingsPage() {
             <strong>Export data</strong> — requires MFA if user has enrolled
           </li>
         </ul>
+      </section>
+
+      <section
+        style={{
+          background: "white",
+          border: "1px solid #e5e7eb",
+          borderRadius: 12,
+          padding: 24,
+        }}
+      >
+        <ChangePasswordForm />
       </section>
     </div>
   );
