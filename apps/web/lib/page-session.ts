@@ -23,7 +23,7 @@ export async function requirePageSession() {
         mfaLevel,
       );
     } catch {
-      redirect("/onboarding/pending");
+      redirect("/onboarding/setup");
     }
   }
 
