@@ -29,6 +29,7 @@ NVIDIA QA (#82) COMPLETE — PASS, 12/12 scenarios, no HIGH/CRITICAL bugs.
 | **Issue A (#94)**                       | **🔴 OPEN (P1)**   | **Stale APPROVED auto-follow-up**                                    |
 | **Issue B (#95)**                       | **🔴 OPEN (P2)**   | **Round savingsPercent to 2 decimals**                               |
 | **Issue C (#96)**                       | **🔴 OPEN (P3)**   | **Demo auth cookie/header alignment**                                |
+| **#99 Auth & Demo Role Accounts**       | **✅ DONE / PASS** | **10/10 E2E tests, 4 roles verified, walkthrough doc**               |
 
 ## Verified Production Behaviour (2026-05-27)
 
@@ -57,6 +58,7 @@ NVIDIA QA (#82) COMPLETE — PASS, 12/12 scenarios, no HIGH/CRITICAL bugs.
 - [x] All 38 tables have RLS enabled on production
 - [x] No Security Advisor application-table warnings
 - [x] **NVIDIA QA (#82) completed — PASS, no HIGH/CRITICAL bugs**
+- [x] **#99 Auth & Demo Role Accounts — seeded 4 accounts, role-based landing, 10/10 E2E tests PASS, walkthrough doc**
 
 ## Residual Risks
 
@@ -78,3 +80,4 @@ NVIDIA QA (#82) COMPLETE — PASS, 12/12 scenarios, no HIGH/CRITICAL bugs.
 5. **Real pilot validation**: 1 real buyer, 1 real case, 1 real outcome
 6. Configure production email (SES/SMTP) for Supabase magic links
 7. Rotate and store production secrets in 1Password
+8. E2E per-role tests with demo auth (OWNER, ADMIN, OPERATOR, VIEWER) — verify landing redirects + permission gates

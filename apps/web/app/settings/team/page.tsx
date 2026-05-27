@@ -3,6 +3,7 @@ import { executeAction } from "@tradeos/policy-core";
 import { requirePagePermission } from "../../../lib/page-session";
 import { revalidatePath } from "next/cache";
 import "@tradeos/crm-core";
+import { RoleSelect } from "./role-select";
 
 const STATUS_COLORS: Record<string, string> = {
   ACTIVE: "#16a34a",
@@ -193,33 +194,12 @@ export default async function TeamSettingsPage() {
                   </td>
                   <td style={{ padding: "10px 16px", fontSize: 14 }}>
                     {canChangeRole && !isSelf ? (
-                      <form
-                        action={changeRole}
-                        style={{
-                          display: "flex",
-                          gap: 6,
-                          alignItems: "center",
-                        }}
-                      >
-                        <input type="hidden" name="userId" value={m.user.id} />
-                        <select
-                          name="roleId"
-                          defaultValue={m.roleId ?? ""}
-                          style={{
-                            padding: "4px 8px",
-                            border: "1px solid #d1d5db",
-                            borderRadius: 4,
-                            fontSize: 13,
-                          }}
-                          onChange={(e) => e.target.form?.requestSubmit()}
-                        >
-                          {roles.map((r) => (
-                            <option key={r.id} value={r.id}>
-                              {r.name}
-                            </option>
-                          ))}
-                        </select>
-                      </form>
+                      <RoleSelect
+                        userId={m.user.id}
+                        currentRoleId={m.roleId ?? ""}
+                        roles={roles}
+                        changeRoleAction={changeRole}
+                      />
                     ) : (
                       (m.role?.name ?? "—")
                     )}
