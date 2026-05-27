@@ -16,3 +16,7 @@ next-env.d.ts
 test-results/
 e2e-screenshots/
 e2e/.auth/
+
+# Supabase CLI temp files
+supabase/.temp/
+**/supabase/.temp/
