@@ -4,9 +4,9 @@
 
 **Phase 18 — RBAC & multi-org membership** is the current phase.  
 **Real pilot validation** — 1 real buyer, 1 real case, 1 real outcome.  
-⚠️ **#113 reopened**: 1Password vault items exist but are empty — production secrets still in Vercel env vars, not in vault.
-⚠️ **#122 reopened**: Leaked password protection documented but not enabled on Dashboard (acceptable for magic-link-only pilot).
-⛔ **BuyerReportDelivery RLS blocker (#120)**: ✅ FIXED — all 39 app tables have RLS. No app-table RLS-disabled warnings.
+✅ **#113**: ✅ DONE — 1Password vault filled with real production secrets. `GET /api/health` → 200.
+⚠️ **#122**: Leaked password protection documented but not enabled on Dashboard (acceptable for magic-link-only pilot).
+✅ **BuyerReportDelivery RLS blocker (#120)**: ✅ FIXED — all 39 app tables have RLS. No app-table RLS-disabled warnings.
 
 ---
 
@@ -45,7 +45,7 @@
 | **#120 No more Security Advisor warnings** | **✅ VERIFIED**    | **All 39 application tables have RLS enabled. Zero `rls_disabled_in_public` warnings.**                                                                                    |
 | **#122 Leaked password protection**        | **🔴 REOPENED**    | **Documented in runbook but not enabled on Dashboard. Acceptable for first controlled case (magic link only). Blocked: needs Supabase PAT or Dashboard access.**           |
 | **#123 RLS performance + unindexed FKs**   | **✅ DONE**        | **BuyerReportDelivery.assignedById FK index added in #120. current_user_org_id() is STABLE (single eval per query). All formal FK indexes covered by 20260527 migration.** |
-| **#113 1Password vault items empty**       | **🔴 REOPENED**    | **Vault structure created (10 items) but none filled with actual secret values. Secrets still live in Vercel env vars. Needs `op signin` + manual fill.**                  |
+| **#113 1Password vault filled**            | **✅ DONE**        | **All 10+ vault items filled with real production secrets via `npx vercel env run`. Production `/api/health` → 200.**                                                      |
 
 ## Verified Production Behaviour (2026-05-28)
 
@@ -84,14 +84,18 @@
 
 ## Residual Risks
 
-| Risk                                        | Severity | Mitigation                                                                     |
-| ------------------------------------------- | -------- | ------------------------------------------------------------------------------ |
-| Production secrets in Vercel, not 1Password | HIGH     | #113 reopened: vault items created but empty. Needs `op signin` + manual fill. |
-| `SUPABASE_SERVICE_ROLE_KEY` in Vercel env   | HIGH     | Server-side only; never exposed to client. Add to 1Password in #113.           |
-| No production business seed data            | LOW      | Users start with empty workspace; system roles/permissions bootstrap on signup |
-| Gmail SMTP is pilot-grade                   | MEDIUM   | Replace with domain-verified Resend/SES before scaled buyer onboarding         |
-| BuyerReportDelivery missing RLS (#120)      | ✅ FIXED | RLS enabled + tenant policy applied to staging + production                    |
-| Leaked password protection disabled         | LOW      | Acceptable for first controlled case (magic link only). #122 tracks enablement |
+| Risk                                   | Severity   | Mitigation                                                                                                    |
+| -------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------- |
+| Production secrets in 1Password vault  | ✅ DONE    | All 10+ items filled with real values from Vercel production. `load-env.sh` field mapping needs verification. |
+| `SUPABASE_SERVICE_ROLE_KEY` handled    | ✅ MANAGED | Server-side only; never exposed to client. Value in 1Password vault.                                          |
+| No production business seed data       | LOW        | Users start with empty workspace; system roles/permissions bootstrap on signup                                |
+| Gmail SMTP is pilot-grade              | MEDIUM     | Replace with domain-verified Resend/SES before scaled buyer onboarding                                        |
+| BuyerReportDelivery missing RLS (#120) | ✅ FIXED   | RLS enabled + tenant policy applied to staging + production                                                   |
+| Leaked password protection disabled    | LOW        | Acceptable for first controlled case (magic link only). #122 tracks enablement                                |
+| No production business seed data       | LOW        | Users start with empty workspace; system roles/permissions bootstrap on signup                                |
+| Gmail SMTP is pilot-grade              | MEDIUM     | Replace with domain-verified Resend/SES before scaled buyer onboarding                                        |
+| BuyerReportDelivery missing RLS (#120) | ✅ FIXED   | RLS enabled + tenant policy applied to staging + production                                                   |
+| Leaked password protection disabled    | LOW        | Acceptable for first controlled case (magic link only). #122 tracks enablement                                |
 
 ## Next Steps
 
@@ -104,6 +108,7 @@
 7. ~~#121 Sync docs with live DB state~~ ✅ DONE — docs now honest about gaps found
 8. ~~#122 Enable leaked password protection~~ 🔴 REOPENED — documented but not enabled; acceptable for magic-link-only pilot
 9. ~~#123 RLS performance + unindexed FKs~~ ✅ DONE — audit completed, no remaining gaps
-10. **#113 Fill 1Password vault**: sign in (`op signin`), fill 10+ vault items with production secret values, verify `/api/health` still OK
+10. ~~#113 Fill 1Password vault~~ ✅ DONE — vault filled with real production secrets, `/api/health` → 200
 11. **#122 Enable leaked password protection**: Supabase Dashboard > Auth > Settings > toggle on (or PAT via Management API)
-12. **Real pilot validation**: 1 real buyer, 1 real case, 1 real outcome
+12. **Verify field mapping**: `op item get 'Supabase Project' --fields url --reveal` — ensure `load-env.sh` can read it
+13. **Real pilot validation**: 1 real buyer, 1 real case, 1 real outcome
