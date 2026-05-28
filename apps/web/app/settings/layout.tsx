@@ -46,7 +46,6 @@ export default async function SettingsLayout({
     <div
       style={{
         display: "flex",
-        minHeight: "100vh",
         fontFamily: "system-ui, sans-serif",
       }}
     >

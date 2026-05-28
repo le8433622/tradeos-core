@@ -13,6 +13,7 @@
     "db:migrate": "pnpm --filter @tradeos/database db:migrate",
     "db:seed": "pnpm --filter @tradeos/database db:seed",
     "db:studio": "pnpm --filter @tradeos/database db:studio",
+    "env:load": "bash scripts/load-env.sh",
     "dev:worker": "pnpm --filter @tradeos/worker dev",
     "sbom": "pnpm licenses list --json > sbom.json && echo 'SBOM written to sbom.json'",
     "license:check": "pnpm licenses list --json | node scripts/check-licenses.mjs",

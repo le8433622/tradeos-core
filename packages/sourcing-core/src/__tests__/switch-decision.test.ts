@@ -17,15 +17,17 @@ function makeInput(
 }
 
 describe("computeSwitchDecision", () => {
-  describe("WAIT cases", () => {
-    it("returns WAIT when no baseline and no alternatives exist", () => {
+  describe("INSUFFICIENT_EVIDENCE cases", () => {
+    it("returns INSUFFICIENT_EVIDENCE when no baseline, no alternatives, no evidence", () => {
       const result = computeSwitchDecision(makeInput());
-      expect(result.recommendation).toBe("WAIT");
+      expect(result.recommendation).toBe("INSUFFICIENT_EVIDENCE");
       expect(result.confidence).toBe("LOW");
       expect(result.overallScore).toBeGreaterThanOrEqual(0);
-      expect(result.missingProof.length).toBeGreaterThanOrEqual(2);
+      expect(result.missingProof.length).toBeGreaterThanOrEqual(4);
     });
+  });
 
+  describe("WAIT cases", () => {
     it("returns WAIT when baseline exists but no alternatives and no evidence", () => {
       const result = computeSwitchDecision(
         makeInput({

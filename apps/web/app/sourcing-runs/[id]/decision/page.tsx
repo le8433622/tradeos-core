@@ -99,7 +99,9 @@ export default async function BuyerDecisionPage({
             report.annualSavings ? Number(report.annualSavings) : null
           }
           savingsPercent={
-            report.savingsPercent ? Number(report.savingsPercent) : null
+            report.savingsPercent
+              ? Math.round(Number(report.savingsPercent) * 100) / 100
+              : null
           }
           currency={report.currency}
           summary={report.summary ?? ""}

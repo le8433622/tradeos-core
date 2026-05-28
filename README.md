@@ -1,41 +1,62 @@
 # TradeOS Core
 
-AI case execution operating system for economic and supply-chain decisions.
+**Độc lập · Tự do · Hạnh phúc**
 
-TradeOS is not a generic SaaS, CRM, ERP, marketplace, or chatbot. It is a system that turns human economic pain into structured cases, executes tools/actions through a gated policy engine, produces auditable evidence, enables risk-adjusted human decisions, checkpoint billing, and outcome learning.
+Operating system for measurable, auditable, executable trade relationships.
+
+## Mission
+
+TradeOS exists to eliminate asymmetric information in international trade. We turn fragmented, opaque supply chains into structured cases that anyone can audit, decide on, and learn from.
+
+We are not a marketplace, CRM, ERP, or chatbot. We are an execution OS for trade teams.
 
 ## Core Chain
 
 ```txt
 Human pain
-→ Economic Case
-→ Tool/action execution
-→ Evidence
-→ Risk-adjusted decision
-→ Human approval
-→ Checkpoint billing
-→ Outcome learning
+→ Structured trade case
+→ Evidence-gated actions
+→ Risk-adjusted recommendation
+→ Buyer decision
+→ Outcome recording
+→ Organizational learning
 ```
 
-Every feature must strengthen this chain.
+Everything in TradeOS strengthens one link in this chain.
 
-## Current Strategic Wedge
+## Strategic Wedge: Supplier Switch Intelligence
 
-**Supplier Switch Intelligence / Procurement Case Execution**
+Current focus: **Am I buying from the right supplier, or should I switch, negotiate, or wait?**
 
-Core question: _Am I buying from the right supplier, or should I switch, negotiate, or wait?_
+Every sourcing run captures:
 
-## Current Project Mode
+- Who is buying, what, from whom, at what price
+- What hurts (pain categories, evidence gaps, decision authority)
+- Current baseline + alternative quotes with evidence
+- Risk-adjusted recommendation (SWITCH / NEGOTIATE / WAIT / INSUFFICIENT_EVIDENCE)
+- Buyer decision and actual outcome
 
-The repository is in **incident-proof / state-sync mode**. Production availability is being restored after a middleware-related incident. Open issues reflect this priority:
+## Current State
 
-- `#25` — Rebuild current truth after incident recovery (docs sync)
-- `#26` — Run authenticated production/staging smoke
-- `#27` — Add authenticated E2E harness with env-blocked stop behavior
-- `#28` — Define Supplier Switch Intelligence product spec
-- `#29` — Design plugin intake layer architecture
+| Capability                                             | Status      |
+| ------------------------------------------------------ | ----------- |
+| Demo auth (cookie/header bypass)                       | ✅ Done     |
+| Global app shell + sidebar navigation                  | ✅ Done     |
+| Dashboard with stats + outcome tracking                | ✅ Done     |
+| Trade pain intake (3-step form)                        | ✅ Done     |
+| Sourcing run lifecycle (DRAFT → REPORT_DELIVERED)      | ✅ Done     |
+| Baseline + alternatives + quotes + evidence            | ✅ Done     |
+| Switch decision engine (INSUFFICIENT_EVIDENCE gates)   | ✅ Done     |
+| Buyer report (6-section decision freedom report)       | ✅ Done     |
+| Buyer decision + outcome recording                     | ✅ Done     |
+| Outcome as truth (stale approval detection)            | ✅ Done     |
+| Real pilot: Coffee Bean Sourcing (Vietnam → Singapore) | ✅ Seeded   |
+| Multi-org RBAC (OrganizationMember join table)         | 🏗️ Phase 18 |
 
-Product feature expansion is frozen until production proof gates are clear. See `docs/CURRENT_TRUTH.md` and `docs/13_CHECKPOINTS.md` for live state.
+## Deployment
+
+- **Production**: [https://tradeos-core.vercel.app](https://tradeos-core.vercel.app)
+- **Staging**: Supabase `ulnjanlaehfmxurreibj` · `pnpm dev`
 
 ## Non-Negotiable Rules
 
@@ -45,46 +66,42 @@ Product feature expansion is frozen until production proof gates are clear. See 
 4. Every tenant-scoped query must include `organizationId`.
 5. Every risky action must create an approval path before execution.
 6. Every mutation through a registered action must create an audit log.
-7. Missing env/auth/deployment access is not a code bug.
-8. Fix root causes, not symptoms. Search sibling paths before editing.
+7. Demo auth is local-only. Production must set `ALLOW_DEMO_AUTH=false`.
+8. Secrets stay in environment variables, never in source code.
 
 Full rule document: `RULES.md`.
 
 ## Stack
 
-- Turborepo
-- TypeScript
-- Next.js App Router
-- Prisma
-- Supabase Postgres (pgvector-ready)
-- Redis queue-ready worker
-- OpenAI/OpenRouter-compatible AI layer
-- Vercel + Cloudflare-ready deployment
+- **Monorepo**: Turborepo + pnpm
+- **Runtime**: Node 20, TypeScript
+- **Frontend**: Next.js App Router, React
+- **Database**: Prisma + Supabase Postgres
+- **Auth**: Supabase Auth + demo auth for local development
+- **Deployment**: Vercel + Cloudflare-ready
 
 ## Structure
 
-```txt
+```
 apps/
-  web/       Tenant dashboard and API routes
-  worker/    Background jobs
+  web/        Tenant dashboard and API routes
+  worker/     Background jobs
 packages/
   database/     Prisma schema and client
   auth/         Tenant/session helpers
-  policy-core/  Action registry, policy gates, audit types
+  policy-core/  Action registry, role/permission gates, audit
   ai-core/      Intent detection and agent planning
+  sourcing-core/ Sourcing runs, procurement actions, switch decisions
   crm-core/     Lead and follow-up actions
   trade-core/   Quotation and partner actions
-  sourcing-core/ Sourcing run and supplier procurement actions
-  evidence-core/ Evidence lifecycle actions
+  evidence-core/ Evidence lifecycle
   approval-core/ Approval lifecycle and execution
   plan-core/     Plan and entitlement checks
-  analytics-core/ Billing metrics, usage export, report snapshots
-  inbox-core/    Inbound conversation/message ingestion
-  webhook-core/  Webhook receipt, idempotency, processing
+  analytics-core/ Billing metrics, usage export
+  inbox-core/    Inbound message ingestion
+  webhook-core/  Webhook receipt and idempotency
   job-core/      Job queue and scheduling
 ```
-
-See `docs/03_DATABASE_CONTRACT.md` for the full schema contract.
 
 ## Getting Started
 
@@ -96,28 +113,22 @@ pnpm build
 pnpm --filter @tradeos/web dev
 ```
 
-Requires Node 20.x and a Supabase project for local development. See `docs/10_DEPLOYMENT_RUNBOOK.md` for environment setup.
+Requires Node 20.x and a Supabase project. See `docs/10_DEPLOYMENT_RUNBOOK.md`.
 
 ## Verification
 
-| Command              | Purpose                               |
-| -------------------- | ------------------------------------- |
-| `pnpm typecheck`     | TypeScript strict check (17 packages) |
-| `pnpm build`         | Next.js production build              |
-| `pnpm test`          | All test suites                       |
-| `pnpm docs:check`    | Action registry ↔ docs parity         |
-| `pnpm lint`          | ESLint                                |
-| `pnpm license:check` | License compliance                    |
-| `pnpm routes:check`  | Route ↔ action parity                 |
+| Command          | Purpose                 |
+| ---------------- | ----------------------- |
+| `pnpm typecheck` | TypeScript strict check |
+| `pnpm build`     | Production build        |
+| `pnpm test`      | All test suites         |
+| `pnpm lint`      | ESLint                  |
 
 ## Key Documents
 
-- `RULES.md` — Hard rules discovered through code review and production analysis
-- `agent.md` — Agent operating manual with anti-rework execution loop
+- `RULES.md` — Hard rules from production analysis
+- `agent.md` — Agent operating manual
 - `AGENTS.md` — Repository charter
-- `docs/CURRENT_TRUTH.md` — Short source of truth for current state
-- `docs/13_CHECKPOINTS.md` — Honest production readiness ledger
-- `docs/SUPER_AGENT_RULER.md` — Governance to prevent infinite agent loops
-- `docs/10_DEPLOYMENT_RUNBOOK.md` — Deployment and rollback procedures
-- `docs/04_ACTION_REGISTRY.md` — All registered actions with risk/roles/approval
-- `docs/06_SECURITY_AND_TENANCY.md` — Security and tenant isolation
+- `docs/13_CHECKPOINTS.md` — Production readiness ledger
+- `docs/10_DEPLOYMENT_RUNBOOK.md` — Deployment procedures
+- `docs/04_ACTION_REGISTRY.md` — Registered actions reference

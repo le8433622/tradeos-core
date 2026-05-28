@@ -1113,3 +1113,19 @@ model PlanLimit {
 
   @@unique([plan, feature])
 }
+
+model BuyerReportDelivery {
+  id              String   @id @default(cuid())
+  organizationId  String
+  sourcingRunId   String
+  assignedToEmail String
+  assignedById    String?
+  deliveredAt     DateTime @default(now())
+  viewedAt        DateTime?
+  status          String   @default("PENDING") // PENDING | VIEWED | DECIDED
+  notes           String?
+
+  @@index([organizationId, assignedToEmail])
+  @@index([sourcingRunId])
+  @@index([organizationId])
+}

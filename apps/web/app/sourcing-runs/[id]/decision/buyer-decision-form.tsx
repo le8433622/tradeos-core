@@ -135,7 +135,7 @@ export default function BuyerDecisionForm(props: Props) {
           )}
           {props.savingsPercent != null && (
             <span>
-              Savings: <strong>{props.savingsPercent}%</strong>
+              Savings: <strong>{props.savingsPercent?.toFixed(2)}%</strong>
             </span>
           )}
         </div>

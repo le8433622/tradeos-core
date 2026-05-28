@@ -514,6 +514,52 @@ export const deliverBuyerReportAction = registerAction<
   },
 });
 
+export const assignBuyerReportSchema = z
+  .object({
+    organizationId: z.string().min(1),
+    sourcingRunId: z.string().min(1),
+    assignedToEmail: z.string().email().max(256),
+    notes: z.string().max(1024).optional(),
+  })
+  .strict();
+
+export type AssignBuyerReportResult = {
+  deliveryId: string;
+};
+
+export const assignBuyerReportAction = registerAction<
+  z.infer<typeof assignBuyerReportSchema>,
+  AssignBuyerReportResult
+>({
+  name: "sourcing.assignBuyerReport",
+  description:
+    "Assign a switch decision report to a buyer reviewer by email. Creates a BuyerReportDelivery record.",
+  riskLevel: "MEDIUM",
+  allowedRoles: DEFAULT_ADMIN_ROLES,
+  requiresApprovalForAI: true,
+  handler: async (input, context) => {
+    const parsed = assignBuyerReportSchema.parse(input);
+    const run = await prisma.sourcingRun.findUnique({
+      where: { id: parsed.sourcingRunId },
+      select: { organizationId: true },
+    });
+    validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+
+    const delivery = await prisma.buyerReportDelivery.create({
+      data: {
+        organizationId: parsed.organizationId,
+        sourcingRunId: parsed.sourcingRunId,
+        assignedToEmail: parsed.assignedToEmail,
+        assignedById: context.actorUserId,
+        notes: parsed.notes,
+      },
+      select: { id: true },
+    });
+
+    return { deliveryId: delivery.id };
+  },
+});
+
 export const generateSwitchDecisionSchema = z
   .object({
     organizationId: z.string().min(1),
@@ -670,7 +716,7 @@ export const generateSwitchDecisionAction = registerAction<
         : null,
       annualSavings: report.annualSavings ? Number(report.annualSavings) : null,
       savingsPercent: report.savingsPercent
-        ? Number(report.savingsPercent)
+        ? Math.round(Number(report.savingsPercent) * 100) / 100
         : null,
       currency: report.currency,
       evidenceCount,
@@ -705,15 +751,32 @@ export const submitBuyerDecisionAction = registerAction<
   description:
     "Record a buyer decision (APPROVE / REQUEST_MORE_PROOF / REJECT) on a switch decision report. Creates BUYER_DECISION evidence.",
   riskLevel: "MEDIUM",
-  allowedRoles: DEFAULT_ADMIN_ROLES,
+  allowedRoles: [...DEFAULT_ADMIN_ROLES, "BUYER_REVIEWER"],
   requiresApprovalForAI: true,
   handler: async (input, context) => {
     const parsed = submitBuyerDecisionSchema.parse(input);
     const run = await prisma.sourcingRun.findUnique({
       where: { id: parsed.sourcingRunId },
-      select: { organizationId: true },
+      select: { organizationId: true, title: true },
     });
     validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+
+    if (context.role === "BUYER_REVIEWER") {
+      const user = await prisma.user.findUnique({
+        where: { id: context.actorUserId },
+        select: { email: true },
+      });
+      if (!user?.email) throw new Error("USER_NOT_FOUND");
+      const delivery = await prisma.buyerReportDelivery.findFirst({
+        where: {
+          sourcingRunId: parsed.sourcingRunId,
+          organizationId: parsed.organizationId,
+          assignedToEmail: user.email,
+        },
+        select: { id: true },
+      });
+      if (!delivery) throw new Error("REPORT_NOT_ASSIGNED_TO_YOU");
+    }
 
     const report = await prisma.switchDecisionReport.findFirst({
       where: {
@@ -729,6 +792,8 @@ export const submitBuyerDecisionAction = registerAction<
     if (report.recommendation !== "SWITCH" && parsed.decision === "APPROVE") {
       throw new Error("CANNOT_APPROVE_NON_SWITCH_RECOMMENDATION");
     }
+
+    const isApprove = parsed.decision === "APPROVE";
 
     const [updated, evidence] = await prisma.$transaction([
       prisma.switchDecisionReport.update({
@@ -762,6 +827,20 @@ export const submitBuyerDecisionAction = registerAction<
         },
         select: { id: true },
       }),
+      ...(isApprove
+        ? [
+            prisma.task.create({
+              data: {
+                organizationId: parsed.organizationId,
+                assigneeId: context.actorUserId,
+                title: `Record outcome for "${run!.title}"`,
+                description: `Sourcing run "${run!.title}" was APPROVED. Record the final outcome (switch result, satisfaction, learning).`,
+                dueAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+              },
+              select: { id: true },
+            }),
+          ]
+        : []),
     ]);
 
     return {

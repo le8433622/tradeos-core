@@ -100,6 +100,7 @@ const {
     lead: {
       findUnique: mockLeadFindUnique,
     },
+    task: { create: vi.fn().mockResolvedValue({ id: "task-1" }) },
   };
   return {
     mockSourcingFindUnique,
@@ -190,6 +191,7 @@ vi.mock("@tradeos/database", () => ({
     lead: {
       findUnique: mockLeadFindUnique,
     },
+    task: { create: vi.fn().mockResolvedValue({ id: "task-1" }) },
     $transaction: vi.fn(async (arg: unknown) => {
       const tx = {
         auditLog: { create: mockAuditCreate },
@@ -245,6 +247,7 @@ vi.mock("@tradeos/database", () => ({
         lead: {
           findUnique: mockLeadFindUnique,
         },
+        task: { create: vi.fn().mockResolvedValue({ id: "task-1" }) },
       };
       if (typeof arg === "function") {
         return arg(tx);

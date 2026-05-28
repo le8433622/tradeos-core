@@ -10,7 +10,21 @@ export function SignOutButton() {
   }
 
   return (
-    <button onClick={signOut} style={{ padding: 10 }}>
+    <button
+      onClick={signOut}
+      style={{
+        width: "100%",
+        padding: "8px 12px",
+        borderRadius: 8,
+        fontSize: 14,
+        color: "#dc2626",
+        background: "transparent",
+        border: "1px solid #fca5a5",
+        cursor: "pointer",
+        textAlign: "left",
+        fontWeight: 500,
+      }}
+    >
       Sign out
     </button>
   );

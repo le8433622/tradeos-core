@@ -202,7 +202,7 @@ export default function SwitchDecisionDisplay({
               )}
               {report.savingsPercent != null && (
                 <span>
-                  Savings: <strong>{report.savingsPercent}%</strong>
+                  Savings: <strong>{report.savingsPercent?.toFixed(2)}%</strong>
                 </span>
               )}
               <span>

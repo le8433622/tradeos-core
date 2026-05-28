@@ -11,29 +11,37 @@ NVIDIA QA (#82) COMPLETE — PASS, 12/12 scenarios, no HIGH/CRITICAL bugs.
 
 ## Current Status
 
-| Gate                                    | Status             | Notes                                                                |
-| --------------------------------------- | ------------------ | -------------------------------------------------------------------- |
-| RLS on Supplier Switch tables           | ✅ DONE            | 13 policies via `20260527_add_rls_policies`                          |
-| RLS on legacy/core tables               | ✅ DONE            | 17 policies via `20260527_add_legacy_core_rls_policies`              |
-| **RLS on auxiliary/admin tables (#93)** | **✅ DONE**        | **15 policies via `20260527_add_auxiliary_rls_policies`**            |
-| FK covering indexes                     | ✅ DONE            | 87 indexes applied                                                   |
-| search_path fix                         | ✅ DONE            | `current_user_org_id()` search_path = `public`                       |
-| Real Supabase Auth E2E                  | ✅ PASS            | 19/19 tests on staging                                               |
-| Demo auth off on production             | ✅ VERIFIED        | Login page with demo cookie                                          |
-| E2E endpoint blocked on production      | ✅ VERIFIED        | POST returns 403                                                     |
-| Password rotated                        | ✅ DONE            | pgcrypto SQL update                                                  |
-| Supabase production project             | ✅ DONE            | `tradeos-core-prod` (ref: `okkzfmtwrjkfjzyprrwh`)                    |
-| Vercel production → production DB       | ✅ DONE            | All env vars updated                                                 |
-| **RLS on ALL 38 production tables**     | **✅ COMPLETE**    | **No more Security Advisor warnings**                                |
-| **NVIDIA QA (#82)**                     | **✅ DONE / PASS** | **12/12 scenarios. No bugs found. Cross-tenant isolation verified.** |
-| **Issue A (#94)**                       | **🔴 OPEN (P1)**   | **Stale APPROVED auto-follow-up**                                    |
-| **Issue B (#95)**                       | **🔴 OPEN (P2)**   | **Round savingsPercent to 2 decimals**                               |
-| **Issue C (#96)**                       | **🔴 OPEN (P3)**   | **Demo auth cookie/header alignment**                                |
-| **#99 Auth & Demo Role Accounts**       | **✅ DONE / PASS** | **10/10 E2E tests, 4 roles verified, walkthrough doc**               |
-| **#100 Production email (Gmail SMTP)**  | **✅ DONE**        | **Magic link working on production. Gmail SMTP via Supabase Auth.**  |
-| **Auth role foundation**                | **✅ DONE**        | **Signup/invite bootstrap system roles, added BUYER_REVIEWER**       |
+| Gate                                    | Status             | Notes                                                                                                                   |
+| --------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| RLS on Supplier Switch tables           | ✅ DONE            | 13 policies via `20260527_add_rls_policies`                                                                             |
+| RLS on legacy/core tables               | ✅ DONE            | 17 policies via `20260527_add_legacy_core_rls_policies`                                                                 |
+| **RLS on auxiliary/admin tables (#93)** | **✅ DONE**        | **15 policies via `20260527_add_auxiliary_rls_policies`**                                                               |
+| FK covering indexes                     | ✅ DONE            | 87 indexes applied                                                                                                      |
+| search_path fix                         | ✅ DONE            | `current_user_org_id()` search_path = `public`                                                                          |
+| Real Supabase Auth E2E                  | ✅ PASS            | 19/19 tests on staging                                                                                                  |
+| Demo auth off on production             | ✅ VERIFIED        | Login page with demo cookie                                                                                             |
+| E2E endpoint blocked on production      | ✅ VERIFIED        | POST returns 403                                                                                                        |
+| Password rotated                        | ✅ DONE            | pgcrypto SQL update                                                                                                     |
+| Supabase production project             | ✅ DONE            | `tradeos-core-prod` (ref: `okkzfmtwrjkfjzyprrwh`)                                                                       |
+| Vercel production → production DB       | ✅ DONE            | All env vars updated                                                                                                    |
+| **RLS on ALL 38 production tables**     | **✅ COMPLETE**    | **No more Security Advisor warnings**                                                                                   |
+| **NVIDIA QA (#82)**                     | **✅ DONE / PASS** | **12/12 scenarios. No bugs found. Cross-tenant isolation verified.**                                                    |
+| **Issue A (#94)**                       | **🔴 OPEN (P1)**   | **Stale APPROVED auto-follow-up**                                                                                       |
+| **Issue B (#95)**                       | **🔴 OPEN (P2)**   | **Round savingsPercent to 2 decimals**                                                                                  |
+| **Issue C (#96)**                       | **🔴 OPEN (P3)**   | **Demo auth cookie/header alignment**                                                                                   |
+| **#99 Auth & Demo Role Accounts**       | **✅ DONE / PASS** | **10/10 E2E tests, 4 roles verified, walkthrough doc**                                                                  |
+| **#100 Production email (Gmail SMTP)**  | **✅ DONE**        | **Magic link working on production. Gmail SMTP via Supabase Auth.**                                                     |
+| **Auth role foundation**                | **✅ DONE**        | **Signup/invite bootstrap system roles, added BUYER_REVIEWER**                                                          |
+| **#112 Magic link session fix**         | **✅ DONE**        | **`createBrowserClient + setSession` from hash; cookies vs localStorage**                                               |
+| **#94 Stale APPROVED auto-follow-up**   | **✅ DONE**        | **APPROVE → auto-create follow-up task with 14d due (packages/sourcing-core/src/index.ts:767)**                         |
+| **#95 Round savingsPercent**            | **✅ DONE**        | **`.toFixed(2)` display + `Math.round` action/API (3 files touched)**                                                   |
+| **#96 Demo auth cookie/header**         | **✅ DONE**        | **`middleware.ts` copies `x-demo-auth-email` cookie to header when `ALLOW_DEMO_AUTH=true`**                             |
+| **#119 Outcome as Truth**               | **✅ DONE**        | **Dashboard shows outcome-pending stat + list + banners; sourcing run detail shows outcome pending/complete**           |
+| **#118 Decision Freedom Report**        | **✅ DONE**        | **Buyer report rewritten with 6 sections: Current Situation, Evidence, Comparison, Risk, Recommendation, Next Actions** |
+| **#117 Evidence Before Decision**       | **✅ DONE**        | **INSUFFICIENT*EVIDENCE recommendation added; NEEDS*\* missing proof flags; evidence gates SWITCH**                     |
+| **#116 Trade Pain Intake**              | **✅ DONE**        | **3-step intake form: Buyer & Product → Pain & Evidence → Confirm; 11 pain categories; authority tracking**             |
 
-## Verified Production Behaviour (2026-05-27)
+## Verified Production Behaviour (2026-05-28)
 
 | Check                                  | Result                                                         |
 | -------------------------------------- | -------------------------------------------------------------- |
@@ -62,6 +70,9 @@ NVIDIA QA (#82) COMPLETE — PASS, 12/12 scenarios, no HIGH/CRITICAL bugs.
 - [x] **NVIDIA QA (#82) completed — PASS, no HIGH/CRITICAL bugs**
 - [x] **#99 Auth & Demo Role Accounts — seeded 5 accounts, 4 internal roles covered by 10/10 E2E tests, walkthrough doc**
 - [x] **Auth signup/invite role bootstrap — OWNER assigned on org creation, invitations assign fixed role, BUYER_REVIEWER added**
+- [x] **#112 Magic link → server session fix — `createBrowserClient` + explicit `setSession`, user completes onboarding**
+- [x] **#94 Stale APPROVED auto-follow-up — APPROVE auto-creates task with 14d due; stale warnings on list+detail**
+- [x] **#95 Round savingsPercent — `.toFixed(2)` at all display + API output layers**
 
 ## Residual Risks
 
@@ -71,15 +82,16 @@ NVIDIA QA (#82) COMPLETE — PASS, 12/12 scenarios, no HIGH/CRITICAL bugs.
 | `SUPABASE_SERVICE_ROLE_KEY` in Vercel env      | HIGH     | Server-side only; never exposed to client                                      |
 | No production business seed data               | LOW      | Users start with empty workspace; system roles/permissions bootstrap on signup |
 | Gmail SMTP is pilot-grade                      | MEDIUM   | Replace with domain-verified Resend/SES before scaled buyer onboarding         |
-| Stale APPROVED no auto-follow-up (#94)         | MEDIUM   | Open issue — blocks outcome tracking until resolved                            |
-| `savingsPercent` floating-point artifact (#95) | LOW      | Cosmetic — report shows 8.300000000000001%                                     |
+| Stale APPROVED no auto-follow-up (#94)         | ✅ FIXED | Follow-up task auto-created on APPROVE; stale warnings on list+detail pages    |
+| `savingsPercent` floating-point artifact (#95) | ✅ FIXED | Rounded to 2 decimal places at display + API level                             |
 
 ## Next Steps
 
 1. ~~NVIDIA QA (#82) on staging~~ ✅ DONE — PASS, closed
-2. #94 (P1) Stale APPROVED auto-follow-up — outcome cycle dependency
-3. #95 (P2) Round savingsPercent — cosmetic
-4. #96 (P3) Demo auth cookie/header — low priority
-5. **Real pilot validation**: 1 real buyer, 1 real case, 1 real outcome
-6. Rotate and store production secrets in 1Password
-7. E2E per-role tests with real auth, including BUYER_REVIEWER and invitation acceptance
+2. ~~#94 (P1) Stale APPROVED auto-follow-up~~ ✅ DONE — APPROVE auto-creates follow-up task
+3. ~~#95 (P2) Round savingsPercent~~ ✅ DONE — `.toFixed(2)` display + `Math.round` API
+4. ~~#96 (P3) Demo auth cookie/header~~ ✅ DONE — middleware copies cookie to header
+5. ~~#119 Outcome as Truth~~ ✅ DONE — dashboard shows outcome-pending stat + list + banners
+6. **Real pilot validation**: 1 real buyer, 1 real case, 1 real outcome
+7. Rotate and store production secrets in 1Password
+8. E2E per-role tests with real auth, including BUYER_REVIEWER and invitation acceptance

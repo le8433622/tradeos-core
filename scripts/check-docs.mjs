@@ -21,7 +21,19 @@ function parseSourceRoles(value) {
   if (ROLE_MAP[value]) return ROLE_MAP[value];
   // Literal array like ['OWNER', 'ADMIN', 'OPERATOR']
   const m = value.match(/\[([^\]]+)\]/);
-  if (m) return m[1].split(",").map((s) => s.trim().replace(/['"]/g, ""));
+  if (m) {
+    return m[1]
+      .split(",")
+      .flatMap((s) => {
+        s = s.trim().replace(/['"]/g, "");
+        // Expand spread references like ...DEFAULT_ADMIN_ROLES
+        const spreadMatch = s.match(/^\.\.\.(.*)/);
+        if (spreadMatch && ROLE_MAP[spreadMatch[1]])
+          return ROLE_MAP[spreadMatch[1]];
+        return s;
+      })
+      .filter((r) => r !== "");
+  }
   return ["UNKNOWN"];
 }
 

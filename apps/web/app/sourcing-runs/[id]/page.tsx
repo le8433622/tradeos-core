@@ -5,6 +5,7 @@ import "@tradeos/sourcing-core";
 import PurchaseBaselineForm from "./purchase-baseline-form";
 import SupplierAlternativeForm from "./supplier-alternative-form";
 import SwitchDecisionDisplay from "./switch-decision-display";
+import DeliverBuyerReport from "./deliver-buyer-report";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "#6b7280",
@@ -96,13 +97,17 @@ export default async function SourcingRunDetailPage({
     notFound();
   }
 
+  const daysSinceDecision = latestReport?.buyerDecidedAt
+    ? (Date.now() - new Date(latestReport.buyerDecidedAt).getTime()) /
+      (1000 * 60 * 60 * 24)
+    : 0;
   const isStaleApproved =
     latestReport?.buyerDecision === "APPROVED" &&
     latestReport.buyerDecidedAt &&
     !outcome &&
-    (Date.now() - new Date(latestReport.buyerDecidedAt).getTime()) /
-      (1000 * 60 * 60 * 24) >=
-      STALE_DAYS;
+    daysSinceDecision >= STALE_DAYS;
+  const isOutcomePending =
+    latestReport?.buyerDecision && !outcome && !isStaleApproved;
 
   return (
     <main style={{ padding: 32, fontFamily: "Arial, sans-serif" }}>
@@ -157,6 +162,46 @@ export default async function SourcingRunDetailPage({
             style={{
               padding: "8px 16px",
               background: "#dc2626",
+              color: "#fff",
+              borderRadius: 6,
+              textDecoration: "none",
+              fontSize: 13,
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Record Outcome
+          </a>
+        </div>
+      )}
+
+      {isOutcomePending && (
+        <div
+          style={{
+            background: "#fffbeb",
+            border: "1px solid #f59e0b",
+            borderRadius: 8,
+            padding: "12px 16px",
+            marginTop: 16,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div>
+            <strong style={{ color: "#b45309", fontSize: 14 }}>
+              Outcome Pending
+            </strong>
+            <p style={{ color: "#92400e", fontSize: 13, margin: "4px 0 0" }}>
+              Buyer decision recorded but outcome not yet captured. Close the
+              learning loop.
+            </p>
+          </div>
+          <a
+            href={`/sourcing-runs/${id}/outcome`}
+            style={{
+              padding: "8px 16px",
+              background: "#f59e0b",
               color: "#fff",
               borderRadius: 6,
               textDecoration: "none",
@@ -625,6 +670,8 @@ export default async function SourcingRunDetailPage({
           </div>
         </section>
       )}
+
+      {latestReport && <DeliverBuyerReport sourcingRunId={id} />}
 
       {run.handovers.length > 0 && (
         <section style={{ marginTop: 32 }}>

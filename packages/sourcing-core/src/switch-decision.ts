@@ -31,7 +31,7 @@ export type SwitchDecisionInput = {
 };
 
 export type SwitchDecisionOutput = {
-  recommendation: "SWITCH" | "NEGOTIATE" | "WAIT";
+  recommendation: "SWITCH" | "NEGOTIATE" | "WAIT" | "INSUFFICIENT_EVIDENCE";
   confidence: "HIGH" | "MEDIUM" | "LOW";
   savingsScore: number;
   evidenceScore: number;
@@ -222,6 +222,30 @@ export function computeSwitchDecision(
     missingProof.push(
       "Evidence records — no evidence attached to this sourcing run",
     );
+    missingProof.push("NEEDS_CURRENT_QUOTE");
+    missingProof.push("NEEDS_SUPPLIER_PROOF");
+  }
+
+  // --- Missing price/landed-cost flags ---
+  if (baseline && baselineUnitPrice == null) {
+    missingProof.push("NEEDS_ORIGIN_PRICE");
+  }
+  if (
+    alternatives.length > 0 &&
+    alternatives.every((a) => !a.unitPrice && !a.totalCost)
+  ) {
+    missingProof.push("NEEDS_CURRENT_QUOTE");
+  }
+  if (missingProof.some((m) => m.includes("pricing") || m.includes("price"))) {
+    if (
+      !missingProof.includes("NEEDS_ORIGIN_PRICE") &&
+      baselineUnitPrice == null
+    ) {
+      missingProof.push("NEEDS_ORIGIN_PRICE");
+    }
+    if (!missingProof.includes("NEEDS_LANDED_COST")) {
+      missingProof.push("NEEDS_LANDED_COST");
+    }
   }
 
   // --- Payment risk score (0-100) ---
@@ -334,24 +358,37 @@ export function computeSwitchDecision(
   );
 
   // --- Recommendation ---
-  let recommendation: "SWITCH" | "NEGOTIATE" | "WAIT";
-  const hasSwitchConditions =
-    savingsPercent != null &&
-    savingsPercent >= 20 &&
-    evidenceScore >= 60 &&
-    paymentRiskScore < 70 &&
-    dependencyRiskScore < 60;
+  let recommendation: "SWITCH" | "NEGOTIATE" | "WAIT" | "INSUFFICIENT_EVIDENCE";
 
-  if (hasSwitchConditions) {
-    recommendation = "SWITCH";
-  } else if (
-    savingsPercent != null &&
-    savingsPercent > 0 &&
-    dependencyRiskScore < 80
-  ) {
-    recommendation = "NEGOTIATE";
+  const hasPricingData =
+    baselineUnitPrice != null || alternatives.some((a) => a.unitPrice != null);
+  const isCriticallyWeak = evidenceCount === 0 && !hasPricingData;
+
+  if (isCriticallyWeak) {
+    recommendation = "INSUFFICIENT_EVIDENCE";
   } else {
-    recommendation = "WAIT";
+    const hasSwitchConditions =
+      savingsPercent != null &&
+      savingsPercent >= 20 &&
+      evidenceScore >= 60 &&
+      paymentRiskScore < 70 &&
+      dependencyRiskScore < 60;
+
+    if (
+      hasSwitchConditions &&
+      evidenceCount >= 3 &&
+      baselineUnitPrice != null
+    ) {
+      recommendation = "SWITCH";
+    } else if (
+      savingsPercent != null &&
+      savingsPercent > 0 &&
+      dependencyRiskScore < 80
+    ) {
+      recommendation = "NEGOTIATE";
+    } else {
+      recommendation = "WAIT";
+    }
   }
 
   // --- Confidence ---
@@ -401,6 +438,23 @@ export function computeSwitchDecision(
     if (missingProof.length > 0)
       nextActions.push(
         `Address missing information: ${missingProof.join("; ")}`,
+      );
+  } else if (recommendation === "INSUFFICIENT_EVIDENCE") {
+    if (evidenceCount === 0)
+      nextActions.push(
+        "Collect at least one piece of evidence (quote, invoice, or supplier profile) before evaluating",
+      );
+    if (!baseline || baselineUnitPrice == null)
+      nextActions.push(
+        "Record current purchase baseline with unit price to enable comparison",
+      );
+    if (alternatives.length === 0)
+      nextActions.push(
+        "Identify and record at least 2 alternative supplier options with pricing",
+      );
+    if (missingProof.length > 0)
+      nextActions.push(
+        `Resolve missing proof before re-evaluating: ${missingProof.filter((m) => !m.startsWith("NEEDS_")).join("; ")}`,
       );
   } else {
     if (missingProof.length > 0)
