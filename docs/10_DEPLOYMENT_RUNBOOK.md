@@ -71,7 +71,15 @@ APP_URL="<DEPLOYMENT_URL>"
 JWT_SECRET="<strong-secret>"
 ```
 
-### Supabase
+### Supabase Auth Settings
+
+The following Supabase Dashboard settings must be configured for each environment:
+
+1. **Authentication > Providers**: Enable "Email" provider for magic link + password auth.
+2. **Authentication > Settings > SMTP**: Configure custom SMTP for transactional emails (magic link, password reset).
+3. **Authentication > Settings > Redirect URLs**: Add auth callback URLs (e.g., `https://tradeos-core.vercel.app/auth/callback`, `http://localhost:3000/auth/callback`).
+4. **Authentication > Settings > Security**: Enable **Leaked Password Protection** (requires Pro Plan or above). This checks passwords against HaveIBeenPwned.org and blocks known compromised passwords.
+5. **Authentication > Settings > Security**: Set minimum password length to 8 and require at least digits + lowercase + uppercase characters.
 
 ```
 NEXT_PUBLIC_SUPABASE_URL="https://<PROJECT_REF>.supabase.co"

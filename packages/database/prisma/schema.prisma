@@ -1128,4 +1128,5 @@ model BuyerReportDelivery {
   @@index([organizationId, assignedToEmail])
   @@index([sourcingRunId])
   @@index([organizationId])
+  @@index([assignedById])
 }
