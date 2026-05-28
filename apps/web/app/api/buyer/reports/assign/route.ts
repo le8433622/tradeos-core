@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { executeAction } from "@tradeos/policy-core";
+import { prisma } from "@tradeos/database";
 import {
   apiErrorResponse,
   withApiPermission,
 } from "../../../../../lib/api-errors";
 import { z } from "zod";
+import { sendReportDeliveryNotification } from "../../../../../lib/email";
 import "@tradeos/sourcing-core";
 
 const assignSchema = z
@@ -59,6 +61,24 @@ export async function POST(request: Request) {
         mfaLevel: session.mfaLevel,
       },
     );
+
+    // Send notification email to buyer
+    const run = await prisma.sourcingRun.findUnique({
+      where: { id: body.sourcingRunId as string },
+      select: { title: true, organization: { select: { name: true } } },
+    });
+    if (run) {
+      const appUrl = process.env.APP_URL ?? "https://tradeos-core.vercel.app";
+      sendReportDeliveryNotification(
+        body.assignedToEmail as string,
+        run.title,
+        run.organization.name,
+        `${appUrl}/buyer/reports/${body.sourcingRunId}`,
+        body.notes as string | undefined,
+      ).catch((err) =>
+        console.error("[assign] email notification failed", err),
+      );
+    }
 
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

@@ -2,6 +2,7 @@ import { prisma } from "@tradeos/database";
 import { executeAction } from "@tradeos/policy-core";
 import { requirePagePermission } from "../../../lib/page-session";
 import { createLogger } from "../../../lib/logger";
+import { sendInviteEmail } from "../../../lib/email";
 import { revalidatePath } from "next/cache";
 import "@tradeos/crm-core";
 import { RoleSelect } from "./role-select";
@@ -82,26 +83,11 @@ export default async function TeamSettingsPage() {
     const inviteLink = `${appUrl}/invite/${result.token}`;
 
     try {
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.RESEND_API_KEY ?? ""}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: "TradeOS Core <noreply@resend.dev>",
-          to: email,
-          subject: "You have been invited to TradeOS Core",
-          text: `You have been invited to join ${org?.name ?? "a TradeOS organization"} on TradeOS Core.\n\nClick the link below to accept:\n${inviteLink}\n\nThis invitation expires in 7 days.`,
-        }),
-      });
-      if (!res.ok) {
-        logger.error("invitation_email_failed", {
-          status: res.status,
-          body: await res.text(),
-        });
-        throw new Error("INVITATION_EMAIL_SEND_FAILED");
-      }
+      await sendInviteEmail(
+        email,
+        org?.name ?? "a TradeOS organization",
+        inviteLink,
+      );
     } catch (mailErr) {
       logger.error("invitation_email_failed", {
         code: mailErr instanceof Error ? mailErr.message : "UNKNOWN_ERROR",
