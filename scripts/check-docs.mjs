@@ -9,6 +9,11 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DOC_PATH = resolve(ROOT, "docs/04_ACTION_REGISTRY.md");
+const SEED_PATH = resolve(ROOT, "packages/database/prisma/seed.ts");
+const SYSTEM_ROLES_PATH = resolve(
+  ROOT,
+  "packages/database/src/system-roles.ts",
+);
 
 const ROLE_MAP = {
   DEFAULT_LOW_RISK_ROLES: ["OWNER", "ADMIN", "SALES", "OPERATOR"],
@@ -37,17 +42,151 @@ function parseSourceRoles(value) {
   return ["UNKNOWN"];
 }
 
+function trackedFiles(pathPrefix) {
+  const out = execSync(`git ls-files ${pathPrefix}`, {
+    cwd: ROOT,
+    encoding: "utf-8",
+  }).trim();
+  return out ? out.split("\n").filter(Boolean) : [];
+}
+
+function quotedStrings(value) {
+  return [...value.matchAll(/["']([^"']+)["']/g)].map((match) => match[1]);
+}
+
+function duplicateValues(values) {
+  const seen = new Set();
+  const duplicates = new Set();
+  for (const value of values) {
+    if (seen.has(value)) duplicates.add(value);
+    seen.add(value);
+  }
+  return [...duplicates].sort();
+}
+
+function difference(left, right) {
+  const rightSet = new Set(right);
+  return [...new Set(left)].filter((value) => !rightSet.has(value)).sort();
+}
+
+function extractPermissionKeys(content) {
+  return [...content.matchAll(/key:\s*["']([^"']+)["']/g)].map(
+    (match) => match[1],
+  );
+}
+
+function extractConstArray(content, name) {
+  const nameIndex = content.indexOf(name);
+  if (nameIndex === -1) return "";
+  const equalsIndex = content.indexOf("=", nameIndex);
+  if (equalsIndex === -1) return "";
+  const start = content.indexOf("[", equalsIndex);
+  if (start === -1) return "";
+
+  let depth = 0;
+  for (let i = start; i < content.length; i++) {
+    const ch = content[i];
+    if (ch === "[") depth++;
+    if (ch === "]") depth--;
+    if (depth === 0) return content.slice(start, i + 1);
+  }
+  return "";
+}
+
+function topLevelObjectBlocks(arrayContent) {
+  const blocks = [];
+  let depth = 0;
+  let start = -1;
+
+  for (let i = 0; i < arrayContent.length; i++) {
+    const ch = arrayContent[i];
+    if (ch === "{") {
+      if (depth === 0) start = i;
+      depth++;
+    }
+    if (ch === "}") {
+      depth--;
+      if (depth === 0 && start !== -1) {
+        blocks.push(arrayContent.slice(start, i + 1));
+        start = -1;
+      }
+    }
+  }
+
+  return blocks;
+}
+
+function parseRoleDefinitions(content, arrayName, permissionKeys) {
+  const roles = new Map();
+  const arrayContent = extractConstArray(content, arrayName);
+  const allPermissions = [...new Set(permissionKeys)].sort();
+
+  for (const block of topLevelObjectBlocks(arrayContent)) {
+    const nameMatch = block.match(/name:\s*["']([A-Z_]+)["']/);
+    if (!nameMatch) continue;
+    const roleName = nameMatch[1];
+
+    let permissions = [];
+    if (/permissions:\s*(?:PERMISSIONS|SYSTEM_PERMISSIONS)\.map/.test(block)) {
+      permissions = allPermissions;
+    } else if (
+      /permissions:\s*(?:PERMISSIONS|SYSTEM_PERMISSIONS)\.filter/.test(block)
+    ) {
+      const exclusionsMatch = block.match(
+        /!\s*\[([\s\S]*?)\]\.includes\(p\.key\)/,
+      );
+      const exclusions = exclusionsMatch
+        ? new Set(quotedStrings(exclusionsMatch[1]))
+        : new Set();
+      permissions = allPermissions.filter((key) => !exclusions.has(key));
+    } else {
+      const permissionsMatch = block.match(/permissions:\s*\[([\s\S]*?)\]/);
+      permissions = permissionsMatch ? quotedStrings(permissionsMatch[1]) : [];
+    }
+
+    roles.set(roleName, [...new Set(permissions)].sort());
+  }
+
+  return roles;
+}
+
+function assertNoDuplicates(label, values) {
+  const duplicates = duplicateValues(values);
+  if (duplicates.length === 0) return 0;
+
+  console.error(`[FAIL] Duplicate ${label}:`);
+  for (const value of duplicates) console.error(`  - ${value}`);
+  return duplicates.length;
+}
+
+function compareSets(label, left, right) {
+  const missingFromRight = difference(left, right);
+  const missingFromLeft = difference(right, left);
+  let problems = 0;
+
+  if (missingFromRight.length > 0) {
+    console.error(`[FAIL] ${label}: missing from right side:`);
+    for (const value of missingFromRight) console.error(`  - ${value}`);
+    problems += missingFromRight.length;
+  }
+
+  if (missingFromLeft.length > 0) {
+    console.error(`[FAIL] ${label}: missing from left side:`);
+    for (const value of missingFromLeft) console.error(`  - ${value}`);
+    problems += missingFromLeft.length;
+  }
+
+  return problems;
+}
+
 let exitCode = 0;
 let hasWarn = false;
 
 // 1. Extract actions from source with metadata
-const grepOut = execSync(
-  `grep -rln "registerAction" packages/ --include="*.ts" | grep -v "__tests__" | grep -v "node_modules"`,
-  { cwd: ROOT, encoding: "utf-8" },
-);
-
 const sourceActions = new Map();
-const files = grepOut.trim().split("\n").filter(Boolean);
+const files = trackedFiles("packages").filter(
+  (file) => file.endsWith(".ts") && !file.includes("/__tests__/"),
+);
 
 for (const file of files) {
   const content = readFileSync(resolve(ROOT, file), "utf-8");
@@ -240,6 +379,154 @@ if (metaMismatches > 0) {
   console.log(
     `[PASS] Metadata (risk, roles, AI approval) matches between source and docs.`,
   );
+}
+
+// 5. Permission registry consistency
+let registryProblems = 0;
+
+if (!existsSync(SEED_PATH)) {
+  console.error(`[FAIL] packages/database/prisma/seed.ts not found`);
+  registryProblems++;
+}
+
+if (!existsSync(SYSTEM_ROLES_PATH)) {
+  console.error(`[FAIL] packages/database/src/system-roles.ts not found`);
+  registryProblems++;
+}
+
+if (registryProblems === 0) {
+  const seedContent = readFileSync(SEED_PATH, "utf-8");
+  const systemRolesContent = readFileSync(SYSTEM_ROLES_PATH, "utf-8");
+
+  const seedPermissions = extractPermissionKeys(seedContent);
+  const systemPermissions = extractPermissionKeys(systemRolesContent);
+
+  registryProblems += assertNoDuplicates(
+    "permission keys in seed.ts",
+    seedPermissions,
+  );
+  registryProblems += assertNoDuplicates(
+    "permission keys in system-roles.ts",
+    systemPermissions,
+  );
+
+  registryProblems += compareSets(
+    "Permission registry mismatch (seed.ts ↔ system-roles.ts)",
+    seedPermissions,
+    systemPermissions,
+  );
+
+  const seedRoles = parseRoleDefinitions(
+    seedContent,
+    "const ROLES",
+    seedPermissions,
+  );
+  const systemRoles = parseRoleDefinitions(
+    systemRolesContent,
+    "const SYSTEM_ROLES",
+    systemPermissions,
+  );
+  const knownRoles = new Set(systemRoles.keys());
+  const knownPermissions = new Set(systemPermissions);
+
+  for (const [actionName, action] of sourceActions) {
+    for (const role of action.roles) {
+      if (!knownRoles.has(role)) {
+        console.error(
+          `[FAIL] ${actionName}: action allowedRole "${role}" is not a system role`,
+        );
+        registryProblems++;
+      }
+    }
+  }
+
+  registryProblems += compareSets(
+    "Role registry mismatch (seed.ts ↔ system-roles.ts)",
+    [...seedRoles.keys()],
+    [...systemRoles.keys()],
+  );
+
+  for (const [roleName, seedRolePermissions] of seedRoles) {
+    const systemRolePermissions = systemRoles.get(roleName);
+    if (!systemRolePermissions) continue;
+
+    registryProblems += compareSets(
+      `Role permission mismatch for ${roleName} (seed.ts ↔ system-roles.ts)`,
+      seedRolePermissions,
+      systemRolePermissions,
+    );
+
+    for (const permission of seedRolePermissions) {
+      if (!knownPermissions.has(permission)) {
+        console.error(
+          `[FAIL] ${roleName}: seed.ts references unknown permission "${permission}"`,
+        );
+        registryProblems++;
+      }
+    }
+  }
+
+  for (const [roleName, systemRolePermissions] of systemRoles) {
+    for (const permission of systemRolePermissions) {
+      if (!knownPermissions.has(permission)) {
+        console.error(
+          `[FAIL] ${roleName}: system-roles.ts references unknown permission "${permission}"`,
+        );
+        registryProblems++;
+      }
+    }
+  }
+
+  const routeFiles = trackedFiles("apps/web/app/api").filter((file) =>
+    file.endsWith("route.ts"),
+  );
+  const guardRegex = /withApiPermission\s*\(\s*[^,]+,\s*["']([^"']+)["']/g;
+  const executeActionRegex =
+    /executeAction(?:\s*<[\s\S]*?>)?\s*\(\s*([`"'])([^`"']+)\1/g;
+  let guardedRoutes = 0;
+  let routeActionCalls = 0;
+
+  for (const file of routeFiles) {
+    const content = readFileSync(resolve(ROOT, file), "utf-8");
+    const routePermissions = [...content.matchAll(guardRegex)].map(
+      (match) => match[1],
+    );
+    const routeActions = [...content.matchAll(executeActionRegex)].map(
+      (match) => match[2],
+    );
+
+    guardedRoutes += routePermissions.length;
+    routeActionCalls += routeActions.length;
+
+    for (const permission of routePermissions) {
+      if (!knownPermissions.has(permission)) {
+        console.error(
+          `[FAIL] ${file}: route guard references unknown permission "${permission}"`,
+        );
+        registryProblems++;
+      }
+    }
+
+    for (const actionName of routeActions) {
+      if (!sourceActions.has(actionName)) {
+        console.error(
+          `[FAIL] ${file}: executeAction references unregistered action "${actionName}"`,
+        );
+        registryProblems++;
+      }
+    }
+  }
+
+  if (registryProblems === 0) {
+    console.log(
+      `[PASS] Permission registry is consistent across seed.ts, system-roles.ts, ${guardedRoutes} API guard(s), and ${routeActionCalls} route action call(s).`,
+    );
+  } else {
+    console.error(
+      `\n[FAIL] ${registryProblems} permission registry consistency problem(s) found.`,
+    );
+    exitCode = 1;
+  }
 }
 
 const totalSource = sourceNames.size;

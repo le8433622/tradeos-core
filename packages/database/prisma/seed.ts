@@ -383,13 +383,6 @@ const PERMISSIONS: {
   },
   {
     key: "buyerDecision.submit_assigned",
-    name: "Submit decision on assigned buyer reports",
-    description:
-      "Submit decision (APPROVE/REQUEST_MORE_PROOF/REJECT) on buyer reports assigned to this reviewer",
-    group: "buyer",
-  },
-  {
-    key: "buyerDecision.submit_assigned",
     name: "Submit assigned buyer decision",
     description: "Approve, reject, or request proof for assigned buyer reports",
     group: "buyer",
@@ -475,7 +468,6 @@ const ROLES: RoleDef[] = [
       "sourcing.view",
       "sourcing.create",
       "sourcing.manage",
-      "buyerDecision.submit_assigned",
       "evidence.view_summary",
       "evidence.upload",
     ],

@@ -14,6 +14,16 @@
 | New registered action | `pnpm typecheck`, `pnpm build`, package tests, `pnpm docs:check`, manual action smoke test |
 | Production ops        | Command-specific verification, rollback notes, checkpoint update                           |
 
+## Registry Consistency Gate
+
+`pnpm docs:check` is also the permission registry consistency gate. It verifies:
+
+- registered actions are documented with matching risk, roles, and AI approval metadata
+- `packages/database/prisma/seed.ts` permission keys have no duplicates
+- `seed.ts` and `packages/database/src/system-roles.ts` define the same permission keys and role assignments
+- API route `withApiPermission()` guards reference known permission keys
+- API route `executeAction()` calls reference registered actions
+
 ## Tenant Invariant Test Requirement
 
 Every registered action that accepts `organizationId` must have tests proving:

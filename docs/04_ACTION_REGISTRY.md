@@ -121,7 +121,7 @@ Irreversible, legal, financial, or security-sensitive action. (None currently re
 | `plan.checkEntitlement`               | plan-core      | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
 | `plan.getPlan`                        | plan-core      | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
 
-**Total: 55 registered actions** (LOW: 19, MEDIUM: 16, HIGH: 16, CRITICAL: 0)
+**Total: 61 registered actions**. Source/documentation parity is enforced by `pnpm docs:check`.
 
 ## Always-MFA Actions
 
