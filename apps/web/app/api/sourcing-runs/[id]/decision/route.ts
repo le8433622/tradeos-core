@@ -14,7 +14,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const auth = await withApiPermission(request, "sourcing.manage");
+    const auth = await withApiPermission(
+      request,
+      "buyerDecision.submit_assigned",
+    );
     if (auth.response) return auth.response;
     const { session } = auth;
     const { id } = await params;

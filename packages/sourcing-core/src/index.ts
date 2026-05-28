@@ -940,7 +940,7 @@ export const recordOutcomeAction = registerAction<
   description:
     "Record the post-decision outcome of a Supplier Switch case. Closes the learning loop.",
   riskLevel: "LOW",
-  allowedRoles: DEFAULT_ADMIN_ROLES,
+  allowedRoles: [...DEFAULT_ADMIN_ROLES, "OPERATOR"],
   requiresApprovalForAI: false,
   handler: async (input, context) => {
     const parsed = recordOutcomeSchema.parse(input);

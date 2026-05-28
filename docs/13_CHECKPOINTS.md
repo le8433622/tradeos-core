@@ -2,9 +2,15 @@
 
 ## Active Work Order
 
-**Phase 18 — RBAC & multi-org membership** is the current phase.  
-**Real pilot validation** — 1 real buyer, 1 real case, 1 real outcome.  
-✅ **#113**: ✅ DONE — 1Password vault filled with real production secrets. `GET /api/health` → 200.
+**Phase 18 — RBAC & multi-org membership** is the current phase.
+
+**Honest state**: System is operationally ready for the first controlled real buyer case, with magic-link auth, app-table RLS clean, and one seeded end-to-end trade pain walkthrough completed.
+
+**But**: Coffee Bean walkthrough was seeded, not a real buyer. Do not mistake operational rehearsal for market validation.
+
+**#124**: Next step is the first external buyer pain-solving case — real email, real evidence, real decision, real outcome.
+
+✅ **#113**: 1Password vault filled with real production secrets. `GET /api/health` → 200.
 ⚠️ **#122**: Leaked password protection documented but not enabled on Dashboard (acceptable for magic-link-only pilot).
 ✅ **BuyerReportDelivery RLS blocker (#120)**: ✅ FIXED — all 39 app tables have RLS. No app-table RLS-disabled warnings.
 
@@ -12,40 +18,42 @@
 
 ## Current Status
 
-| Gate                                       | Status             | Notes                                                                                                                                                                      |
-| ------------------------------------------ | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| RLS on Supplier Switch tables              | ✅ DONE            | 13 policies via `20260527_add_rls_policies`                                                                                                                                |
-| RLS on legacy/core tables                  | ✅ DONE            | 17 policies via `20260527_add_legacy_core_rls_policies`                                                                                                                    |
-| **RLS on auxiliary/admin tables (#93)**    | **✅ DONE**        | **15 policies via `20260527_add_auxiliary_rls_policies`**                                                                                                                  |
-| FK covering indexes                        | ✅ DONE            | 87 indexes applied                                                                                                                                                         |
-| search_path fix                            | ✅ DONE            | `current_user_org_id()` search_path = `public`                                                                                                                             |
-| Real Supabase Auth E2E                     | ✅ PASS            | 19/19 tests on staging                                                                                                                                                     |
-| Demo auth off on production                | ✅ VERIFIED        | Login page with demo cookie                                                                                                                                                |
-| E2E endpoint blocked on production         | ✅ VERIFIED        | POST returns 403                                                                                                                                                           |
-| Password rotated                           | ✅ DONE            | pgcrypto SQL update                                                                                                                                                        |
-| Supabase production project                | ✅ DONE            | `tradeos-core-prod` (ref: `okkzfmtwrjkfjzyprrwh`)                                                                                                                          |
-| Vercel production → production DB          | ✅ DONE            | All env vars updated                                                                                                                                                       |
-| **RLS on ALL application tables**          | **✅ COMPLETE**    | **Previously claimed 38/38 but BuyerReportDelivery was missed. #120 fixed it. Now 39/39 with no app-table RLS-disabled warnings.**                                         |
-| **NVIDIA QA (#82)**                        | **✅ DONE / PASS** | **12/12 scenarios. No bugs found. Cross-tenant isolation verified.**                                                                                                       |
-| **Issue A (#94)**                          | **🔴 OPEN (P1)**   | **Stale APPROVED auto-follow-up**                                                                                                                                          |
-| **Issue B (#95)**                          | **🔴 OPEN (P2)**   | **Round savingsPercent to 2 decimals**                                                                                                                                     |
-| **Issue C (#96)**                          | **🔴 OPEN (P3)**   | **Demo auth cookie/header alignment**                                                                                                                                      |
-| **#99 Auth & Demo Role Accounts**          | **✅ DONE / PASS** | **10/10 E2E tests, 4 roles verified, walkthrough doc**                                                                                                                     |
-| **#100 Production email (Gmail SMTP)**     | **✅ DONE**        | **Magic link working on production. Gmail SMTP via Supabase Auth.**                                                                                                        |
-| **Auth role foundation**                   | **✅ DONE**        | **Signup/invite bootstrap system roles, added BUYER_REVIEWER**                                                                                                             |
-| **#112 Magic link session fix**            | **✅ DONE**        | **`createBrowserClient + setSession` from hash; cookies vs localStorage**                                                                                                  |
-| **#94 Stale APPROVED auto-follow-up**      | **✅ DONE**        | **APPROVE → auto-create follow-up task with 14d due (packages/sourcing-core/src/index.ts:767)**                                                                            |
-| **#95 Round savingsPercent**               | **✅ DONE**        | **`.toFixed(2)` display + `Math.round` action/API (3 files touched)**                                                                                                      |
-| **#96 Demo auth cookie/header**            | **✅ DONE**        | **`middleware.ts` copies `x-demo-auth-email` cookie to header when `ALLOW_DEMO_AUTH=true`**                                                                                |
-| **#119 Outcome as Truth**                  | **✅ DONE**        | **Dashboard shows outcome-pending stat + list + banners; sourcing run detail shows outcome pending/complete**                                                              |
-| **#118 Decision Freedom Report**           | **✅ DONE**        | **Buyer report rewritten with 6 sections: Current Situation, Evidence, Comparison, Risk, Recommendation, Next Actions**                                                    |
-| **#117 Evidence Before Decision**          | **✅ DONE**        | **INSUFFICIENT*EVIDENCE recommendation added; NEEDS*\* missing proof flags; evidence gates SWITCH**                                                                        |
-| **#116 Trade Pain Intake**                 | **✅ DONE**        | **3-step intake form: Buyer & Product → Pain & Evidence → Confirm; 11 pain categories; authority tracking**                                                                |
-| **#120 BuyerReportDelivery RLS**           | **✅ DONE**        | **Enabled RLS on BuyerReportDelivery (was missed by prior migrations). Added FK index on assignedById. Applied to staging + production.**                                  |
-| **#120 No more Security Advisor warnings** | **✅ VERIFIED**    | **All 39 application tables have RLS enabled. Zero `rls_disabled_in_public` warnings.**                                                                                    |
-| **#122 Leaked password protection**        | **🔴 REOPENED**    | **Documented in runbook but not enabled on Dashboard. Acceptable for first controlled case (magic link only). Blocked: needs Supabase PAT or Dashboard access.**           |
-| **#123 RLS performance + unindexed FKs**   | **✅ DONE**        | **BuyerReportDelivery.assignedById FK index added in #120. current_user_org_id() is STABLE (single eval per query). All formal FK indexes covered by 20260527 migration.** |
-| **#113 1Password vault filled**            | **✅ DONE**        | **All 10+ vault items filled with real production secrets via `npx vercel env run`. Production `/api/health` → 200.**                                                      |
+| Gate                                       | Status             | Notes                                                                                                                                                                                   |
+| ------------------------------------------ | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RLS on Supplier Switch tables              | ✅ DONE            | 13 policies via `20260527_add_rls_policies`                                                                                                                                             |
+| RLS on legacy/core tables                  | ✅ DONE            | 17 policies via `20260527_add_legacy_core_rls_policies`                                                                                                                                 |
+| **RLS on auxiliary/admin tables (#93)**    | **✅ DONE**        | **15 policies via `20260527_add_auxiliary_rls_policies`**                                                                                                                               |
+| FK covering indexes                        | ✅ DONE            | 87 indexes applied                                                                                                                                                                      |
+| search_path fix                            | ✅ DONE            | `current_user_org_id()` search_path = `public`                                                                                                                                          |
+| Real Supabase Auth E2E                     | ✅ PASS            | 19/19 tests on staging                                                                                                                                                                  |
+| Demo auth off on production                | ✅ VERIFIED        | Login page with demo cookie                                                                                                                                                             |
+| E2E endpoint blocked on production         | ✅ VERIFIED        | POST returns 403                                                                                                                                                                        |
+| Password rotated                           | ✅ DONE            | pgcrypto SQL update                                                                                                                                                                     |
+| Supabase production project                | ✅ DONE            | `tradeos-core-prod` (ref: `okkzfmtwrjkfjzyprrwh`)                                                                                                                                       |
+| Vercel production → production DB          | ✅ DONE            | All env vars updated                                                                                                                                                                    |
+| **RLS on ALL application tables**          | **✅ COMPLETE**    | **Previously claimed 38/38 but BuyerReportDelivery was missed. #120 fixed it. Now 39/39 with no app-table RLS-disabled warnings.**                                                      |
+| **NVIDIA QA (#82)**                        | **✅ DONE / PASS** | **12/12 scenarios. No bugs found. Cross-tenant isolation verified.**                                                                                                                    |
+| **Issue A (#94)**                          | **🔴 OPEN (P1)**   | **Stale APPROVED auto-follow-up**                                                                                                                                                       |
+| **Issue B (#95)**                          | **🔴 OPEN (P2)**   | **Round savingsPercent to 2 decimals**                                                                                                                                                  |
+| **Issue C (#96)**                          | **🔴 OPEN (P3)**   | **Demo auth cookie/header alignment**                                                                                                                                                   |
+| **#99 Auth & Demo Role Accounts**          | **✅ DONE / PASS** | **10/10 E2E tests, 4 roles verified, walkthrough doc**                                                                                                                                  |
+| **#100 Production email (Gmail SMTP)**     | **✅ DONE**        | **Magic link working on production. Gmail SMTP via Supabase Auth.**                                                                                                                     |
+| **Auth role foundation**                   | **✅ DONE**        | **Signup/invite bootstrap system roles, added BUYER_REVIEWER**                                                                                                                          |
+| **#112 Magic link session fix**            | **✅ DONE**        | **`createBrowserClient + setSession` from hash; cookies vs localStorage**                                                                                                               |
+| **#94 Stale APPROVED auto-follow-up**      | **✅ DONE**        | **APPROVE → auto-create follow-up task with 14d due (packages/sourcing-core/src/index.ts:767)**                                                                                         |
+| **#95 Round savingsPercent**               | **✅ DONE**        | **`.toFixed(2)` display + `Math.round` action/API (3 files touched)**                                                                                                                   |
+| **#96 Demo auth cookie/header**            | **✅ DONE**        | **`middleware.ts` copies `x-demo-auth-email` cookie to header when `ALLOW_DEMO_AUTH=true`**                                                                                             |
+| **#119 Outcome as Truth**                  | **✅ DONE**        | **Dashboard shows outcome-pending stat + list + banners; sourcing run detail shows outcome pending/complete**                                                                           |
+| **#118 Decision Freedom Report**           | **✅ DONE**        | **Buyer report rewritten with 6 sections: Current Situation, Evidence, Comparison, Risk, Recommendation, Next Actions**                                                                 |
+| **#117 Evidence Before Decision**          | **✅ DONE**        | **INSUFFICIENT*EVIDENCE recommendation added; NEEDS*\* missing proof flags; evidence gates SWITCH**                                                                                     |
+| **#116 Trade Pain Intake**                 | **✅ DONE**        | **3-step intake form: Buyer & Product → Pain & Evidence → Confirm; 11 pain categories; authority tracking**                                                                             |
+| **#120 BuyerReportDelivery RLS**           | **✅ DONE**        | **Enabled RLS on BuyerReportDelivery (was missed by prior migrations). Added FK index on assignedById. Applied to staging + production.**                                               |
+| **#120 No more Security Advisor warnings** | **✅ VERIFIED**    | **All 39 application tables have RLS enabled. Zero `rls_disabled_in_public` warnings.**                                                                                                 |
+| **#122 Leaked password protection**        | **🔴 REOPENED**    | **Documented in runbook but not enabled on Dashboard. Acceptable for first controlled case (magic link only). Blocked: needs Supabase PAT or Dashboard access.**                        |
+| **#123 RLS performance + unindexed FKs**   | **✅ DONE**        | **BuyerReportDelivery.assignedById FK index added in #120. current_user_org_id() is STABLE (single eval per query). All formal FK indexes covered by 20260527 migration.**              |
+| **#113 1Password vault filled**            | **✅ DONE**        | **All 10+ vault items filled with real production secrets via `npx vercel env run`. Production `/api/health` → 200.**                                                                   |
+| **#124 Coffee Bean walkthrough**           | **✅ PASS**        | **Seeded case walked end-to-end: operator view → buyer report → buyer decision → outcome recorded. 4 bugs found & fixed (permission registry, route guard, action roles, db symlink).** |
+| **#124 Permission bugs fixed**             | **✅ DONE**        | **`buyerDecision.submit_assigned` registered + added to OPERATOR; decision route guard fixed; recordOutcome action allows OPERATOR; db symlink fixed.**                                 |
 
 ## Verified Production Behaviour (2026-05-28)
 
@@ -84,18 +92,15 @@
 
 ## Residual Risks
 
-| Risk                                   | Severity   | Mitigation                                                                                                    |
-| -------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------- |
-| Production secrets in 1Password vault  | ✅ DONE    | All 10+ items filled with real values from Vercel production. `load-env.sh` field mapping needs verification. |
-| `SUPABASE_SERVICE_ROLE_KEY` handled    | ✅ MANAGED | Server-side only; never exposed to client. Value in 1Password vault.                                          |
-| No production business seed data       | LOW        | Users start with empty workspace; system roles/permissions bootstrap on signup                                |
-| Gmail SMTP is pilot-grade              | MEDIUM     | Replace with domain-verified Resend/SES before scaled buyer onboarding                                        |
-| BuyerReportDelivery missing RLS (#120) | ✅ FIXED   | RLS enabled + tenant policy applied to staging + production                                                   |
-| Leaked password protection disabled    | LOW        | Acceptable for first controlled case (magic link only). #122 tracks enablement                                |
-| No production business seed data       | LOW        | Users start with empty workspace; system roles/permissions bootstrap on signup                                |
-| Gmail SMTP is pilot-grade              | MEDIUM     | Replace with domain-verified Resend/SES before scaled buyer onboarding                                        |
-| BuyerReportDelivery missing RLS (#120) | ✅ FIXED   | RLS enabled + tenant policy applied to staging + production                                                   |
-| Leaked password protection disabled    | LOW        | Acceptable for first controlled case (magic link only). #122 tracks enablement                                |
+| Risk                                   | Severity   | Mitigation                                                                                                 |
+| -------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
+| Production secrets in 1Password vault  | ✅ DONE    | All 10+ items filled with real values from Vercel production.                                              |
+| `SUPABASE_SERVICE_ROLE_KEY` handled    | ✅ MANAGED | Server-side only; never exposed to client. Value in 1Password vault.                                       |
+| No production business seed data       | LOW        | Users start with empty workspace; system roles/permissions bootstrap on signup                             |
+| Gmail SMTP is pilot-grade              | MEDIUM     | Replace with domain-verified Resend/SES before scaled buyer onboarding                                     |
+| BuyerReportDelivery missing RLS (#120) | ✅ FIXED   | RLS enabled + tenant policy applied to staging + production                                                |
+| Leaked password protection disabled    | LOW        | Acceptable for first controlled case (magic link only). #122 tracks enablement                             |
+| Permission registry drift risk         | LOW        | Walkthrough found 1 mismatch (PERMISSIONS array vs role definitions). Tracked but not blocking first case. |
 
 ## Next Steps
 
@@ -109,6 +114,6 @@
 8. ~~#122 Enable leaked password protection~~ 🔴 REOPENED — documented but not enabled; acceptable for magic-link-only pilot
 9. ~~#123 RLS performance + unindexed FKs~~ ✅ DONE — audit completed, no remaining gaps
 10. ~~#113 Fill 1Password vault~~ ✅ DONE — vault filled with real production secrets, `/api/health` → 200
-11. **#122 Enable leaked password protection**: Supabase Dashboard > Auth > Settings > toggle on (or PAT via Management API)
-12. **Verify field mapping**: `op item get 'Supabase Project' --fields url --reveal` — ensure `load-env.sh` can read it
-13. **Real pilot validation**: 1 real buyer, 1 real case, 1 real outcome
+11. **#122 Enable leaked password protection**: Supabase Dashboard > Auth > Settings > toggle on (or PAT via Management API) — before password onboarding
+12. **~Verify field mapping~**: `op item get 'Supabase Project' --fields url --reveal` (deferred — not blocking first real case)
+13. **#124 P0: Run first external buyer pain-solving case**: real email, real evidence, real decision, real outcome — not seeded, not demo

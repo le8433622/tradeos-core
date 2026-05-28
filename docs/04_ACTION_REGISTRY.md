@@ -102,7 +102,7 @@ Irreversible, legal, financial, or security-sensitive action. (None currently re
 | `sourcing.addSupplierQuote`           | sourcing-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
 | `sourcing.compareQuotes`              | sourcing-core  | LOW    | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
 | `sourcing.markRunReadyForReview`      | sourcing-core  | MEDIUM | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
-| `sourcing.recordOutcome`              | sourcing-core  | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
+| `sourcing.recordOutcome`              | sourcing-core  | LOW    | OWNER, ADMIN, OPERATOR        | Yes        | No                | Yes            |
 | `sourcing.deliverBuyerReport`         | sourcing-core  | HIGH   | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 | `sourcing.generateBuyerReport`        | sourcing-core  | HIGH   | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
 | `sourcing.generateSwitchDecision`     | sourcing-core  | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
