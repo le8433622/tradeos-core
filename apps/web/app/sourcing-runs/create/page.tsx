@@ -40,7 +40,13 @@ export default function TradePainIntakePage() {
   const [selectedPains, setSelectedPains] = useState<string[]>([]);
   const [painDetail, setPainDetail] = useState("");
   const [hasEvidence, setHasEvidence] = useState("");
-  const [decisionAuthority, setDecisionAuthority] = useState("");
+  const [buyerContact, setBuyerContact] = useState("");
+  const [decisionMakerKnown, setDecisionMakerKnown] = useState("");
+  const [decisionMakerNameOrRole, setDecisionMakerNameOrRole] = useState("");
+  const [payerKnown, setPayerKnown] = useState("");
+  const [payerNameOrRole, setPayerNameOrRole] = useState("");
+  const [consequenceOwner, setConsequenceOwner] = useState("");
+  const [decisionAuthorityLevel, setDecisionAuthorityLevel] = useState("");
   const [expectedOutcome, setExpectedOutcome] = useState("");
 
   function togglePain(value: string) {
@@ -51,7 +57,8 @@ export default function TradePainIntakePage() {
 
   function buildRequirement(): string {
     const parts: string[] = [];
-    if (buyer) parts.push(`Buyer/Operator: ${buyer}`);
+    if (buyer) parts.push(`Reported By: ${buyer}`);
+    if (buyerContact) parts.push(`Buyer Contact: ${buyerContact}`);
     if (product) parts.push(`Product: ${product}`);
     if (currentSupplier) parts.push(`Current Supplier: ${currentSupplier}`);
     if (currentPrice)
@@ -68,8 +75,15 @@ export default function TradePainIntakePage() {
     }
     if (painDetail) parts.push(`Pain Detail: ${painDetail}`);
     if (hasEvidence) parts.push(`Evidence: ${hasEvidence}`);
-    if (decisionAuthority)
-      parts.push(`Decision Authority: ${decisionAuthority}`);
+    if (decisionMakerKnown)
+      parts.push(`Decision Maker Known: ${decisionMakerKnown}`);
+    if (decisionMakerNameOrRole)
+      parts.push(`Decision Maker: ${decisionMakerNameOrRole}`);
+    if (payerKnown) parts.push(`Payer Known: ${payerKnown}`);
+    if (payerNameOrRole) parts.push(`Payer: ${payerNameOrRole}`);
+    if (consequenceOwner) parts.push(`Consequence Owner: ${consequenceOwner}`);
+    if (decisionAuthorityLevel)
+      parts.push(`Decision Authority Level: ${decisionAuthorityLevel}`);
     if (expectedOutcome) parts.push(`Expected Outcome: ${expectedOutcome}`);
     return parts.join("\n");
   }
@@ -80,6 +94,35 @@ export default function TradePainIntakePage() {
     setError("");
 
     try {
+      const metadata = {
+        painCategories: selectedPains,
+        painDetail: painDetail || undefined,
+        evidenceSummary: hasEvidence || undefined,
+        decisionAuthority:
+          decisionAuthorityLevel || decisionMakerNameOrRole || undefined,
+        decisionAuthorityLevel: decisionAuthorityLevel || undefined,
+        expectedOutcome: expectedOutcome || undefined,
+        dependencyFlags: selectedPains.filter((pain) =>
+          [
+            "single_supplier",
+            "single_platform",
+            "unknown_origin_price",
+          ].includes(pain),
+        ),
+        reportedBy: buyer || undefined,
+        buyerContact: buyerContact || undefined,
+        decisionMakerKnown:
+          decisionMakerKnown === ""
+            ? null
+            : decisionMakerKnown === "YES"
+              ? true
+              : false,
+        decisionMakerNameOrRole: decisionMakerNameOrRole || undefined,
+        payerKnown:
+          payerKnown === "" ? null : payerKnown === "YES" ? true : false,
+        payerNameOrRole: payerNameOrRole || undefined,
+        consequenceOwner: consequenceOwner || undefined,
+      };
       const res = await fetch("/api/sourcing-runs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -92,6 +135,7 @@ export default function TradePainIntakePage() {
           quantity: quantity || undefined,
           budget: currentPrice || undefined,
           currency: currency || undefined,
+          metadata,
           riskLevel:
             selectedPains.length > 3
               ? "HIGH"
@@ -173,12 +217,22 @@ export default function TradePainIntakePage() {
               </h2>
 
               <div style={{ marginBottom: 16 }}>
-                <label style={labelStyle}>Who is the buyer or operator?</label>
+                <label style={labelStyle}>Who reported this trade pain?</label>
                 <input
                   value={buyer}
                   onChange={(e) => setBuyer(e.target.value)}
                   style={inputStyle}
-                  placeholder="Name or role of the person making the purchase decision"
+                  placeholder="Name or role of the person reporting the pain"
+                />
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={labelStyle}>Buyer contact</label>
+                <input
+                  value={buyerContact}
+                  onChange={(e) => setBuyerContact(e.target.value)}
+                  style={inputStyle}
+                  placeholder="Name, role, or email of the buyer contact"
                 />
               </div>
 
@@ -393,25 +447,92 @@ export default function TradePainIntakePage() {
                 />
               </div>
 
+              <div
+                style={{
+                  display: "grid",
+                  gap: 16,
+                  gridTemplateColumns: "1fr 1fr",
+                  marginBottom: 16,
+                }}
+              >
+                <div>
+                  <label style={labelStyle}>Is the decision-maker known?</label>
+                  <select
+                    value={decisionMakerKnown}
+                    onChange={(e) => setDecisionMakerKnown(e.target.value)}
+                    style={inputStyle}
+                  >
+                    <option value="">Unknown</option>
+                    <option value="YES">Yes</option>
+                    <option value="NO">No</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Decision-maker name or role</label>
+                  <input
+                    value={decisionMakerNameOrRole}
+                    onChange={(e) => setDecisionMakerNameOrRole(e.target.value)}
+                    style={inputStyle}
+                    placeholder="e.g. Owner, procurement director"
+                  />
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gap: 16,
+                  gridTemplateColumns: "1fr 1fr",
+                  marginBottom: 16,
+                }}
+              >
+                <div>
+                  <label style={labelStyle}>Is the payer known?</label>
+                  <select
+                    value={payerKnown}
+                    onChange={(e) => setPayerKnown(e.target.value)}
+                    style={inputStyle}
+                  >
+                    <option value="">Unknown</option>
+                    <option value="YES">Yes</option>
+                    <option value="NO">No</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Payer name or role</label>
+                  <input
+                    value={payerNameOrRole}
+                    onChange={(e) => setPayerNameOrRole(e.target.value)}
+                    style={inputStyle}
+                    placeholder="e.g. Company owner, finance team"
+                  />
+                </div>
+              </div>
+
               <div style={{ marginBottom: 16 }}>
-                <label style={labelStyle}>
-                  Do you have authority to decide, negotiate, or switch?
-                </label>
+                <label style={labelStyle}>Who carries the consequence?</label>
+                <input
+                  value={consequenceOwner}
+                  onChange={(e) => setConsequenceOwner(e.target.value)}
+                  style={inputStyle}
+                  placeholder="Who bears loss if the decision is wrong?"
+                />
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={labelStyle}>Decision authority level</label>
                 <select
-                  value={decisionAuthority}
-                  onChange={(e) => setDecisionAuthority(e.target.value)}
+                  value={decisionAuthorityLevel}
+                  onChange={(e) => setDecisionAuthorityLevel(e.target.value)}
                   style={inputStyle}
                 >
-                  <option value="">Select...</option>
-                  <option value="FULL_AUTHORITY">
-                    Full authority — I can decide and switch
-                  </option>
-                  <option value="CAN_NEGOTIATE">
-                    Can negotiate but not switch supplier
-                  </option>
-                  <option value="NEEDS_APPROVAL">Needs manager approval</option>
-                  <option value="NO_AUTHORITY">
-                    No decision authority — just researching
+                  <option value="">UNKNOWN</option>
+                  <option value="NO_AUTHORITY">NO_AUTHORITY</option>
+                  <option value="INFLUENCER">INFLUENCER</option>
+                  <option value="RECOMMENDER">RECOMMENDER</option>
+                  <option value="APPROVER">APPROVER</option>
+                  <option value="FINAL_DECISION_MAKER">
+                    FINAL_DECISION_MAKER
                   </option>
                 </select>
               </div>

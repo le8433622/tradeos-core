@@ -87,7 +87,7 @@ export default async function SourcingRunDetailPage({
       select: { buyerDecision: true, buyerDecidedAt: true, id: true },
     }),
     prisma.outcomeRecord.findFirst({
-      where: { sourcingRunId: id },
+      where: { organizationId: session.organizationId, sourcingRunId: id },
       orderBy: { createdAt: "desc" },
       select: { id: true, buyerAction: true, createdAt: true },
     }),

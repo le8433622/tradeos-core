@@ -4,10 +4,11 @@ import "@tradeos/sourcing-core";
 
 export default async function BuyerReportsPage() {
   const session = await requirePagePermission("buyerReport.view_assigned");
+  const reviewerEmail = session.email.trim().toLowerCase();
 
   const deliveries = await prisma.buyerReportDelivery.findMany({
     where: {
-      assignedToEmail: session.email,
+      assignedToEmail: reviewerEmail,
       organizationId: session.organizationId,
     },
     orderBy: { deliveredAt: "desc" },
@@ -18,7 +19,7 @@ export default async function BuyerReportsPage() {
   const runs =
     runIds.length > 0
       ? await prisma.sourcingRun.findMany({
-          where: { id: { in: runIds } },
+          where: { organizationId: session.organizationId, id: { in: runIds } },
           select: {
             id: true,
             title: true,
@@ -36,7 +37,10 @@ export default async function BuyerReportsPage() {
   const reports =
     runIds.length > 0
       ? await prisma.switchDecisionReport.findMany({
-          where: { sourcingRunId: { in: runIds } },
+          where: {
+            organizationId: session.organizationId,
+            sourcingRunId: { in: runIds },
+          },
           orderBy: { createdAt: "desc" },
           distinct: ["sourcingRunId"],
           select: {
@@ -73,7 +77,7 @@ export default async function BuyerReportsPage() {
         Assigned Buyer Reports
       </h1>
       <p style={{ color: "#6b7280", maxWidth: 720 }}>
-        Signed in as {session.email}. This role can only see buyer reports
+        Signed in as {reviewerEmail}. This role can only see buyer reports
         explicitly assigned to this email and buyer-safe evidence summaries.
       </p>
 

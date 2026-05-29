@@ -107,11 +107,13 @@ export default async function BuyerReportDetailPage({
 }) {
   const session = await requirePagePermission("buyerReport.view_assigned");
   const { id } = await params;
+  const reviewerEmail = session.email.trim().toLowerCase();
 
   const delivery = await prisma.buyerReportDelivery.findFirst({
     where: {
       sourcingRunId: id,
-      assignedToEmail: session.email,
+      organizationId: session.organizationId,
+      assignedToEmail: reviewerEmail,
     },
   });
 
@@ -124,6 +126,7 @@ export default async function BuyerReportDetailPage({
       where: { id: delivery.sourcingRunId },
       select: {
         id: true,
+        organizationId: true,
         title: true,
         requirement: true,
         targetCountry: true,
@@ -135,7 +138,7 @@ export default async function BuyerReportDetailPage({
       },
     }),
     prisma.switchDecisionReport.findFirst({
-      where: { sourcingRunId: id },
+      where: { organizationId: session.organizationId, sourcingRunId: id },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -164,7 +167,11 @@ export default async function BuyerReportDetailPage({
     }),
   ]);
 
-  if (!sourcingRun || !report) {
+  if (
+    !sourcingRun ||
+    sourcingRun.organizationId !== session.organizationId ||
+    !report
+  ) {
     notFound();
   }
 
@@ -180,7 +187,7 @@ export default async function BuyerReportDetailPage({
         })
       : null,
     prisma.outcomeRecord.findFirst({
-      where: { sourcingRunId: id },
+      where: { organizationId: session.organizationId, sourcingRunId: id },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -193,7 +200,13 @@ export default async function BuyerReportDetailPage({
 
   if (delivery.status === "PENDING") {
     await prisma.buyerReportDelivery.update({
-      where: { id: delivery.id },
+      where: {
+        organizationId_sourcingRunId_assignedToEmail: {
+          organizationId: session.organizationId,
+          sourcingRunId: id,
+          assignedToEmail: reviewerEmail,
+        },
+      },
       data: { status: "VIEWED", viewedAt: new Date() },
     });
   }

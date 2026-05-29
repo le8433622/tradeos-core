@@ -7,6 +7,7 @@ import {
 } from "../../../../../lib/api-errors";
 import { z } from "zod";
 import { sendReportDeliveryNotification } from "../../../../../lib/email";
+import { createLogger, getRequestId } from "../../../../../lib/logger";
 import "@tradeos/sourcing-core";
 
 const assignSchema = z
@@ -22,6 +23,7 @@ export async function POST(request: Request) {
     const auth = await withApiPermission(request, "sourcing.manage");
     if (auth.response) return auth.response;
     const { session } = auth;
+    const logger = createLogger(getRequestId(request));
 
     let body: Record<string, unknown>;
     try {
@@ -45,12 +47,15 @@ export async function POST(request: Request) {
       throw error;
     }
 
+    const assignedToEmail = (body.assignedToEmail as string)
+      .trim()
+      .toLowerCase();
     const result = await executeAction(
       "sourcing.assignBuyerReport",
       {
         organizationId: session.organizationId,
         sourcingRunId: body.sourcingRunId as string,
-        assignedToEmail: body.assignedToEmail as string,
+        assignedToEmail,
         notes: body.notes as string | undefined,
       },
       {
@@ -70,13 +75,15 @@ export async function POST(request: Request) {
     if (run) {
       const appUrl = process.env.APP_URL ?? "https://tradeos-core.vercel.app";
       sendReportDeliveryNotification(
-        body.assignedToEmail as string,
+        assignedToEmail,
         run.title,
         run.organization.name,
         `${appUrl}/buyer/reports/${body.sourcingRunId}`,
         body.notes as string | undefined,
       ).catch((err) =>
-        console.error("[assign] email notification failed", err),
+        logger.error("[assign] email notification failed", {
+          error: err instanceof Error ? err.message : String(err),
+        }),
       );
     }
 

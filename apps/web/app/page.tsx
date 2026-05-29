@@ -87,6 +87,7 @@ export default async function DashboardPage() {
     members,
     decidedRuns,
     allOutcomeRunIds,
+    decisionPendingRuns,
   ] = await Promise.all([
     prisma.sourcingRun.count({ where: { organizationId: orgId } }),
     prisma.sourcingRun.count({
@@ -115,6 +116,16 @@ export default async function DashboardPage() {
     prisma.outcomeRecord.findMany({
       where: { organizationId: orgId },
       select: { sourcingRunId: true },
+      distinct: ["sourcingRunId"],
+    }),
+    prisma.switchDecisionReport.findMany({
+      where: {
+        organizationId: orgId,
+        buyerDecision: null,
+      },
+      select: {
+        sourcingRunId: true,
+      },
       distinct: ["sourcingRunId"],
     }),
   ]);
@@ -177,6 +188,13 @@ export default async function DashboardPage() {
           href="/approvals"
         />
         <StatCard label="Team Members" value={members} href="/settings/team" />
+        {decisionPendingRuns.length > 0 && (
+          <StatCard
+            label="Decision Pending"
+            value={decisionPendingRuns.length}
+            href="/sourcing-runs"
+          />
+        )}
         {pendingOutcomeRuns.length > 0 && (
           <a href="/sourcing-runs" style={{ textDecoration: "none" }}>
             <div

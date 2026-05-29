@@ -791,6 +791,7 @@ model SourcingRun {
   budget          String?
   currency        String?
   riskLevel       String            @default("MEDIUM")
+  metadata        Json?
   createdById     String?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
@@ -825,6 +826,9 @@ model PurchaseBaseline {
   quantity           Decimal?
   unit               String?
   unitPrice          Decimal?
+  originUnitPrice    Decimal?
+  landedCost         Decimal?
+  marketBenchmarkPrice Decimal?
   currency           String?
   frequency          String?
   annualEquivalent   Decimal?
@@ -902,6 +906,16 @@ model OutcomeRecord {
   reorderOccurred   Boolean  @default(false)
   buyerSatisfaction Int?     // 1-5
   learningNote      String?
+  moneySaved        Decimal?
+  timeSaved         String?
+  riskReduced       String?
+  dependencyReduced String?
+  trustImproved     String?
+  proofImproved     String?
+  buyerUnderstoodReport Boolean?
+  operatorTimeSpent String?
+  lessonLearned     String?
+  failedOutcomeReason String?
 
   linkedReportId    String?
 
@@ -1129,4 +1143,5 @@ model BuyerReportDelivery {
   @@index([sourcingRunId])
   @@index([organizationId])
   @@index([assignedById])
+  @@unique([organizationId, sourcingRunId, assignedToEmail])
 }

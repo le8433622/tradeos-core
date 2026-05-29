@@ -96,7 +96,11 @@ export default function BuyerDecisionForm({
               fontWeight: 600,
             }}
           >
-            {opt.replace(/_/g, " ")}
+            {opt === "APPROVE"
+              ? "ACCEPT RECOMMENDATION"
+              : opt === "REJECT"
+                ? "REJECT RECOMMENDATION"
+                : opt.replace(/_/g, " ")}
           </button>
         ))}
       </div>

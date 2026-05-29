@@ -32,6 +32,7 @@ export const TENANT_SCOPED_MODELS = [
   "Invitation",
   "Product",
   "OrganizationMember",
+  "BuyerReportDelivery",
 ] as const;
 
 type PrismaAction =

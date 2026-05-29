@@ -9,6 +9,11 @@ import { stripSessionManagedFields } from "../../../../../lib/validate";
 import { z } from "zod";
 import "@tradeos/sourcing-core";
 
+const submitBuyerDecisionRequestSchema = submitBuyerDecisionSchema.omit({
+  organizationId: true,
+  sourcingRunId: true,
+});
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -24,7 +29,7 @@ export async function POST(
 
     let body: Record<string, unknown>;
     try {
-      body = submitBuyerDecisionSchema.parse(
+      body = submitBuyerDecisionRequestSchema.parse(
         await request.json(),
       ) as unknown as Record<string, unknown>;
     } catch (error) {

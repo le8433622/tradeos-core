@@ -15,6 +15,9 @@ export default function PurchaseBaselineForm({
   const [quantity, setQuantity] = useState("");
   const [unit, setUnit] = useState("");
   const [unitPrice, setUnitPrice] = useState("");
+  const [originUnitPrice, setOriginUnitPrice] = useState("");
+  const [landedCost, setLandedCost] = useState("");
+  const [marketBenchmarkPrice, setMarketBenchmarkPrice] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [frequency, setFrequency] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("");
@@ -55,6 +58,9 @@ export default function PurchaseBaselineForm({
             quantity: quantity.trim() || undefined,
             unit: unit.trim() || undefined,
             unitPrice: unitPrice.trim() || undefined,
+            originUnitPrice: originUnitPrice.trim() || undefined,
+            landedCost: landedCost.trim() || undefined,
+            marketBenchmarkPrice: marketBenchmarkPrice.trim() || undefined,
             currency: currency || undefined,
             frequency: frequency.trim() || undefined,
             paymentTerms: paymentTerms.trim() || undefined,
@@ -171,6 +177,88 @@ export default function PurchaseBaselineForm({
             {fieldErrors.productDescription}
           </p>
         )}
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gap: 12,
+          gridTemplateColumns: "1fr 1fr 1fr",
+          marginBottom: 12,
+        }}
+      >
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontWeight: 600,
+              marginBottom: 4,
+              fontSize: 13,
+            }}
+          >
+            Origin Unit Price
+          </label>
+          <input
+            value={originUnitPrice}
+            onChange={(e) => setOriginUnitPrice(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              border: "1px solid #d1d5db",
+              borderRadius: 8,
+              fontSize: 14,
+            }}
+            placeholder="e.g. farmgate/export source price"
+          />
+        </div>
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontWeight: 600,
+              marginBottom: 4,
+              fontSize: 13,
+            }}
+          >
+            Landed Cost
+          </label>
+          <input
+            value={landedCost}
+            onChange={(e) => setLandedCost(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              border: "1px solid #d1d5db",
+              borderRadius: 8,
+              fontSize: 14,
+            }}
+            placeholder="e.g. CIF/DDP total unit cost"
+          />
+        </div>
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontWeight: 600,
+              marginBottom: 4,
+              fontSize: 13,
+            }}
+          >
+            Market Benchmark
+          </label>
+          <input
+            value={marketBenchmarkPrice}
+            onChange={(e) => setMarketBenchmarkPrice(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              border: "1px solid #d1d5db",
+              borderRadius: 8,
+              fontSize: 14,
+            }}
+            placeholder="e.g. public benchmark price"
+          />
+        </div>
       </div>
 
       <div

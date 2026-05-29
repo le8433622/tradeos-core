@@ -12,6 +12,9 @@ function makeInput(
     alternatives: [],
     evidenceCount: 0,
     defaultCurrency: "USD",
+    decisionAuthorityLevel: "FINAL_DECISION_MAKER",
+    payerKnown: true,
+    consequenceOwnerKnown: true,
     ...overrides,
   };
 }
@@ -51,6 +54,7 @@ describe("computeSwitchDecision", () => {
         makeInput({
           baseline: {
             unitPrice: "100",
+            originUnitPrice: "95",
             quantity: "10",
             currency: "USD",
             paymentTerms: "net30",
@@ -79,6 +83,7 @@ describe("computeSwitchDecision", () => {
         makeInput({
           baseline: {
             unitPrice: "100",
+            originUnitPrice: "95",
             quantity: "10",
             currency: "USD",
             paymentTerms: "net30",
@@ -107,6 +112,7 @@ describe("computeSwitchDecision", () => {
         makeInput({
           baseline: {
             unitPrice: "100",
+            originUnitPrice: "95",
             quantity: "10",
             currency: "USD",
             paymentTerms: "net30",
@@ -162,10 +168,13 @@ describe("computeSwitchDecision", () => {
         makeInput({
           baseline: {
             unitPrice: "100",
+            originUnitPrice: "95",
             quantity: "10",
             currency: "USD",
             paymentTerms: "net30",
             leadTime: "30 days",
+            landedCost: "105",
+            marketBenchmarkPrice: "98",
           },
           alternatives: [
             {
@@ -196,10 +205,13 @@ describe("computeSwitchDecision", () => {
         makeInput({
           baseline: {
             unitPrice: "200",
+            originUnitPrice: "190",
             quantity: "100",
             currency: "USD",
             paymentTerms: "net30",
             leadTime: "30 days",
+            landedCost: "210",
+            marketBenchmarkPrice: "195",
           },
           alternatives: [
             {
@@ -423,6 +435,151 @@ describe("computeSwitchDecision", () => {
       expect(result.missingProof.some((m) => m.includes("evidence"))).toBe(
         true,
       );
+    });
+  });
+
+  describe("human-nature dependency and authority cases", () => {
+    it("shows origin and landed-cost gaps instead of guessing", () => {
+      const result = computeSwitchDecision(
+        makeInput({
+          baseline: {
+            unitPrice: "100",
+            quantity: "10",
+            currency: "USD",
+            paymentTerms: "net30",
+            leadTime: "30 days",
+          },
+          alternatives: [
+            {
+              unitPrice: "80",
+              currency: "USD",
+              leadTime: "25 days",
+              paymentTerm: "net30",
+            },
+          ],
+          evidenceCount: 2,
+        }),
+      );
+
+      expect(result.recommendation).not.toBe("SWITCH");
+      expect(result.missingProof).toContain("origin price unknown");
+      expect(result.missingProof).toContain("landed cost unknown");
+      expect(result.riskFlags).toContain("ORIGIN_PRICE_UNKNOWN");
+      expect(result.riskFlags).toContain("LANDED_COST_UNKNOWN");
+    });
+
+    it("flags weak supplier proof and avoids strong switch", () => {
+      const result = computeSwitchDecision(
+        makeInput({
+          baseline: {
+            unitPrice: "100",
+            originUnitPrice: "95",
+            quantity: "10",
+            currency: "USD",
+            paymentTerms: "net30",
+            leadTime: "30 days",
+          },
+          alternatives: [
+            {
+              unitPrice: "60",
+              totalCost: "600",
+              currency: "USD",
+              leadTime: "20 days",
+              paymentTerm: "net30",
+            },
+            {
+              unitPrice: "65",
+              totalCost: "650",
+              currency: "USD",
+              leadTime: "22 days",
+              paymentTerm: "net30",
+            },
+          ],
+          evidenceCount: 1,
+        }),
+      );
+
+      expect(result.recommendation).toBe("NEGOTIATE");
+      expect(result.riskFlags).toContain("SUPPLIER_PROOF_WEAK");
+    });
+
+    it("flags no decision authority and blocks switch", () => {
+      const result = computeSwitchDecision(
+        makeInput({
+          baseline: {
+            unitPrice: "100",
+            originUnitPrice: "95",
+            quantity: "10",
+            currency: "USD",
+            paymentTerms: "net30",
+            leadTime: "30 days",
+          },
+          alternatives: [
+            {
+              unitPrice: "60",
+              totalCost: "600",
+              currency: "USD",
+              leadTime: "20 days",
+              paymentTerm: "net30",
+            },
+            {
+              unitPrice: "65",
+              totalCost: "650",
+              currency: "USD",
+              leadTime: "22 days",
+              paymentTerm: "net30",
+            },
+          ],
+          evidenceCount: 3,
+          decisionAuthorityLevel: "NO_AUTHORITY",
+        }),
+      );
+
+      expect(result.recommendation).toBe("NEGOTIATE");
+      expect(result.riskFlags).toContain("NO_DECISION_AUTHORITY");
+      expect(result.missingProof).toContain("decision authority not confirmed");
+    });
+
+    it("flags broker and platform dependency deterministically", () => {
+      const result = computeSwitchDecision(
+        makeInput({
+          baseline: {
+            supplierName: "Current Distributor",
+            unitPrice: "100",
+            originUnitPrice: "95",
+            quantity: "10",
+            currency: "USD",
+            paymentTerms: "net30",
+            leadTime: "30 days",
+          },
+          alternatives: [
+            {
+              supplierName: "Platform Supplier",
+              unitPrice: "80",
+              totalCost: "800",
+              currency: "USD",
+              platform: "Alibaba",
+              source: "marketplace platform",
+              leadTime: "25 days",
+              paymentTerm: "net30",
+            },
+            {
+              supplierName: "Export Broker",
+              unitPrice: "82",
+              totalCost: "820",
+              currency: "USD",
+              source: "broker",
+              leadTime: "28 days",
+              paymentTerm: "net30",
+            },
+          ],
+          evidenceCount: 3,
+        }),
+      );
+
+      expect(result.riskFlags).toContain("PLATFORM_DEPENDENCY");
+      expect(result.riskFlags).toContain("BROKER_DEPENDENCY");
+      expect(result.summary).toContain("Who controls information");
     });
   });
 });

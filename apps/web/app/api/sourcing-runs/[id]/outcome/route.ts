@@ -9,6 +9,11 @@ import { stripSessionManagedFields } from "../../../../../lib/validate";
 import { z } from "zod";
 import "@tradeos/sourcing-core";
 
+const recordOutcomeRequestSchema = recordOutcomeSchema.omit({
+  organizationId: true,
+  sourcingRunId: true,
+});
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -21,7 +26,7 @@ export async function POST(
 
     let body: Record<string, unknown>;
     try {
-      body = recordOutcomeSchema.parse(
+      body = recordOutcomeRequestSchema.parse(
         await request.json(),
       ) as unknown as Record<string, unknown>;
     } catch (error) {
@@ -55,6 +60,16 @@ export async function POST(
         reorderOccurred: body.reorderOccurred as boolean | undefined,
         buyerSatisfaction: body.buyerSatisfaction as number | undefined,
         learningNote: body.learningNote as string | undefined,
+        moneySaved: body.moneySaved as string | undefined,
+        timeSaved: body.timeSaved as string | undefined,
+        riskReduced: body.riskReduced as string | undefined,
+        dependencyReduced: body.dependencyReduced as string | undefined,
+        trustImproved: body.trustImproved as string | undefined,
+        proofImproved: body.proofImproved as string | undefined,
+        buyerUnderstoodReport: body.buyerUnderstoodReport as string | undefined,
+        operatorTimeSpent: body.operatorTimeSpent as string | undefined,
+        lessonLearned: body.lessonLearned as string | undefined,
+        failedOutcomeReason: body.failedOutcomeReason as string | undefined,
         linkedReportId: body.linkedReportId as string | undefined,
       },
       {

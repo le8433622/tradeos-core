@@ -23,7 +23,7 @@ export default async function OutcomePage({
       },
     }),
     prisma.outcomeRecord.findFirst({
-      where: { sourcingRunId: id },
+      where: { organizationId: session.organizationId, sourcingRunId: id },
       orderBy: { createdAt: "desc" },
     }),
   ]);

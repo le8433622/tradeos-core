@@ -170,6 +170,22 @@ const ERROR_MESSAGES: Record<string, { en: string; vi: string }> = {
     en: "Checkpoint must be billed before recording payment.",
     vi: "Checkpoint phải được ghi nhận tính tiền trước khi ghi nhận thanh toán.",
   },
+  FINAL_DECISION_AUTHORITY_REQUIRED: {
+    en: "A final decision-maker must confirm before this case can be recorded as solved.",
+    vi: "Cần người có thẩm quyền quyết định cuối cùng xác nhận trước khi ghi nhận ca này là đã giải quyết.",
+  },
+  FAILED_OUTCOME_REASON_REQUIRED: {
+    en: "Record the failed-outcome reason before closing the learning loop.",
+    vi: "Cần ghi lý do kết quả thất bại trước khi đóng vòng học hỏi.",
+  },
+  BUYER_DECISION_REQUIRED_BEFORE_OUTCOME: {
+    en: "Record the buyer decision before recording a successful outcome.",
+    vi: "Cần ghi quyết định của người mua trước khi ghi nhận kết quả thành công.",
+  },
+  INVALID_OUTCOME_AMOUNT: {
+    en: "Outcome amount fields must be valid numbers.",
+    vi: "Các trường số tiền trong kết quả phải là số hợp lệ.",
+  },
   SUPPLIER_CANDIDATE_RUN_MISMATCH: {
     en: "Supplier candidate does not belong to this sourcing run.",
     vi: "Nhà cung cấp không thuộc về đợt sourcing này.",

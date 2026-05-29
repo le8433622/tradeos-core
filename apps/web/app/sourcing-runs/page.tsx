@@ -76,7 +76,10 @@ export default async function SourcingRunsPage({
     runs.length > 0
       ? await prisma.switchDecisionReport.groupBy({
           by: ["sourcingRunId"],
-          where: { sourcingRunId: { in: runs.map((r) => r.id) } },
+          where: {
+            organizationId: session.organizationId,
+            sourcingRunId: { in: runs.map((r) => r.id) },
+          },
           _max: { buyerDecision: true, buyerDecidedAt: true },
         })
       : [];
@@ -92,7 +95,10 @@ export default async function SourcingRunsPage({
     runs.length > 0
       ? (
           await prisma.outcomeRecord.findMany({
-            where: { sourcingRunId: { in: runs.map((r) => r.id) } },
+            where: {
+              organizationId: session.organizationId,
+              sourcingRunId: { in: runs.map((r) => r.id) },
+            },
             select: { sourcingRunId: true },
           })
         ).map((o) => o.sourcingRunId)

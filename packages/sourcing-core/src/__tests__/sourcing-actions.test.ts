@@ -30,8 +30,14 @@ const {
   mockSwitchReportFindFirst,
   mockSwitchReportUpdate,
   mockOutcomeCreate,
+  mockBuyerReportDeliveryCreate,
+  mockBuyerReportDeliveryFindFirst,
+  mockUserFindUnique,
 } = vi.hoisted(() => {
   const mockOutcomeCreate = vi.fn();
+  const mockBuyerReportDeliveryCreate = vi.fn();
+  const mockBuyerReportDeliveryFindFirst = vi.fn();
+  const mockUserFindUnique = vi.fn();
   const mockSourcingFindUnique = vi.fn();
   const mockSourcingCreate = vi.fn();
   const mockSourcingUpdate = vi.fn();
@@ -101,6 +107,11 @@ const {
       findUnique: mockLeadFindUnique,
     },
     task: { create: vi.fn().mockResolvedValue({ id: "task-1" }) },
+    buyerReportDelivery: {
+      create: mockBuyerReportDeliveryCreate,
+      findFirst: mockBuyerReportDeliveryFindFirst,
+    },
+    user: { findUnique: mockUserFindUnique },
   };
   return {
     mockSourcingFindUnique,
@@ -132,6 +143,9 @@ const {
     mockSwitchReportFindFirst,
     mockSwitchReportUpdate,
     mockOutcomeCreate,
+    mockBuyerReportDeliveryCreate,
+    mockBuyerReportDeliveryFindFirst,
+    mockUserFindUnique,
     tx,
   };
 });
@@ -192,6 +206,11 @@ vi.mock("@tradeos/database", () => ({
       findUnique: mockLeadFindUnique,
     },
     task: { create: vi.fn().mockResolvedValue({ id: "task-1" }) },
+    buyerReportDelivery: {
+      create: mockBuyerReportDeliveryCreate,
+      findFirst: mockBuyerReportDeliveryFindFirst,
+    },
+    user: { findUnique: mockUserFindUnique },
     $transaction: vi.fn(async (arg: unknown) => {
       const tx = {
         auditLog: { create: mockAuditCreate },
@@ -248,6 +267,11 @@ vi.mock("@tradeos/database", () => ({
           findUnique: mockLeadFindUnique,
         },
         task: { create: vi.fn().mockResolvedValue({ id: "task-1" }) },
+        buyerReportDelivery: {
+          create: mockBuyerReportDeliveryCreate,
+          findFirst: mockBuyerReportDeliveryFindFirst,
+        },
+        user: { findUnique: mockUserFindUnique },
       };
       if (typeof arg === "function") {
         return arg(tx);
@@ -294,6 +318,8 @@ beforeEach(() => {
   mockSourcingFindUnique.mockResolvedValue({
     id: "run-1",
     organizationId: "org-1",
+    requirement:
+      "Decision Authority Level: FINAL_DECISION_MAKER\nPayer Known: YES\nConsequence Owner: Buyer owner",
   });
   mockSourcingCreate.mockResolvedValue({ id: "run-1", status: "DRAFT" });
   mockSourcingUpdate.mockResolvedValue({ status: "READY_FOR_REVIEW" });
@@ -345,6 +371,9 @@ beforeEach(() => {
   });
   mockSwitchReportFindFirst.mockResolvedValue(null);
   mockSwitchReportUpdate.mockResolvedValue({ id: "report-1" });
+  mockBuyerReportDeliveryCreate.mockResolvedValue({ id: "delivery-1" });
+  mockBuyerReportDeliveryFindFirst.mockResolvedValue({ id: "delivery-1" });
+  mockUserFindUnique.mockResolvedValue({ email: "buyer@example.com" });
   mockOutcomeCreate.mockResolvedValue({
     id: "outcome-1",
     buyerAction: "SWITCH",
@@ -989,6 +1018,29 @@ describe("sourcing.deliverBuyerReport", () => {
   });
 });
 
+describe("sourcing.assignBuyerReport", () => {
+  it("normalizes assigned buyer email before creating delivery", async () => {
+    const result = (await executeAction(
+      "sourcing.assignBuyerReport",
+      {
+        organizationId: "org-1",
+        sourcingRunId: "run-1",
+        assignedToEmail: "Buyer@Company.com",
+      },
+      context,
+    )) as { deliveryId: string };
+
+    expect(result.deliveryId).toBe("delivery-1");
+    expect(mockBuyerReportDeliveryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          assignedToEmail: "buyer@company.com",
+        }),
+      }),
+    );
+  });
+});
+
 describe("sourcing.generateSwitchDecision", () => {
   it("generates WAIT report when no baseline or alternatives exist", async () => {
     mockBaselineFindMany.mockResolvedValue([]);
@@ -1145,22 +1197,53 @@ describe("sourcing.submitBuyerDecision", () => {
     );
   });
 
-  it("rejects APPROVE when recommendation is not SWITCH", async () => {
+  it("records APPROVE for NEGOTIATE as accepting the recommendation", async () => {
+    mockSwitchReportFindFirst.mockResolvedValue({
+      id: "report-1",
+      recommendation: "NEGOTIATE",
+    });
+    mockSwitchReportUpdate.mockResolvedValue({ id: "report-1" });
+    mockEvidenceCreate.mockResolvedValue({ id: "evidence-accept-negotiate" });
+    const result = (await executeAction(
+      "sourcing.submitBuyerDecision",
+      {
+        organizationId: "org-1",
+        sourcingRunId: "run-1",
+        decision: "APPROVE",
+      },
+      context,
+    )) as { decision: string };
+
+    expect(result.decision).toBe("APPROVE");
+    expect(mockEvidenceCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          content: expect.stringContaining(
+            '"acceptedRecommendation":"NEGOTIATE"',
+          ),
+        }),
+      }),
+    );
+  });
+
+  it("records APPROVE for WAIT as accepting the recommendation", async () => {
     mockSwitchReportFindFirst.mockResolvedValue({
       id: "report-1",
       recommendation: "WAIT",
     });
-    await expect(
-      executeAction(
-        "sourcing.submitBuyerDecision",
-        {
-          organizationId: "org-1",
-          sourcingRunId: "run-1",
-          decision: "APPROVE",
-        },
-        context,
-      ),
-    ).rejects.toThrow("CANNOT_APPROVE_NON_SWITCH_RECOMMENDATION");
+    mockSwitchReportUpdate.mockResolvedValue({ id: "report-1" });
+    mockEvidenceCreate.mockResolvedValue({ id: "evidence-accept-wait" });
+    const result = (await executeAction(
+      "sourcing.submitBuyerDecision",
+      {
+        organizationId: "org-1",
+        sourcingRunId: "run-1",
+        decision: "APPROVE",
+      },
+      context,
+    )) as { decision: string };
+
+    expect(result.decision).toBe("APPROVE");
   });
 
   it("records REQUEST_MORE_PROOF on any recommendation", async () => {
@@ -1180,6 +1263,35 @@ describe("sourcing.submitBuyerDecision", () => {
       context,
     )) as { decision: string };
     expect(result.decision).toBe("REQUEST_MORE_PROOF");
+  });
+
+  it("normalizes buyer reviewer email before assignment lookup", async () => {
+    mockUserFindUnique.mockResolvedValue({ email: "Buyer@Company.com" });
+    mockSwitchReportFindFirst.mockResolvedValue({
+      id: "report-1",
+      recommendation: "NEGOTIATE",
+    });
+    mockSwitchReportUpdate.mockResolvedValue({ id: "report-1" });
+    mockEvidenceCreate.mockResolvedValue({ id: "evidence-2" });
+
+    const result = (await executeAction(
+      "sourcing.submitBuyerDecision",
+      {
+        organizationId: "org-1",
+        sourcingRunId: "run-1",
+        decision: "REQUEST_MORE_PROOF",
+      },
+      { ...context, role: "BUYER_REVIEWER" as const },
+    )) as { decision: string };
+
+    expect(result.decision).toBe("REQUEST_MORE_PROOF");
+    expect(mockBuyerReportDeliveryFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          assignedToEmail: "buyer@company.com",
+        }),
+      }),
+    );
   });
 
   it("records REJECT on any recommendation", async () => {
@@ -1269,6 +1381,14 @@ describe("sourcing.createSwitchCheckpoints", () => {
 });
 
 describe("sourcing.recordOutcome", () => {
+  beforeEach(() => {
+    mockSwitchReportFindFirst.mockResolvedValue({
+      id: "report-1",
+      recommendation: "SWITCH",
+      buyerDecision: "APPROVE",
+    });
+  });
+
   it("records an outcome with valid data", async () => {
     mockOutcomeCreate.mockResolvedValue({
       id: "outcome-1",
@@ -1301,6 +1421,92 @@ describe("sourcing.recordOutcome", () => {
         }),
       }),
     );
+  });
+
+  it("blocks success outcome before buyer decision", async () => {
+    mockSwitchReportFindFirst.mockResolvedValue({
+      id: "report-1",
+      recommendation: "SWITCH",
+      buyerDecision: null,
+    });
+
+    await expect(
+      executeAction(
+        "sourcing.recordOutcome",
+        {
+          organizationId: "org-1",
+          sourcingRunId: "run-1",
+          buyerAction: "SWITCH",
+          lessonLearned: "Should not close before buyer decision.",
+        },
+        context,
+      ),
+    ).rejects.toThrow("BUYER_DECISION_REQUIRED_BEFORE_OUTCOME");
+  });
+
+  it("records REQUEST_MORE_PROOF as a first-class outcome", async () => {
+    mockOutcomeCreate.mockResolvedValue({
+      id: "outcome-2",
+      buyerAction: "REQUEST_MORE_PROOF",
+    });
+    const result = (await executeAction(
+      "sourcing.recordOutcome",
+      {
+        organizationId: "org-1",
+        sourcingRunId: "run-1",
+        buyerAction: "REQUEST_MORE_PROOF",
+        proofImproved: "NO",
+        buyerUnderstoodReport: "YES",
+        lessonLearned: "Buyer understood the risk but requested quality proof.",
+      },
+      context,
+    )) as { id: string; buyerAction: string };
+
+    expect(result.buyerAction).toBe("REQUEST_MORE_PROOF");
+    expect(mockOutcomeCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          buyerAction: "REQUEST_MORE_PROOF",
+          learningNote: expect.stringContaining("Buyer understood"),
+        }),
+      }),
+    );
+  });
+
+  it("requires a failed-outcome reason for disappeared buyer", async () => {
+    await expect(
+      executeAction(
+        "sourcing.recordOutcome",
+        {
+          organizationId: "org-1",
+          sourcingRunId: "run-1",
+          buyerAction: "BUYER_DISAPPEARED",
+        },
+        context,
+      ),
+    ).rejects.toThrow("FAILED_OUTCOME_REASON_REQUIRED");
+  });
+
+  it("blocks solved outcome when decision authority is weak", async () => {
+    mockSourcingFindUnique.mockResolvedValue({
+      id: "run-1",
+      organizationId: "org-1",
+      requirement:
+        "Decision Authority Level: NO_AUTHORITY\nPayer Known: NO\nConsequence Owner: Unknown",
+    });
+
+    await expect(
+      executeAction(
+        "sourcing.recordOutcome",
+        {
+          organizationId: "org-1",
+          sourcingRunId: "run-1",
+          buyerAction: "SWITCH",
+          lessonLearned: "Reported user had pain but no authority.",
+        },
+        context,
+      ),
+    ).rejects.toThrow("FINAL_DECISION_AUTHORITY_REQUIRED");
   });
 
   it("rejects when sourcing run belongs to another org", async () => {

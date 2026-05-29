@@ -7,6 +7,10 @@ import { stripSessionManagedFields } from "../../../lib/validate";
 import { z } from "zod";
 import "@tradeos/sourcing-core";
 
+const createSourcingRunRequestSchema = createSourcingRunSchema.omit({
+  organizationId: true,
+});
+
 export async function GET(request: Request) {
   try {
     const auth = await withApiPermission(request, "sourcing.list");
@@ -43,7 +47,7 @@ export async function POST(request: Request) {
 
     let body: Record<string, unknown>;
     try {
-      body = createSourcingRunSchema.parse(
+      body = createSourcingRunRequestSchema.parse(
         await request.json(),
       ) as unknown as Record<string, unknown>;
     } catch (error) {

@@ -11,7 +11,26 @@ import {
 } from "@tradeos/policy-core";
 import { checkEntitlement } from "@tradeos/plan-core";
 import { z } from "zod";
-import { computeSwitchDecision } from "./switch-decision";
+import {
+  computeSwitchDecision,
+  deriveEvidenceQuality,
+  isWeakDecisionAuthority,
+  parseTradePainMetadata,
+} from "./switch-decision";
+
+export {
+  isWeakDecisionAuthority,
+  normalizeDecisionAuthorityLevel,
+  parseTradePainMetadata,
+  deriveEvidenceQuality,
+  type DecisionAuthorityLevel,
+  type EvidenceQualityLevel,
+  type TradePainMetadata,
+} from "./switch-decision";
+
+function db(context: ActionContext) {
+  return (context.prismaTransactionClient ?? prisma) as typeof prisma;
+}
 
 export const createSourcingRunSchema = z
   .object({
@@ -26,6 +45,25 @@ export const createSourcingRunSchema = z
     budget: z.string().max(64).optional(),
     currency: z.string().max(8).optional(),
     riskLevel: z.string().max(32).optional(),
+    metadata: z
+      .object({
+        painCategories: z.array(z.string().max(128)).optional(),
+        painDetail: z.string().max(4096).optional(),
+        evidenceSummary: z.string().max(4096).optional(),
+        decisionAuthority: z.string().max(64).optional(),
+        decisionAuthorityLevel: z.string().max(64).optional(),
+        expectedOutcome: z.string().max(4096).optional(),
+        dependencyFlags: z.array(z.string().max(128)).optional(),
+        reportedBy: z.string().max(256).optional(),
+        buyerContact: z.string().max(256).optional(),
+        decisionMakerKnown: z.boolean().nullable().optional(),
+        decisionMakerNameOrRole: z.string().max(256).optional(),
+        payerKnown: z.boolean().nullable().optional(),
+        payerNameOrRole: z.string().max(256).optional(),
+        consequenceOwner: z.string().max(256).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -68,6 +106,7 @@ export const createSourcingRunAction = registerAction<
         budget: parsed.budget,
         currency: parsed.currency,
         riskLevel: parsed.riskLevel ?? "MEDIUM",
+        metadata: parsed.metadata,
         createdById: context.actorUserId,
       },
       select: { id: true, status: true },
@@ -87,6 +126,9 @@ export const createPurchaseBaselineSchema = z
     quantity: z.string().optional(),
     unit: z.string().max(64).optional(),
     unitPrice: z.string().optional(),
+    originUnitPrice: z.string().optional(),
+    landedCost: z.string().optional(),
+    marketBenchmarkPrice: z.string().optional(),
     currency: z.string().max(8).optional(),
     frequency: z.string().max(64).optional(),
     paymentTerms: z.string().max(256).optional(),
@@ -131,6 +173,9 @@ export const createPurchaseBaselineAction = registerAction<
         quantity: parsed.quantity,
         unit: parsed.unit,
         unitPrice: parsed.unitPrice,
+        originUnitPrice: parsed.originUnitPrice,
+        landedCost: parsed.landedCost,
+        marketBenchmarkPrice: parsed.marketBenchmarkPrice,
         currency: parsed.currency,
         frequency: parsed.frequency,
         paymentTerms: parsed.paymentTerms,
@@ -539,6 +584,7 @@ export const assignBuyerReportAction = registerAction<
   requiresApprovalForAI: true,
   handler: async (input, context) => {
     const parsed = assignBuyerReportSchema.parse(input);
+    const assignedToEmail = parsed.assignedToEmail.trim().toLowerCase();
     const run = await prisma.sourcingRun.findUnique({
       where: { id: parsed.sourcingRunId },
       select: { organizationId: true },
@@ -549,7 +595,7 @@ export const assignBuyerReportAction = registerAction<
       data: {
         organizationId: parsed.organizationId,
         sourcingRunId: parsed.sourcingRunId,
-        assignedToEmail: parsed.assignedToEmail,
+        assignedToEmail,
         assignedById: context.actorUserId,
         notes: parsed.notes,
       },
@@ -600,62 +646,104 @@ export const generateSwitchDecisionAction = registerAction<
   requiresApprovalForAI: false,
   handler: async (input, context) => {
     const parsed = generateSwitchDecisionSchema.parse(input);
-    const run = await prisma.sourcingRun.findUnique({
+    const database = db(context);
+    const run = await database.sourcingRun.findUnique({
       where: { id: parsed.sourcingRunId },
       select: {
         organizationId: true,
         currency: true,
+        requirement: true,
+        metadata: true,
       },
     });
     validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+    const tradePainMetadata = parseTradePainMetadata(
+      run?.requirement,
+      run?.metadata,
+    );
 
-    const [baselines, alternatives, evidenceCount] = await Promise.all([
-      prisma.purchaseBaseline.findMany({
+    const [baselines, alternatives, evidenceItems] = await Promise.all([
+      database.purchaseBaseline.findMany({
         where: { sourcingRunId: parsed.sourcingRunId },
         orderBy: { createdAt: "desc" },
         take: 1,
       }),
-      prisma.supplierAlternative.findMany({
+      database.supplierAlternative.findMany({
         where: { sourcingRunId: parsed.sourcingRunId },
         orderBy: { createdAt: "desc" },
+        include: {
+          supplierCandidate: {
+            select: {
+              platform: true,
+              source: true,
+              reliabilityScore: true,
+            },
+          },
+        },
       }),
-      prisma.evidenceItem.count({
+      database.evidenceItem.findMany({
         where: { sourcingRunId: parsed.sourcingRunId },
+        select: {
+          evidenceType: true,
+          title: true,
+          description: true,
+          content: true,
+          metadata: true,
+        },
       }),
     ]);
+    const evidenceQuality = deriveEvidenceQuality(evidenceItems);
 
     const baseline = baselines[0] ?? null;
     const decision = computeSwitchDecision({
       baseline: baseline
         ? {
+            supplierName: baseline.supplierName,
             unitPrice: baseline.unitPrice?.toString(),
+            originUnitPrice: baseline.originUnitPrice?.toString(),
+            landedCost: baseline.landedCost?.toString(),
+            marketBenchmarkPrice:
+              baseline.marketBenchmarkPrice?.toString() ??
+              baseline.marketPrice?.toString(),
             quantity: baseline.quantity?.toString(),
             currency: baseline.currency,
             frequency: baseline.frequency,
             paymentTerms: baseline.paymentTerms,
+            deliveryTerms: baseline.deliveryTerms,
             leadTime: baseline.leadTime,
             riskFlags: baseline.riskFlags,
           }
         : null,
       alternatives: alternatives.map((a) => ({
+        supplierName: a.supplierName,
         unitPrice: a.unitPrice?.toString(),
         totalCost: a.totalCost?.toString(),
         currency: a.currency,
         moq: a.moq,
         leadTime: a.leadTime,
         paymentTerm: a.paymentTerm,
+        platform: a.supplierCandidate?.platform,
+        source: a.supplierCandidate?.source,
+        reliabilityScore: a.supplierCandidate?.reliabilityScore,
         estimatedSavings: a.estimatedSavings?.toString(),
         savingsConfidence: a.savingsConfidence,
         switchingCost: a.switchingCost,
         switchingRisk: a.switchingRisk,
+        totalCostComparison: a.totalCostComparison,
         riskFlags: a.riskFlags,
         evidenceId: a.evidenceId,
       })),
-      evidenceCount,
+      evidenceCount: evidenceItems.length,
+      evidenceQualityScore: evidenceQuality.score,
+      evidenceQualityLevel: evidenceQuality.level,
+      evidenceQualityReasons: evidenceQuality.reasons,
       defaultCurrency: run?.currency ?? null,
+      decisionAuthorityLevel: tradePainMetadata.decisionAuthorityLevel,
+      payerKnown: tradePainMetadata.payerKnown,
+      consequenceOwnerKnown: Boolean(tradePainMetadata.consequenceOwner),
     });
 
-    const report = await prisma.switchDecisionReport.create({
+    const report = await database.switchDecisionReport.create({
       data: {
         organizationId: parsed.organizationId,
         sourcingRunId: parsed.sourcingRunId,
@@ -676,7 +764,12 @@ export const generateSwitchDecisionAction = registerAction<
             ? alternatives[decision.topAlternativeIndex]?.id
             : null,
         baselineId: baseline?.id ?? null,
-        evidenceSummary: { count: decision.evidenceCount },
+        evidenceSummary: {
+          count: decision.evidenceCount,
+          qualityLevel: evidenceQuality.level,
+          qualityScore: evidenceQuality.score,
+          reasons: evidenceQuality.reasons,
+        },
         missingProof: JSON.parse(JSON.stringify(decision.missingProof)),
         riskFlags: JSON.parse(JSON.stringify(decision.riskFlags)),
         summary: decision.summary,
@@ -719,7 +812,7 @@ export const generateSwitchDecisionAction = registerAction<
         ? Math.round(Number(report.savingsPercent) * 100) / 100
         : null,
       currency: report.currency,
-      evidenceCount,
+      evidenceCount: evidenceItems.length,
       missingProof: decision.missingProof,
       riskFlags: decision.riskFlags,
       summary: report.summary ?? "",
@@ -767,11 +860,12 @@ export const submitBuyerDecisionAction = registerAction<
         select: { email: true },
       });
       if (!user?.email) throw new Error("USER_NOT_FOUND");
+      const reviewerEmail = user.email.trim().toLowerCase();
       const delivery = await prisma.buyerReportDelivery.findFirst({
         where: {
           sourcingRunId: parsed.sourcingRunId,
           organizationId: parsed.organizationId,
-          assignedToEmail: user.email,
+          assignedToEmail: reviewerEmail,
         },
         select: { id: true },
       });
@@ -788,9 +882,6 @@ export const submitBuyerDecisionAction = registerAction<
     });
     if (!report) {
       throw new Error("NO_SWITCH_DECISION_REPORT");
-    }
-    if (report.recommendation !== "SWITCH" && parsed.decision === "APPROVE") {
-      throw new Error("CANNOT_APPROVE_NON_SWITCH_RECOMMENDATION");
     }
 
     const isApprove = parsed.decision === "APPROVE";
@@ -814,12 +905,14 @@ export const submitBuyerDecisionAction = registerAction<
           evidenceType: "BUYER_DECISION",
           title: `Buyer decision: ${parsed.decision}`,
           description:
-            `Buyer ${parsed.decision === "APPROVE" ? "approved" : parsed.decision === "REQUEST_MORE_PROOF" ? "requested more proof for" : "rejected"} the switch decision report.` +
+            `Buyer ${parsed.decision === "APPROVE" ? `accepted the ${report.recommendation} recommendation in` : parsed.decision === "REQUEST_MORE_PROOF" ? "requested more proof for" : "rejected"} the switch decision report.` +
             (parsed.notes ? ` Notes: ${parsed.notes}` : ""),
           content: JSON.stringify({
             decision: parsed.decision,
             reportId: report.id,
             recommendation: report.recommendation,
+            acceptedRecommendation:
+              parsed.decision === "APPROVE" ? report.recommendation : null,
             notes: parsed.notes,
           }),
           capturedBy: context.actorUserId,
@@ -908,11 +1001,43 @@ export const createSwitchCheckpointsAction = registerAction<
   },
 });
 
+export const OUTCOME_ACTIONS = [
+  "NEGOTIATE",
+  "SWITCH",
+  "KEEP",
+  "WAIT",
+  "REQUEST_MORE_PROOF",
+  "REJECT",
+  "NO_DECISION",
+  "BUYER_DISAPPEARED",
+  "USED_FOR_NEGOTIATION",
+  "FAILED_NO_AUTHORITY",
+  "FAILED_INSUFFICIENT_TRUST",
+  "FAILED_MISSING_PROOF",
+  "FAILED_LOW_URGENCY",
+] as const;
+
+const FAILED_OUTCOME_ACTIONS = new Set<string>([
+  "NO_DECISION",
+  "BUYER_DISAPPEARED",
+  "FAILED_NO_AUTHORITY",
+  "FAILED_INSUFFICIENT_TRUST",
+  "FAILED_MISSING_PROOF",
+  "FAILED_LOW_URGENCY",
+]);
+
+const FINAL_DECISION_OUTCOME_ACTIONS = new Set<string>(["SWITCH", "KEEP"]);
+
+const NEGOTIATION_OUTCOME_ACTIONS = new Set<string>([
+  "NEGOTIATE",
+  "USED_FOR_NEGOTIATION",
+]);
+
 export const recordOutcomeSchema = z
   .object({
     organizationId: z.string().min(1),
     sourcingRunId: z.string().min(1),
-    buyerAction: z.enum(["SWITCH", "NEGOTIATE", "WAIT", "REJECT"]),
+    buyerAction: z.enum(OUTCOME_ACTIONS),
     actualSupplier: z.string().max(256).optional(),
     actualUnitPrice: z.string().optional(),
     actualDeliveryDays: z.number().int().min(0).optional(),
@@ -923,9 +1048,67 @@ export const recordOutcomeSchema = z
     reorderOccurred: z.boolean().optional(),
     buyerSatisfaction: z.number().int().min(1).max(5).optional(),
     learningNote: z.string().max(4096).optional(),
+    moneySaved: z.string().max(128).optional(),
+    timeSaved: z.string().max(128).optional(),
+    riskReduced: z.string().max(32).optional(),
+    dependencyReduced: z.string().max(32).optional(),
+    trustImproved: z.string().max(32).optional(),
+    proofImproved: z.string().max(32).optional(),
+    buyerUnderstoodReport: z.string().max(32).optional(),
+    operatorTimeSpent: z.string().max(128).optional(),
+    lessonLearned: z.string().max(4096).optional(),
+    failedOutcomeReason: z.string().max(4096).optional(),
     linkedReportId: z.string().optional(),
   })
   .strict();
+
+type RecordOutcomeInput = z.infer<typeof recordOutcomeSchema>;
+
+function buildOutcomeLearningNote(
+  parsed: RecordOutcomeInput,
+): string | undefined {
+  const lines: string[] = [];
+
+  if (parsed.learningNote) lines.push(parsed.learningNote);
+  if (parsed.lessonLearned)
+    lines.push(`Lesson learned: ${parsed.lessonLearned}`);
+  if (parsed.failedOutcomeReason) {
+    lines.push(`Failed outcome reason: ${parsed.failedOutcomeReason}`);
+  }
+
+  const painRelief = [
+    ["Money saved", parsed.moneySaved],
+    ["Time saved", parsed.timeSaved],
+    ["Risk reduced", parsed.riskReduced],
+    ["Dependency reduced", parsed.dependencyReduced],
+    ["Trust improved", parsed.trustImproved],
+    ["Proof improved", parsed.proofImproved],
+    ["Buyer understood report", parsed.buyerUnderstoodReport],
+    ["Operator time spent", parsed.operatorTimeSpent],
+  ].filter(([, value]) => value);
+
+  if (painRelief.length > 0) {
+    lines.push(
+      painRelief.map(([label, value]) => `${label}: ${value}`).join("; "),
+    );
+  }
+
+  return lines.length > 0 ? lines.join("\n") : undefined;
+}
+
+function parseOptionalDecimal(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) throw new Error("INVALID_OUTCOME_AMOUNT");
+  return value;
+}
+
+function parseYesNo(value: string | undefined): boolean | null {
+  if (!value || value === "UNKNOWN") return null;
+  if (value === "YES") return true;
+  if (value === "NO") return false;
+  return null;
+}
 
 export type RecordOutcomeResult = {
   id: string;
@@ -944,13 +1127,58 @@ export const recordOutcomeAction = registerAction<
   requiresApprovalForAI: false,
   handler: async (input, context) => {
     const parsed = recordOutcomeSchema.parse(input);
-    const run = await prisma.sourcingRun.findUnique({
+    const database = db(context);
+    const run = await database.sourcingRun.findUnique({
       where: { id: parsed.sourcingRunId },
-      select: { organizationId: true },
+      select: { organizationId: true, requirement: true, metadata: true },
     });
     validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
+    const tradePainMetadata = parseTradePainMetadata(
+      run?.requirement,
+      run?.metadata,
+    );
 
-    const outcome = await prisma.outcomeRecord.create({
+    const report = await database.switchDecisionReport.findFirst({
+      where: {
+        organizationId: parsed.organizationId,
+        sourcingRunId: parsed.sourcingRunId,
+      },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, buyerDecision: true },
+    });
+
+    if (
+      !report?.buyerDecision &&
+      !FAILED_OUTCOME_ACTIONS.has(parsed.buyerAction)
+    ) {
+      throw new Error("BUYER_DECISION_REQUIRED_BEFORE_OUTCOME");
+    }
+
+    if (
+      FINAL_DECISION_OUTCOME_ACTIONS.has(parsed.buyerAction) &&
+      isWeakDecisionAuthority(tradePainMetadata.decisionAuthorityLevel)
+    ) {
+      throw new Error("FINAL_DECISION_AUTHORITY_REQUIRED");
+    }
+
+    if (
+      NEGOTIATION_OUTCOME_ACTIONS.has(parsed.buyerAction) &&
+      ["UNKNOWN", "NO_AUTHORITY", "INFLUENCER"].includes(
+        tradePainMetadata.decisionAuthorityLevel,
+      )
+    ) {
+      throw new Error("FINAL_DECISION_AUTHORITY_REQUIRED");
+    }
+
+    const learningNote = buildOutcomeLearningNote(parsed);
+    if (
+      FAILED_OUTCOME_ACTIONS.has(parsed.buyerAction) &&
+      !parsed.failedOutcomeReason
+    ) {
+      throw new Error("FAILED_OUTCOME_REASON_REQUIRED");
+    }
+
+    const outcome = await database.outcomeRecord.create({
       data: {
         organizationId: parsed.organizationId,
         sourcingRunId: parsed.sourcingRunId,
@@ -962,8 +1190,18 @@ export const recordOutcomeAction = registerAction<
         disputeOccurred: parsed.disputeOccurred ?? false,
         reorderOccurred: parsed.reorderOccurred ?? false,
         buyerSatisfaction: parsed.buyerSatisfaction,
-        learningNote: parsed.learningNote,
-        linkedReportId: parsed.linkedReportId,
+        learningNote,
+        moneySaved: parseOptionalDecimal(parsed.moneySaved),
+        timeSaved: parsed.timeSaved,
+        riskReduced: parsed.riskReduced,
+        dependencyReduced: parsed.dependencyReduced,
+        trustImproved: parsed.trustImproved,
+        proofImproved: parsed.proofImproved,
+        buyerUnderstoodReport: parseYesNo(parsed.buyerUnderstoodReport),
+        operatorTimeSpent: parsed.operatorTimeSpent,
+        lessonLearned: parsed.lessonLearned,
+        failedOutcomeReason: parsed.failedOutcomeReason,
+        linkedReportId: parsed.linkedReportId ?? report?.id,
       },
       select: { id: true, buyerAction: true },
     });
