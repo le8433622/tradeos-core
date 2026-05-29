@@ -3,17 +3,8 @@
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "../../../lib/supabase-browser";
 
-function getAllParams(): URLSearchParams {
-  if (typeof window === "undefined") return new URLSearchParams();
-  const hash = new URLSearchParams(window.location.hash.substring(1));
-  const query = new URLSearchParams(window.location.search.substring(1));
-  // Merge: query params take precedence over hash params
-  const merged = new URLSearchParams(hash);
-  for (const [k, v] of query) merged.set(k, v);
-  return merged;
-}
-
 function getNextPath(): string {
+  if (typeof window === "undefined") return "/";
   const urlNext = new URLSearchParams(window.location.search).get("next");
   if (urlNext?.startsWith("/") && !urlNext.startsWith("//")) return urlNext;
   const stored = sessionStorage.getItem("authCallbackNext");
@@ -24,49 +15,54 @@ function getNextPath(): string {
   return "/";
 }
 
+function parseUrlTokens(): { code?: string; accessToken?: string; refreshToken?: string } {
+  if (typeof window === "undefined") return {};
+  const hash = new URLSearchParams(window.location.hash.substring(1));
+  const query = new URLSearchParams(window.location.search.substring(1));
+  return {
+    code: hash.get("code") || query.get("code") || undefined,
+    accessToken: hash.get("access_token") || query.get("access_token") || undefined,
+    refreshToken: hash.get("refresh_token") || query.get("refresh_token") || undefined,
+  };
+}
+
 export default function AuthCallbackPage() {
   const [status, setStatus] = useState("Completing sign in...");
 
   useEffect(() => {
     async function run() {
       const supabase = createSupabaseBrowserClient();
-      const params = getAllParams();
+      const tokens = parseUrlTokens();
 
-      // PKCE flow: Supabase returns a code in the hash
-      const code = params.get("code");
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
+      // PKCE flow
+      if (tokens.code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(tokens.code);
         if (error) {
           setStatus("Session error: " + error.message);
           return;
         }
-        const nextPath = getNextPath();
-        window.location.href = nextPath;
+        window.location.href = getNextPath();
         return;
       }
 
-      // Implicit flow: access_token and refresh_token in hash
-      const accessToken = params.get("access_token");
-      const refreshToken = params.get("refresh_token");
-      if (accessToken && refreshToken) {
+      // Implicit flow
+      if (tokens.accessToken && tokens.refreshToken) {
         const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
+          access_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken,
         });
         if (error) {
           setStatus("Session error: " + error.message);
           return;
         }
-        const nextPath = getNextPath();
-        window.location.href = nextPath;
+        window.location.href = getNextPath();
         return;
       }
 
-      // No tokens found — maybe session already established
+      // Fallback: check if already signed in
       const { data } = await supabase.auth.getSession();
       if (data?.session) {
-        const nextPath = getNextPath();
-        window.location.href = nextPath;
+        window.location.href = getNextPath();
         return;
       }
 
