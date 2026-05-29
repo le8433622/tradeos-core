@@ -33,17 +33,13 @@ export async function POST(
       nextActions: jsonBody.nextActions as string[] | undefined,
     };
 
-    const result = await executeAction(
-      "sourcing.deliverBuyerReport",
-      body,
-      {
-        actorUserId: session.userId,
-        organizationId: session.organizationId,
-        role: session.role,
-        source: "manual",
-        mfaLevel: session.mfaLevel,
-      },
-    );
+    const result = await executeAction("sourcing.deliverBuyerReport", body, {
+      actorUserId: session.userId,
+      organizationId: session.organizationId,
+      role: session.role,
+      source: "manual",
+      mfaLevel: session.mfaLevel,
+    });
     return NextResponse.json(result);
   } catch (error) {
     return apiErrorResponse(request, error);

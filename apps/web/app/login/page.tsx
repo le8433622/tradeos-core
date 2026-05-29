@@ -29,7 +29,7 @@ export default function LoginPage() {
     const supabase = createSupabaseBrowserClient();
     const redirectTo = new URL(`${window.location.origin}/auth/callback`);
     if (nextPath !== "/") {
-      sessionStorage.setItem("authCallbackNext", nextPath);
+      redirectTo.searchParams.set("next", nextPath);
     }
     const { error: err } = await supabase.auth.signInWithOtp({
       email,
