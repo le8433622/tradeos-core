@@ -59,10 +59,11 @@ export function getAccessTokenFromRequestCookies(
   }
 
   // Match cookie name patterns:
-  //   sb-{ref}-auth-token        (single cookie)
-  //   sb-{ref}-auth-token-{n}    (chunked cookie, n = 0, 1, 2...)
-  const AUTH_PATTERN = /^sb-.+-auth-token(?:-\d+)?$/;
-  const CHUNK_SUFFIX = /-(\d+)$/;
+  //   sb-{ref}-auth-token          (single cookie)
+  //   sb-{ref}-auth-token-{n}      (legacy chunked, n = 0, 1, 2...)
+  //   sb-{ref}-auth-token.{n}      (SSR v0.5.2+ chunked, n = 0, 1, 2...)
+  const AUTH_PATTERN = /^sb-.+-auth-token(?:[.-]\d+)?$/;
+  const CHUNK_SUFFIX = /[.-](\d+)$/;
 
   const authCookies = Object.keys(all).filter((k) => AUTH_PATTERN.test(k));
   if (authCookies.length === 0) return null;
@@ -94,19 +95,27 @@ export function getAccessTokenFromRequestCookies(
   return parseSupabaseSession(value);
 }
 
+const BASE64_PREFIX = "base64-";
+
 function parseSupabaseSession(raw: string): string | null {
   // @supabase/ssr stores session as JSON: { access_token, refresh_token, ... }
   // In some configurations it's base64(JSON(...))
+  // In SSR v0.5.2+ it's base64-{base64url(JSON(session))}
   // In raw cookie form it can be a direct JWT
 
-  // Try direct JSON
-  for (const input of [raw, tryBase64Decode(raw)]) {
+  // Try inputs: raw, strip base64- prefix + base64url decode, legacy base64 decode
+  const inputs: (string | null)[] = [raw];
+  if (raw.startsWith(BASE64_PREFIX)) {
+    const b64url = raw.slice(BASE64_PREFIX.length);
+    inputs.push(tryBase64URLDecode(b64url));
+  }
+  inputs.push(tryBase64Decode(raw));
+
+  for (const input of inputs) {
     if (input === null) continue;
     try {
       const parsed = JSON.parse(input);
-      // Standard session object
       if (parsed.access_token) return parsed.access_token;
-      // Array format: [access_token, refresh_token, user, ...]
       if (
         Array.isArray(parsed) &&
         parsed.length >= 1 &&
@@ -119,13 +128,24 @@ function parseSupabaseSession(raw: string): string | null {
     }
   }
 
-  // Raw JWT
   if (raw.split(".").length === 3) return raw;
-  // Base64-decoded JWT
   const decoded = tryBase64Decode(raw);
   if (decoded && decoded.split(".").length === 3) return decoded;
 
   return null;
+}
+
+function tryBase64URLDecode(s: string): string | null {
+  try {
+    const base64 = s.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(
+      base64.length + ((4 - (base64.length % 4)) % 4),
+      "=",
+    );
+    return Buffer.from(padded, "base64").toString("utf-8");
+  } catch {
+    return null;
+  }
 }
 
 function tryBase64Decode(s: string): string | null {
