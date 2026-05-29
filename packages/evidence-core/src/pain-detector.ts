@@ -16,19 +16,25 @@ export function detectPain(parsed: ParsedEvidence): PainDetectorResult {
   const score = parsed.evidenceQualityScore;
   const hasSupplier = !!parsed.supplierName;
   const hasPrice = parsed.price != null;
-  const hasOrigin = !!parsed.originCountry;
   const hasLandedCost = parsed.landedCost != null;
   const hasDelivery = !!parsed.deliveryTerms;
   const hasPayment = !!parsed.paymentTerms;
+  const needsOriginPrice = flags.includes("NEEDS_ORIGIN_PRICE");
 
   // --- Pain flags ---
+  // CURRENT_PRICE_UNKNOWN: missing current buyer price
+  if (!hasPrice || flags.includes("NEEDS_CURRENT_PRICE")) {
+    painFlags.push("CURRENT_PRICE_UNKNOWN");
+  }
 
-  if (
-    !hasPrice ||
-    flags.includes("NEEDS_CURRENT_PRICE") ||
-    flags.includes("NEEDS_ORIGIN_PRICE")
-  ) {
+  // ORIGIN_PRICE_UNKNOWN: missing origin/export price (independent of current price)
+  if (needsOriginPrice) {
     painFlags.push("ORIGIN_PRICE_UNKNOWN");
+  }
+
+  // PRICE_GAP_POSSIBLE: buyer has current price but origin price is unknown
+  if (hasPrice && needsOriginPrice) {
+    painFlags.push("PRICE_GAP_POSSIBLE");
   }
 
   if (!hasLandedCost || flags.includes("NEEDS_LANDED_COST")) {
@@ -37,10 +43,6 @@ export function detectPain(parsed: ParsedEvidence): PainDetectorResult {
 
   if (!hasSupplier || flags.includes("NEEDS_SUPPLIER_IDENTITY")) {
     painFlags.push("SUPPLIER_PROOF_WEAK");
-  }
-
-  if (hasPrice && !hasOrigin) {
-    painFlags.push("PRICE_GAP_POSSIBLE");
   }
 
   if (flags.includes("NEEDS_MARKET_BENCHMARK")) {
@@ -65,11 +67,11 @@ export function detectPain(parsed: ParsedEvidence): PainDetectorResult {
 
   // --- Dependency flags ---
 
-  if (hasSupplier && flags.includes("NEEDS_SUPPLIER_IDENTITY") === false) {
+  if (hasSupplier && !flags.includes("NEEDS_SUPPLIER_IDENTITY")) {
     dependencyFlags.push("SINGLE_SUPPLIER_DEPENDENCY");
   }
 
-  if (!hasPrice && !hasOrigin) {
+  if (!hasPrice) {
     dependencyFlags.push("ORIGIN_VALUE_BLINDNESS");
   }
 
@@ -102,12 +104,19 @@ export function detectPain(parsed: ParsedEvidence): PainDetectorResult {
   // --- suggestedReason ---
 
   const reasonParts: string[] = [];
-  if (painFlags.length === 0) {
-    reasonParts.push("No significant pain detected.");
+  if (painFlags.includes("CURRENT_PRICE_UNKNOWN")) {
+    reasonParts.push(
+      "Current buyer price is missing — cannot compare alternatives.",
+    );
   }
   if (painFlags.includes("ORIGIN_PRICE_UNKNOWN")) {
     reasonParts.push(
-      "Origin price is unknown — cannot evaluate cost baseline.",
+      "Origin price is unknown — cannot evaluate origin value or margin gap.",
+    );
+  }
+  if (painFlags.includes("PRICE_GAP_POSSIBLE")) {
+    reasonParts.push(
+      "Buyer price exists but origin price is unknown — possible hidden margin or price gap.",
     );
   }
   if (painFlags.includes("LANDED_COST_UNKNOWN")) {
@@ -116,11 +125,6 @@ export function detectPain(parsed: ParsedEvidence): PainDetectorResult {
   if (painFlags.includes("SUPPLIER_PROOF_WEAK")) {
     reasonParts.push(
       "Supplier identity or proof is weak — risk of unreliable sourcing.",
-    );
-  }
-  if (painFlags.includes("PRICE_GAP_POSSIBLE")) {
-    reasonParts.push(
-      "Price exists but origin is missing — potential price gap cannot be verified.",
     );
   }
   if (painFlags.includes("MARKET_BENCHMARK_MISSING")) {
@@ -152,7 +156,7 @@ export function detectPain(parsed: ParsedEvidence): PainDetectorResult {
     );
   }
   if (dependencyFlags.includes("ORIGIN_VALUE_BLINDNESS")) {
-    reasonParts.push("No origin or price data — trade value is invisible.");
+    reasonParts.push("No price data — trade value is invisible.");
   }
   if (dependencyFlags.includes("SUPPLIER_INFORMATION_CONTROL")) {
     reasonParts.push(

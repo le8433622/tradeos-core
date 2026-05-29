@@ -25,23 +25,60 @@ function makeParsed(overrides: Partial<ParsedEvidence> = {}): ParsedEvidence {
 }
 
 describe("detectPain", () => {
-  it("returns few pain flags for a complete quote", () => {
+  it("returns no pain flags for a complete quote", () => {
     const result = detectPain(makeParsed());
     expect(result.painFlags).toHaveLength(0);
     expect(result.suggestedNextStep).toBe("CREATE_CASE_DRAFT");
-    expect(result.suggestedReason).toContain("No significant pain detected");
+    expect(result.suggestedReason).toContain("Single supplier identified");
   });
 
-  it("ORIGIN_PRICE_UNKNOWN when price is missing", () => {
+  it("CURRENT_PRICE_UNKNOWN when price is missing", () => {
     const result = detectPain(makeParsed({ price: undefined }));
-    expect(result.painFlags).toContain("ORIGIN_PRICE_UNKNOWN");
+    expect(result.painFlags).toContain("CURRENT_PRICE_UNKNOWN");
+    expect(result.painFlags).not.toContain("ORIGIN_PRICE_UNKNOWN");
   });
 
-  it("ORIGIN_PRICE_UNKNOWN when NEEDS_CURRENT_PRICE flag present", () => {
+  it("CURRENT_PRICE_UNKNOWN when NEEDS_CURRENT_PRICE flag present", () => {
     const result = detectPain(
       makeParsed({ missingProofFlags: ["NEEDS_CURRENT_PRICE"] }),
     );
+    expect(result.painFlags).toContain("CURRENT_PRICE_UNKNOWN");
+    expect(result.painFlags).not.toContain("ORIGIN_PRICE_UNKNOWN");
+  });
+
+  it("ORIGIN_PRICE_UNKNOWN only when NEEDS_ORIGIN_PRICE flag present", () => {
+    const result = detectPain(
+      makeParsed({ missingProofFlags: ["NEEDS_ORIGIN_PRICE"] }),
+    );
     expect(result.painFlags).toContain("ORIGIN_PRICE_UNKNOWN");
+    expect(result.painFlags).not.toContain("CURRENT_PRICE_UNKNOWN");
+  });
+
+  it("PRICE_GAP_POSSIBLE when both price exists and NEEDS_ORIGIN_PRICE", () => {
+    const result = detectPain(
+      makeParsed({ missingProofFlags: ["NEEDS_ORIGIN_PRICE"] }),
+    );
+    expect(result.painFlags).toContain("PRICE_GAP_POSSIBLE");
+    expect(result.painFlags).toContain("ORIGIN_PRICE_UNKNOWN");
+  });
+
+  it("PRICE_GAP_POSSIBLE not set when price missing even with NEEDS_ORIGIN_PRICE", () => {
+    const result = detectPain(
+      makeParsed({
+        price: undefined,
+        missingProofFlags: ["NEEDS_ORIGIN_PRICE"],
+      }),
+    );
+    expect(result.painFlags).toContain("CURRENT_PRICE_UNKNOWN");
+    expect(result.painFlags).toContain("ORIGIN_PRICE_UNKNOWN");
+    expect(result.painFlags).not.toContain("PRICE_GAP_POSSIBLE");
+  });
+
+  it("originCountry alone does not trigger PRICE_GAP_POSSIBLE", () => {
+    const result = detectPain(
+      makeParsed({ price: 4100, originCountry: undefined }),
+    );
+    expect(result.painFlags).not.toContain("PRICE_GAP_POSSIBLE");
   });
 
   it("LANDED_COST_UNKNOWN when landed cost missing", () => {
@@ -52,13 +89,6 @@ describe("detectPain", () => {
   it("SUPPLIER_PROOF_WEAK when supplier missing", () => {
     const result = detectPain(makeParsed({ supplierName: undefined }));
     expect(result.painFlags).toContain("SUPPLIER_PROOF_WEAK");
-  });
-
-  it("PRICE_GAP_POSSIBLE when price exists but no origin", () => {
-    const result = detectPain(
-      makeParsed({ price: 4100, originCountry: undefined }),
-    );
-    expect(result.painFlags).toContain("PRICE_GAP_POSSIBLE");
   });
 
   it("MARKET_BENCHMARK_MISSING when flag present", () => {
@@ -127,6 +157,13 @@ describe("detectPain", () => {
     expect(result.suggestedNextStep).toBe("REQUEST_MORE_EVIDENCE");
   });
 
+  it("REQUEST_MORE_EVIDENCE when NEEDS_ORIGIN_PRICE", () => {
+    const result = detectPain(
+      makeParsed({ missingProofFlags: ["NEEDS_ORIGIN_PRICE"] }),
+    );
+    expect(result.suggestedNextStep).toBe("REQUEST_MORE_EVIDENCE");
+  });
+
   it("WAIT when score below 40", () => {
     const result = detectPain(makeParsed({ evidenceQualityScore: 35 }));
     expect(result.suggestedNextStep).toBe("WAIT");
@@ -137,11 +174,16 @@ describe("detectPain", () => {
     expect(result.dependencyFlags).toContain("SINGLE_SUPPLIER_DEPENDENCY");
   });
 
-  it("ORIGIN_VALUE_BLINDNESS when no price and no origin", () => {
-    const result = detectPain(
-      makeParsed({ price: undefined, originCountry: undefined }),
-    );
+  it("ORIGIN_VALUE_BLINDNESS when no price", () => {
+    const result = detectPain(makeParsed({ price: undefined }));
     expect(result.dependencyFlags).toContain("ORIGIN_VALUE_BLINDNESS");
+  });
+
+  it("ORIGIN_VALUE_BLINDNESS not set when price present even without originCountry", () => {
+    const result = detectPain(
+      makeParsed({ price: 4100, originCountry: undefined }),
+    );
+    expect(result.dependencyFlags).not.toContain("ORIGIN_VALUE_BLINDNESS");
   });
 
   it("SUPPLIER_INFORMATION_CONTROL when no supplier", () => {
@@ -161,16 +203,31 @@ describe("detectPain", () => {
     );
   });
 
-  it("suggestedReason includes missing info for multiple pain flags", () => {
+  it("suggestedReason includes correct messages for CURRENT_PRICE_UNKNOWN", () => {
+    const result = detectPain(makeParsed({ price: undefined }));
+    expect(result.suggestedReason).toContain("Current buyer price is missing");
+    expect(result.suggestedReason).not.toContain("Origin price is unknown");
+  });
+
+  it("suggestedReason includes correct messages for ORIGIN_PRICE_UNKNOWN + PRICE_GAP_POSSIBLE", () => {
+    const result = detectPain(
+      makeParsed({ missingProofFlags: ["NEEDS_ORIGIN_PRICE"] }),
+    );
+    expect(result.suggestedReason).toContain("Origin price is unknown");
+    expect(result.suggestedReason).toContain(
+      "Buyer price exists but origin price is unknown",
+    );
+  });
+
+  it("suggestedReason includes multiple pain messages", () => {
     const result = detectPain(
       makeParsed({
         supplierName: undefined,
         price: undefined,
-        originCountry: undefined,
         landedCost: undefined,
       }),
     );
-    expect(result.suggestedReason).toContain("Origin price is unknown");
+    expect(result.suggestedReason).toContain("Current buyer price is missing");
     expect(result.suggestedReason).toContain("Landed cost is missing");
     expect(result.suggestedReason).toContain(
       "Supplier identity or proof is weak",

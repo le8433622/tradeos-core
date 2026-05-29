@@ -28,6 +28,7 @@ export type EvidenceQualityLevel =
 export type Confidence = "HIGH" | "MEDIUM" | "LOW" | "UNKNOWN";
 
 export type PainFlag =
+  | "CURRENT_PRICE_UNKNOWN"
   | "ORIGIN_PRICE_UNKNOWN"
   | "LANDED_COST_UNKNOWN"
   | "SUPPLIER_PROOF_WEAK"
