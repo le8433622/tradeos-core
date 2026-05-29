@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@tradeos/database";
 import {
+  detectPain,
+  type ParsedEvidence,
+  type EvidenceSourceType,
+  type EvidenceQualityLevel,
+  type MissingProofFlag,
+} from "@tradeos/evidence-core";
+import {
   apiErrorResponse,
   withApiPermission,
 } from "../../../../lib/api-errors";
 
-type ParsedEvidence = {
+type DraftParsedEvidence = {
   sourceType: string;
   productName?: string;
   supplierName?: string;
@@ -42,43 +49,14 @@ export type DraftSuggestion = {
     | "NEEDS_SUPPLIER_IDENTITY"
     | "REQUEST_MORE_EVIDENCE"
     | "WAIT";
+  suggestedReason: string;
+  painFlags: string[];
+  dependencyFlags: string[];
   missingProofFlags: string[];
   evidenceQuality: string;
   evidenceQualityScore: number;
   rawText: string;
 };
-
-function suggestNextStep(
-  quality: string,
-  score: number,
-  flags: string[],
-  hasSupplier: boolean,
-): DraftSuggestion["suggestedNextStep"] {
-  const level = quality.split("_")[0] ?? "L0";
-  if (level === "L0" || level === "L1") return "NEEDS_MORE_EVIDENCE";
-  if (!hasSupplier) return "NEEDS_SUPPLIER_IDENTITY";
-  if (
-    flags.includes("NEEDS_LANDED_COST") ||
-    flags.includes("NEEDS_ORIGIN_PRICE")
-  )
-    return "REQUEST_MORE_EVIDENCE";
-  if (score >= 40) return "CREATE_CASE_DRAFT";
-  return "WAIT";
-}
-
-function suggestPainCategories(flags: string[]): string[] {
-  const categories: string[] = [];
-  if (flags.includes("NEEDS_CURRENT_PRICE"))
-    categories.push("Overpaying / Price Gap");
-  if (flags.includes("NEEDS_SUPPLIER_IDENTITY"))
-    categories.push("Single Supplier Dependency");
-  if (flags.includes("NEEDS_LANDED_COST")) categories.push("Hidden Costs");
-  if (flags.includes("NEEDS_ORIGIN_PRICE"))
-    categories.push("Missing Price Evidence");
-  if (flags.includes("NEEDS_MARKET_BENCHMARK"))
-    categories.push("No Market Benchmark");
-  return categories.length > 0 ? categories : ["General Price Check"];
-}
 
 export async function GET(request: Request) {
   try {
@@ -115,12 +93,12 @@ export async function GET(request: Request) {
     }
 
     const metadata = evidence.metadata as Record<string, unknown> | null;
-    const parsedEvidence = metadata?.parsedEvidence as
-      | ParsedEvidence
+    const rawParsed = metadata?.parsedEvidence as
+      | DraftParsedEvidence
       | undefined;
     const rawText = (metadata?.rawText as string) ?? evidence.content ?? "";
 
-    if (!parsedEvidence) {
+    if (!rawParsed) {
       return NextResponse.json(
         {
           error:
@@ -130,13 +108,33 @@ export async function GET(request: Request) {
       );
     }
 
-    const hasSupplier = !!parsedEvidence.supplierName;
-    const productName = parsedEvidence.productName ?? "";
-    const supplierName = parsedEvidence.supplierName ?? "";
+    const productName = rawParsed.productName ?? "";
+    const supplierName = rawParsed.supplierName ?? "";
     const priceStr =
-      parsedEvidence.price != null
-        ? `${parsedEvidence.currency ?? "USD"} ${parsedEvidence.price}${parsedEvidence.unit ? `/${parsedEvidence.unit}` : ""}`
+      rawParsed.price != null
+        ? `${rawParsed.currency ?? "USD"} ${rawParsed.price}${rawParsed.unit ? `/${rawParsed.unit}` : ""}`
         : "";
+
+    const parsed: ParsedEvidence = {
+      sourceType: rawParsed.sourceType as EvidenceSourceType,
+      productName: rawParsed.productName,
+      supplierName: rawParsed.supplierName,
+      price: rawParsed.price,
+      currency: rawParsed.currency,
+      unit: rawParsed.unit,
+      quantity: rawParsed.quantity,
+      originCountry: rawParsed.originCountry,
+      landedCost: rawParsed.landedCost,
+      paymentTerms: rawParsed.paymentTerms,
+      deliveryTerms: rawParsed.deliveryTerms,
+      evidenceQuality: rawParsed.evidenceQuality as EvidenceQualityLevel,
+      evidenceQualityScore: rawParsed.evidenceQualityScore,
+      missingProofFlags: rawParsed.missingProofFlags as MissingProofFlag[],
+      confidence: {},
+      rawEvidenceRef: rawParsed.rawEvidenceRef ?? "",
+    };
+
+    const painResult = detectPain(parsed);
 
     const suggestion: DraftSuggestion = {
       evidenceItemId: evidence.id,
@@ -145,24 +143,23 @@ export async function GET(request: Request) {
       suggestedProduct: productName,
       suggestedSupplier: supplierName,
       suggestedPrice: priceStr,
-      suggestedCurrency: parsedEvidence.currency ?? "USD",
-      suggestedUnit: parsedEvidence.unit ?? "",
+      suggestedCurrency: rawParsed.currency ?? "USD",
+      suggestedUnit: rawParsed.unit ?? "",
       suggestedQuantity:
-        parsedEvidence.quantity != null ? String(parsedEvidence.quantity) : "",
-      suggestedOrigin: parsedEvidence.originCountry ?? "",
-      suggestedSourceCountry: parsedEvidence.originCountry ?? "",
-      suggestedPainCategories: suggestPainCategories(
-        parsedEvidence.missingProofFlags,
-      ),
-      suggestedNextStep: suggestNextStep(
-        parsedEvidence.evidenceQuality,
-        parsedEvidence.evidenceQualityScore,
-        parsedEvidence.missingProofFlags,
-        hasSupplier,
-      ),
-      missingProofFlags: parsedEvidence.missingProofFlags,
-      evidenceQuality: parsedEvidence.evidenceQuality,
-      evidenceQualityScore: parsedEvidence.evidenceQualityScore,
+        rawParsed.quantity != null ? String(rawParsed.quantity) : "",
+      suggestedOrigin: rawParsed.originCountry ?? "",
+      suggestedSourceCountry: rawParsed.originCountry ?? "",
+      suggestedPainCategories:
+        painResult.painFlags.length > 0
+          ? painResult.painFlags
+          : ["General Price Check"],
+      suggestedNextStep: painResult.suggestedNextStep,
+      suggestedReason: painResult.suggestedReason,
+      painFlags: painResult.painFlags,
+      dependencyFlags: painResult.dependencyFlags,
+      missingProofFlags: rawParsed.missingProofFlags,
+      evidenceQuality: rawParsed.evidenceQuality,
+      evidenceQualityScore: rawParsed.evidenceQualityScore,
       rawText,
     };
 

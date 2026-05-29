@@ -22,6 +22,9 @@ type DraftSuggestion = {
     | "NEEDS_SUPPLIER_IDENTITY"
     | "REQUEST_MORE_EVIDENCE"
     | "WAIT";
+  suggestedReason: string;
+  painFlags: string[];
+  dependencyFlags: string[];
   missingProofFlags: string[];
   evidenceQuality: string;
   evidenceQualityScore: number;
@@ -106,6 +109,9 @@ export default function DraftCaseBuilder({
           quantity: editQuantity.trim() || undefined,
           budget: editBudget.trim() || undefined,
           currency: editCurrency || undefined,
+          painFlags: draft.painFlags,
+          dependencyFlags: draft.dependencyFlags,
+          suggestedReason: draft.suggestedReason,
         }),
       });
       if (!res.ok) {
@@ -240,6 +246,86 @@ export default function DraftCaseBuilder({
               {draft.suggestedNextStep}
             </span>
           </div>
+
+          {draft.suggestedReason && (
+            <div
+              style={{
+                marginBottom: 12,
+                padding: "8px 12px",
+                borderRadius: 8,
+                background: "#fffbeb",
+                border: "1px solid #fde68a",
+                fontSize: 13,
+                color: "#92400e",
+                lineHeight: 1.5,
+              }}
+            >
+              <strong style={{ fontWeight: 600 }}>Trade pain analysis:</strong>{" "}
+              {draft.suggestedReason}
+            </div>
+          )}
+
+          {draft.painFlags.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: "#92400e",
+                  fontWeight: 600,
+                  margin: "0 0 4px",
+                }}
+              >
+                Pain flags:
+              </p>
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                {draft.painFlags.map((flag) => (
+                  <span
+                    key={flag}
+                    style={{
+                      fontSize: 11,
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                      background: "#fffbeb",
+                      color: "#92400e",
+                    }}
+                  >
+                    {flag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {draft.dependencyFlags.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: "#7c3aed",
+                  fontWeight: 600,
+                  margin: "0 0 4px",
+                }}
+              >
+                Dependency flags:
+              </p>
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                {draft.dependencyFlags.map((flag) => (
+                  <span
+                    key={flag}
+                    style={{
+                      fontSize: 11,
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                      background: "#f5f3ff",
+                      color: "#7c3aed",
+                    }}
+                  >
+                    {flag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {draft.missingProofFlags.length > 0 && (
             <div

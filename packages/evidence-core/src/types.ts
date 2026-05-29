@@ -27,6 +27,38 @@ export type EvidenceQualityLevel =
 
 export type Confidence = "HIGH" | "MEDIUM" | "LOW" | "UNKNOWN";
 
+export type PainFlag =
+  | "ORIGIN_PRICE_UNKNOWN"
+  | "LANDED_COST_UNKNOWN"
+  | "SUPPLIER_PROOF_WEAK"
+  | "PRICE_GAP_POSSIBLE"
+  | "MARKET_BENCHMARK_MISSING"
+  | "QUALITY_PROOF_MISSING"
+  | "DELIVERY_TERMS_MISSING"
+  | "PAYMENT_TERMS_MISSING"
+  | "NO_DECISION_AUTHORITY"
+  | "EVIDENCE_WEAK";
+
+export type DependencyFlag =
+  | "SINGLE_SUPPLIER_DEPENDENCY"
+  | "PLATFORM_DEPENDENCY"
+  | "BROKER_DEPENDENCY"
+  | "SUPPLIER_INFORMATION_CONTROL"
+  | "ORIGIN_VALUE_BLINDNESS"
+  | "OPERATOR_INTERPRETATION_DEPENDENCY";
+
+export type PainDetectorResult = {
+  painFlags: PainFlag[];
+  dependencyFlags: DependencyFlag[];
+  suggestedReason: string;
+  suggestedNextStep:
+    | "CREATE_CASE_DRAFT"
+    | "NEEDS_MORE_EVIDENCE"
+    | "NEEDS_SUPPLIER_IDENTITY"
+    | "REQUEST_MORE_EVIDENCE"
+    | "WAIT";
+};
+
 export type ParsedEvidence = {
   sourceType: EvidenceSourceType;
   productName?: string;

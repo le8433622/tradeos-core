@@ -23,6 +23,9 @@ export async function POST(request: Request) {
       quantity,
       budget,
       currency,
+      painFlags,
+      dependencyFlags,
+      suggestedReason,
     } = body;
 
     if (!title || !requirement) {
@@ -45,27 +48,34 @@ export async function POST(request: Request) {
       }
     }
 
-    const result = (await executeAction(
-      "sourcing.createRun",
-      {
-        organizationId: session.organizationId,
-        title,
-        requirement,
-        sourceCountry: sourceCountry || undefined,
-        targetCountry: targetCountry || undefined,
-        productCategory: productCategory || undefined,
-        quantity: quantity || undefined,
-        budget: budget || undefined,
-        currency: currency || undefined,
-      },
-      {
-        actorUserId: session.userId,
-        organizationId: session.organizationId,
-        role: session.role,
-        source: "manual",
-        mfaLevel: session.mfaLevel,
-      },
-    )) as { id: string; status: string };
+    const runInput: Record<string, unknown> = {
+      organizationId: session.organizationId,
+      title,
+      requirement,
+      sourceCountry: sourceCountry || undefined,
+      targetCountry: targetCountry || undefined,
+      productCategory: productCategory || undefined,
+      quantity: quantity || undefined,
+      budget: budget || undefined,
+      currency: currency || undefined,
+    };
+    if (painFlags || dependencyFlags || suggestedReason) {
+      runInput.metadata = {
+        painCategories: Array.isArray(painFlags) ? painFlags : undefined,
+        dependencyFlags: Array.isArray(dependencyFlags)
+          ? dependencyFlags
+          : undefined,
+        painDetail: suggestedReason || undefined,
+      };
+    }
+
+    const result = (await executeAction("sourcing.createRun", runInput, {
+      actorUserId: session.userId,
+      organizationId: session.organizationId,
+      role: session.role,
+      source: "manual",
+      mfaLevel: session.mfaLevel,
+    })) as { id: string; status: string };
 
     if (evidenceItemId) {
       await executeAction(
