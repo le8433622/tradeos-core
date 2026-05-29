@@ -18,6 +18,7 @@
     "@tradeos/ai-core": "workspace:*",
     "@tradeos/analytics-core": "workspace:*",
     "@tradeos/approval-core": "workspace:*",
+    "@tradeos/evidence-core": "workspace:*",
     "@tradeos/auth": "workspace:*",
     "@tradeos/crm-core": "workspace:*",
     "@tradeos/database": "workspace:*",

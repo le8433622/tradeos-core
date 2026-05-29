@@ -63,6 +63,9 @@ importers:
       '@tradeos/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@tradeos/evidence-core':
+        specifier: workspace:*
+        version: link:../../packages/evidence-core
       '@tradeos/inbox-core':
         specifier: workspace:*
         version: link:../../packages/inbox-core

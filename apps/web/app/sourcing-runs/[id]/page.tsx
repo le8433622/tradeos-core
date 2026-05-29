@@ -6,6 +6,7 @@ import PurchaseBaselineForm from "./purchase-baseline-form";
 import SupplierAlternativeForm from "./supplier-alternative-form";
 import SwitchDecisionDisplay from "./switch-decision-display";
 import DeliverBuyerReport from "./deliver-buyer-report";
+import EvidenceIntake from "./evidence-intake";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "#6b7280",
@@ -628,6 +629,8 @@ export default async function SourcingRunDetailPage({
           </div>
         )}
       </section>
+
+      <EvidenceIntake sourcingRunId={id} />
 
       {run.checkpoints.length > 0 && (
         <section style={{ marginTop: 32 }}>
