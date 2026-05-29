@@ -68,9 +68,23 @@
 
 ## Migration Status (2026-05-29)
 
-| Migration                          | Status     | Notes                                                    |
-| ---------------------------------- | ---------- | -------------------------------------------------------- |
-| `20260529_human_nature_trade_pain` | ✅ APPLIED | Applied to staging on 2026-05-29. Not yet on production. |
+| Migration                          | Status     | Notes                                                                  |
+| ---------------------------------- | ---------- | ---------------------------------------------------------------------- |
+| `20260529_human_nature_trade_pain` | ✅ APPLIED | Applied to staging on 2026-05-29. Applied to production on 2026-05-29. |
+
+## Migration Apply Record
+
+Date: 2026-05-29 07:35 UTC
+Operator: AI agent (approved by user)
+Supabase project/ref: `okkzfmtwrjkfjzyprrwh` (production)
+Git commit: `824eaf0` (#125 human-nature QA code)
+Migrations applied:
+
+- `20260529_human_nature_trade_pain`
+  Pre-health check: ✅ /api/health → 200
+  Post-health check: ✅ /api/health → 200
+  Rollback plan: Migration is additive-only (ALTER TABLE ADD COLUMN + CREATE INDEX). Forward-fix preferred.
+  Residual issue: None — additive-only columns, all nullable.
 
 ## Verified Production Behaviour (2026-05-28)
 
@@ -139,4 +153,4 @@
 13. **#124 P0: Run first external buyer pain-solving case**: real email, real evidence, real decision, real outcome — not seeded, not demo
 14. ~~#125 P1: Run live market-evidence QA~~ ✅ DONE — 10/10 scenarios across Coffee/Cashew/Rice; documented per case with human pull, hidden pain, power/dependency, evidence quality, recommendation
 15. **#124: Run real production external buyer case** — real magic link, real buyer feedback, documented outcome. This closes market-validation requirement.
-16. **Apply migration `20260529_human_nature_trade_pain` to production** — before #124 production run.
+16. ~~**Apply migration `20260529_human_nature_trade_pain` to production**~~ ✅ DONE — applied 2026-05-29, pre-health 200, post-health 200.
