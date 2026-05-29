@@ -205,5 +205,6 @@ Migrations applied:
 12. ~~**Phase 18 — Workspace Switcher + permissions cleanup**~~ ✅ DONE — multi-org switch-org API, WorkspaceSwitcher UI, `usePermission` hook, settings sub-page permission gates, dead import cleanup
 13. **#130 Commerce API Spike** — ✅ DONE — 15 APIs evaluated, corrected to interface-first, documented in `docs/40_COMMERCE_API_SPIKE.md`
 14. ~~**P0: Evidence Adapter Interface**~~ ✅ DONE — provider-neutral `EvidenceAdapter` interface, `ManualTextEvidenceAdapter`, `ParsedEvidence` types, 8 missing-proof flags, L0-L5 quality, 31 tests pass, typecheck + build + docs:check pass
-15. **Choose Workspace page** — Build post-login page for users with >1 org
-16. **#124 P0: Run first external buyer pain-solving case** — buyer `earthkingdomuniverse@gmail.com` ✅ signed up via magic link. Full flow rehearsed on staging.
+15. ~~**P0: Evidence Intake UI + Draft Case Builder**~~ ✅ DONE — `POST /api/evidence/parse` + `POST /api/evidence/items` + `EvidenceIntake` component (paste → parse → approve → save) + `GET /api/evidence/build-draft` + `POST /api/evidence/drafts` + `DraftCaseBuilder` component (evidence → draft suggestion → edit → create SourcingRun DRAFT)
+16. **Choose Workspace page** — Build post-login page for users with >1 org
+17. **#124 P0: Run first external buyer pain-solving case** — buyer `earthkingdomuniverse@gmail.com` ✅ signed up via magic link. Full flow rehearsed on staging.

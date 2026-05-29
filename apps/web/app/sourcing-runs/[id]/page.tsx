@@ -7,6 +7,7 @@ import SupplierAlternativeForm from "./supplier-alternative-form";
 import SwitchDecisionDisplay from "./switch-decision-display";
 import DeliverBuyerReport from "./deliver-buyer-report";
 import EvidenceIntake from "./evidence-intake";
+import DraftCaseBuilder from "../../../components/draft-case-builder";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "#6b7280",
@@ -69,6 +70,7 @@ export default async function SourcingRunDetailPage({
           fileUrl: true,
           externalUrl: true,
           capturedAt: true,
+          sourcingRunId: true,
         },
       },
       purchaseBaselines: { orderBy: { createdAt: "desc" } },
@@ -631,6 +633,17 @@ export default async function SourcingRunDetailPage({
       </section>
 
       <EvidenceIntake sourcingRunId={id} />
+
+      <DraftCaseBuilder
+        evidenceItems={run.evidenceItems.map((e) => ({
+          id: e.id,
+          title: e.title,
+          evidenceType: e.evidenceType,
+          description: e.description,
+          capturedAt: e.capturedAt.toISOString(),
+          sourcingRunId: e.sourcingRunId,
+        }))}
+      />
 
       {run.checkpoints.length > 0 && (
         <section style={{ marginTop: 32 }}>
