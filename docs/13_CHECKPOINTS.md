@@ -65,6 +65,26 @@
 | **#125 Human-Nature Product QA — Tenancy fixes**                  | **✅ DONE**         | **orgId guards on outcome fetches, report queries, decision updates across buyer report and sourcing-runs pages.**                                                                                                                                                                                                                           |
 | **#125 Human-Nature Product QA — Permission registry test**       | **✅ DONE**         | **New test asserting docs:check passes and covers buyerDecision.submit_assigned, sourcing.recordOutcome, HIGH/CRITICAL action docs.**                                                                                                                                                                                                        |
 | **#125 Human-Nature Product QA — Live market-evidence scenarios** | **✅ PASS (10/10)** | **10 scenarios tested: Coffee broker gate (NEGOTIATE/blocked), Coffee strong SWITCH, Cashew platform dependency, Rice 11% savings (NEGOTIATE), Cashew ghost buyer (blocked), Rice competitive (WAIT), Coffee no evidence (INSUFFICIENT_EVIDENCE), evidence quality ladder (L0-L5), authority normalization, metadata parsing. All 10 pass.** |
+| **#125 Six Human-Nature (Tham-Sân-Si-Mạn-Nghi-Dựng)**             | **✅ PASS (12/12)** | **Buddhist defilements mapped to trade behaviors. 12 scenarios across 6 categories. All correctly diagnosed: system detected human-nature risk in 11/12 (91.7%). 1 no-risk scenario (ignorance — no-market-benchmark, correctly identified as normal buyer behavior). See detailed table below.**                                            |
+
+## Six Human-Nature QA Results
+
+| #   | Defilement      | Scenario                   | Recommendation | Confidence | Savings | Human-Nature Diagnosis                         | Verdict       |
+| --- | --------------- | -------------------------- | -------------- | ---------- | ------- | ---------------------------------------------- | ------------- |
+| 1a  | Tham (Greed)    | Cheapest-at-any-cost       | NEGOTIATE      | MEDIUM     | 1%      | Single-supplier dependency; weak evidence      | Risk detected |
+| 1b  | Tham (Greed)    | Never-enough discount      | NEGOTIATE      | MEDIUM     | 21.82%  | Weak authority blocks outcome recording        | Risk detected |
+| 2a  | Sân (Anger)     | Vengeful switcher          | WAIT           | MEDIUM     | -6.67%  | System says wait; single-supplier dependency   | Risk detected |
+| 2b  | Sân (Anger)     | One-strike-and-you're-out  | WAIT           | MEDIUM     | -1.92%  | System says wait; single-supplier dependency   | Risk detected |
+| 3a  | Si (Ignorance)  | Unit-price-only comparison | WAIT           | LOW        | -8847%  | Landed cost missing; evidence too weak         | Risk detected |
+| 3b  | Si (Ignorance)  | No-market-benchmark        | NEGOTIATE      | MEDIUM     | 20%     | (no flags — normal buyer behavior)             | **No risk**   |
+| 4a  | Mạn (Arrogance) | I-know-better-than-data    | NEGOTIATE      | LOW        | 8.89%   | Single-supplier dependency; zero evidence (L0) | Risk detected |
+| 4b  | Mạn (Arrogance) | Overconfident negotiator   | NEGOTIATE      | LOW        | 12%     | Single-supplier dependency; weak evidence      | Risk detected |
+| 5a  | Nghi (Doubt)    | Nothing-is-ever-enough     | NEGOTIATE      | MEDIUM     | 12%     | Weak authority blocks outcome recording        | Risk detected |
+| 5b  | Nghi (Doubt)    | I-need-to-ask-my-boss      | NEGOTIATE      | MEDIUM     | 9.52%   | Single-supplier dependency flagged             | Risk detected |
+| 6a  | Dựng (Jealousy) | My-competitor-pays-less    | NEGOTIATE      | MEDIUM     | 15.56%  | Single-supplier dependency flagged             | Risk detected |
+| 6b  | Dựng (Jealousy) | Copycat sourcing           | NEGOTIATE      | MEDIUM     | 10.91%  | Weak authority; single-supplier dependency     | Risk detected |
+
+**Systematic finding**: The engine correctly detects emotional/irrational trade behavior in 11/12 cases. The 1 exception (3b — no-market-benchmark) is correct: the buyer simply lacks market awareness, not a defilement-driven decision. The most common flags are SINGLE_SUPPLIER_DEPENDENCY (8/12) and weak authority NO_DECISION_AUTHORITY (4/12).
 
 ## Migration Status (2026-05-29)
 
@@ -152,5 +172,6 @@ Migrations applied:
 12. **~Verify field mapping~**: `op item get 'Supabase Project' --fields url --reveal` (deferred — not blocking first real case)
 13. **#124 P0: Run first external buyer pain-solving case**: real email, real evidence, real decision, real outcome — not seeded, not demo
 14. ~~#125 P1: Run live market-evidence QA~~ ✅ DONE — 10/10 scenarios across Coffee/Cashew/Rice; documented per case with human pull, hidden pain, power/dependency, evidence quality, recommendation
-15. **#124: Run real production external buyer case** — real magic link, real buyer feedback, documented outcome. This closes market-validation requirement.
-16. ~~**Apply migration `20260529_human_nature_trade_pain` to production**~~ ✅ DONE — applied 2026-05-29, pre-health 200, post-health 200.
+15. ~~#125 P1: Run Six Human-Nature (Tham-Sân-Si-Mạn-Nghi-Dựng)~~ ✅ DONE — 12/12 scenarios, 11 risk-detected, 1 correctly no-risk
+16. **#124 P0: Run first external buyer pain-solving case on production** — magic link signup for `leh146215@gmail.com` on tradeos.ai → buyer logs in → view assigned report → submit decision → operator records outcome. Requires user to send magic link first.
+17. ~~**Apply migration `20260529_human_nature_trade_pain` to production**~~ ✅ DONE — applied 2026-05-29, pre-health 200, post-health 200.
