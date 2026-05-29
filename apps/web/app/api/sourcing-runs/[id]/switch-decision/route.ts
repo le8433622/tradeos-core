@@ -47,13 +47,47 @@ export async function GET(
     const { session } = auth;
     const { id } = await params;
 
-    const report = await prisma.switchDecisionReport.findFirst({
+    const raw = await prisma.switchDecisionReport.findFirst({
       where: {
         sourcingRunId: id,
         organizationId: session.organizationId,
       },
       orderBy: { createdAt: "desc" },
     });
+
+    if (!raw) {
+      return NextResponse.json({ report: null });
+    }
+
+    const report = {
+      id: raw.id,
+      recommendation: raw.recommendation,
+      confidence: raw.confidence,
+      savingsScore: raw.savingsScore ?? 0,
+      evidenceScore: raw.evidenceScore ?? 0,
+      paymentRiskScore: raw.paymentRiskScore ?? 0,
+      leadTimeRiskScore: raw.leadTimeRiskScore ?? 0,
+      dependencyRiskScore: raw.dependencyRiskScore ?? 0,
+      overallScore: raw.overallScore ?? 0,
+      monthlySavings: raw.monthlySavings ? Number(raw.monthlySavings) : null,
+      annualSavings: raw.annualSavings ? Number(raw.annualSavings) : null,
+      savingsPercent: raw.savingsPercent
+        ? Math.round(Number(raw.savingsPercent) * 100) / 100
+        : null,
+      currency: raw.currency,
+      evidenceCount:
+        (raw.evidenceSummary as { count?: number } | null)?.count ?? 0,
+      missingProof: Array.isArray(raw.missingProof)
+        ? (raw.missingProof as string[])
+        : [],
+      riskFlags: Array.isArray(raw.riskFlags)
+        ? (raw.riskFlags as string[])
+        : [],
+      summary: raw.summary ?? "",
+      nextActions: Array.isArray(raw.nextActions)
+        ? (raw.nextActions as string[])
+        : [],
+    };
 
     return NextResponse.json({ report });
   } catch (error) {
