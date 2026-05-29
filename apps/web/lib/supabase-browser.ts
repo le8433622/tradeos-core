@@ -8,5 +8,5 @@ export function createSupabaseBrowserClient() {
     throw new Error("NEXT_PUBLIC_SUPABASE_ENV_MISSING");
   }
 
-  return createBrowserClient(url, key, { flowType: "pkce" });
+  return createBrowserClient(url, key);
 }

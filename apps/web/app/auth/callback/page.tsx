@@ -28,11 +28,16 @@ function parseUrlTokens(): { code?: string; accessToken?: string; refreshToken?:
 
 export default function AuthCallbackPage() {
   const [status, setStatus] = useState("Completing sign in...");
+  const [debug, setDebug] = useState("");
 
   useEffect(() => {
     async function run() {
       const supabase = createSupabaseBrowserClient();
       const tokens = parseUrlTokens();
+      const fullUrl = window.location.href;
+      const hashRaw = window.location.hash;
+      const queryRaw = window.location.search;
+      setDebug(`URL: ${fullUrl}\nHash: ${hashRaw}\nQuery: ${queryRaw}\nCode: ${tokens.code}\nAT: ${tokens.accessToken}\nRT: ${tokens.refreshToken}`);
 
       // PKCE flow
       if (tokens.code) {
@@ -75,6 +80,7 @@ export default function AuthCallbackPage() {
     <main style={{ padding: 32, fontFamily: "Arial, sans-serif" }}>
       <h1>TradeOS Auth</h1>
       <p>{status}</p>
+      <pre style={{ fontSize: 12, background: "#f5f5f5", padding: 16, borderRadius: 8, whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{debug}</pre>
       <a href="/login">Back to login</a>
     </main>
   );
