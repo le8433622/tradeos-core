@@ -156,21 +156,35 @@ Migrations applied:
 | Leaked password protection disabled    | LOW        | Acceptable for first controlled case (magic link only). #122 tracks enablement                                                                      |
 | Permission registry drift risk         | ✅ MANAGED | `pnpm docs:check` now blocks duplicate permission keys, seed/system role drift, unknown API guard permissions, and unregistered route action calls. |
 
+## Phase 18 RBAC & Multi-Org Progress
+
+| Item                                      | Status     | Notes                                                                                             |
+| ----------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------- |
+| Workspace Switcher UI                     | ✅ DONE    | `WorkspaceSwitcher` client component in sidebar dropdown. Fetch + switch org.                     |
+| `POST /api/user/switch-org`               | ✅ DONE    | Sets `activeOrganizationId` cookie, validates membership access.                                  |
+| `page-session.ts` reads active org cookie | ✅ DONE    | `requirePageSession` passes `activeOrganizationId` to `resolveSessionFromEmail`.                  |
+| Memberships API returns full session      | ✅ DONE    | Now returns `userId`, `organizationId`, `role`, `permissions`, `email` + `memberships`.           |
+| `usePermission` hook                      | ✅ DONE    | Client-side hook for conditional UI rendering. Caches session data.                               |
+| Dead `requirePageSession` imports removed | ✅ DONE    | 5 detail pages cleaned up.                                                                        |
+| Settings sub-page permission gates        | ✅ DONE    | `settings/billing`, `integrations`, `privacy`, `settings/` root now have `requirePagePermission`. |
+| #130 Commerce API Spike                   | ✅ DONE    | 15 APIs evaluated, doc updated with interface-first corrected direction.                          |
+| Choose Workspace page                     | 🔴 PENDING | Post-login page for multi-org users. Not blocking current workflow.                               |
+
 ## #124 External Buyer Case — Staging Rehearsal Results
 
-| Step | Status | Details |
-|------|--------|---------|
-| Buyer signed up via magic link | ✅ DONE | `earthkingdomuniverse@gmail.com` on production |
-| Sourcing run created | ✅ DONE | Vietnam Robusta Coffee — Price Check (id: `cmpq8pnep0001cq8dwsk5h2n1`) |
-| Purchase baseline set | ✅ DONE | Unit price $4.20, origin $3.86, landed $5.10, benchmark $3.92 |
-| Supplier alternative + quote | ✅ DONE | Ben Tre Coffee Export JSC @ $3.80/kg |
-| Switch decision computed | ✅ DONE | WAIT (LOW confidence) — evidence too weak |
-| Buyer report generated | ✅ DONE | 6-section report created |
-| Report delivered | ✅ DONE | Status → REPORT_DELIVERED |
-| Report assigned to buyer | ✅ DONE | Assigned to `earthkingdomuniverse@gmail.com` |
-| Buyer decision | ✅ DONE | APPROVE (accepted WAIT recommendation) |
-| Outcome recorded | ✅ DONE | WAIT, quality ACCEPTABLE, lesson learned documented |
-| Magic link on production | ✅ DONE | Buyer already signed in |
+| Step                           | Status  | Details                                                                |
+| ------------------------------ | ------- | ---------------------------------------------------------------------- |
+| Buyer signed up via magic link | ✅ DONE | `earthkingdomuniverse@gmail.com` on production                         |
+| Sourcing run created           | ✅ DONE | Vietnam Robusta Coffee — Price Check (id: `cmpq8pnep0001cq8dwsk5h2n1`) |
+| Purchase baseline set          | ✅ DONE | Unit price $4.20, origin $3.86, landed $5.10, benchmark $3.92          |
+| Supplier alternative + quote   | ✅ DONE | Ben Tre Coffee Export JSC @ $3.80/kg                                   |
+| Switch decision computed       | ✅ DONE | WAIT (LOW confidence) — evidence too weak                              |
+| Buyer report generated         | ✅ DONE | 6-section report created                                               |
+| Report delivered               | ✅ DONE | Status → REPORT_DELIVERED                                              |
+| Report assigned to buyer       | ✅ DONE | Assigned to `earthkingdomuniverse@gmail.com`                           |
+| Buyer decision                 | ✅ DONE | APPROVE (accepted WAIT recommendation)                                 |
+| Outcome recorded               | ✅ DONE | WAIT, quality ACCEPTABLE, lesson learned documented                    |
+| Magic link on production       | ✅ DONE | Buyer already signed in                                                |
 
 **Key lesson**: The system correctly recommended WAIT because evidence was insufficient (no uploaded invoices/quotes, only a supplier alternative). This validates that the evidence gate works before a real buyer case.
 
@@ -187,9 +201,7 @@ Migrations applied:
 9. ~~#123 RLS performance + unindexed FKs~~ ✅ DONE — audit completed, no remaining gaps
 10. ~~#113 Fill 1Password vault~~ ✅ DONE — vault filled with real production secrets, `/api/health` → 200
 11. **#122 Enable leaked password protection**: Supabase Dashboard > Auth > Settings > toggle on (or PAT via Management API) — before password onboarding
-12. **~Verify field mapping~**: `op item get 'Supabase Project' --fields url --reveal` (deferred — not blocking first real case)
-13. **#124 P0: Run first external buyer pain-solving case**: real email, real evidence, real decision, real outcome — not seeded, not demo
-14. ~~#125 P1: Run live market-evidence QA~~ ✅ DONE — 10/10 scenarios across Coffee/Cashew/Rice; documented per case with human pull, hidden pain, power/dependency, evidence quality, recommendation
-15. ~~#125 P1: Run Six Human-Nature (Tham-Sân-Si-Mạn-Nghi-Dựng)~~ ✅ DONE — 12/12 scenarios, 11 risk-detected, 1 correctly no-risk
-16. **#124 P0: Run first external buyer pain-solving case** — buyer `earthkingdomuniverse@gmail.com` ✅ signed up via magic link. Full flow rehearsed on staging: sourcing run → baseline → quote → switch decision → report → assign → buyer decision (APPROVE) → outcome (WAIT). See results table below.
-17. ~~**Apply migration `20260529_human_nature_trade_pain` to production**~~ ✅ DONE — applied 2026-05-29, pre-health 200, post-health 200.
+12. ~~**Phase 18 — Workspace Switcher + permissions cleanup**~~ ✅ DONE — multi-org switch-org API, WorkspaceSwitcher UI, `usePermission` hook, settings sub-page permission gates, dead import cleanup
+13. **#130 Commerce API Spike** — ✅ DONE — 15 APIs evaluated, corrected to interface-first, documented in `docs/40_COMMERCE_API_SPIKE.md`
+14. **Choose Workspace page** — Build post-login page for users with >1 org
+15. **#124 P0: Run first external buyer pain-solving case** — buyer `earthkingdomuniverse@gmail.com` ✅ signed up via magic link. Full flow rehearsed on staging.

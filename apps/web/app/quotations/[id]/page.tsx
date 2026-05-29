@@ -1,9 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@tradeos/database";
-import {
-  requirePageSession,
-  requirePagePermission,
-} from "../../../lib/page-session";
+import { requirePagePermission } from "../../../lib/page-session";
 import { SendButton } from "./SendButton";
 
 export default async function QuotationDetailPage({

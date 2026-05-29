@@ -16,10 +16,14 @@ export async function requirePageSession() {
   if (userData.user?.email) {
     const accessToken = sessionData.session?.access_token;
     const mfaLevel = accessToken ? getSessionAal(accessToken) : "aal1";
+
+    const cookieStore = await cookies();
+    const activeOrganizationId = cookieStore.get("activeOrganizationId")?.value;
+
     try {
       return await resolveSessionFromEmail(
         userData.user.email,
-        undefined,
+        activeOrganizationId,
         mfaLevel,
       );
     } catch {

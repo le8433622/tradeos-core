@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { SignOutButton } from "./sign-out-button";
+import { WorkspaceSwitcher } from "./workspace-switcher";
 
 interface AppSidebarProps {
   orgName?: string;
@@ -42,24 +43,12 @@ export function AppSidebar({ orgName, userEmail }: AppSidebarProps) {
             fontWeight: 700,
             color: "#111827",
             letterSpacing: "-0.5px",
+            marginBottom: 8,
           }}
         >
           TradeOS
         </div>
-        {orgName && (
-          <div
-            style={{
-              fontSize: 12,
-              color: "#6b7280",
-              marginTop: 4,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {orgName}
-          </div>
-        )}
+        <WorkspaceSwitcher />
       </div>
 
       <ul

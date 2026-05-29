@@ -1,8 +1,5 @@
 import { prisma } from "@tradeos/database";
-import {
-  requirePageSession,
-  requirePagePermission,
-} from "../../../lib/page-session";
+import { requirePagePermission } from "../../../lib/page-session";
 import { IntroductionActions } from "./IntroductionActions";
 
 export default async function IntroductionDetailPage({

@@ -1,9 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@tradeos/database";
-import {
-  requirePageSession,
-  requirePagePermission,
-} from "../../../lib/page-session";
+import { requirePagePermission } from "../../../lib/page-session";
 
 export default async function LeadDetailPage({
   params,
