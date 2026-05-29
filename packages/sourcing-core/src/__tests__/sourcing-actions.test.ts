@@ -31,11 +31,13 @@ const {
   mockSwitchReportUpdate,
   mockOutcomeCreate,
   mockBuyerReportDeliveryCreate,
+  mockBuyerReportDeliveryUpsert,
   mockBuyerReportDeliveryFindFirst,
   mockUserFindUnique,
 } = vi.hoisted(() => {
   const mockOutcomeCreate = vi.fn();
   const mockBuyerReportDeliveryCreate = vi.fn();
+  const mockBuyerReportDeliveryUpsert = vi.fn();
   const mockBuyerReportDeliveryFindFirst = vi.fn();
   const mockUserFindUnique = vi.fn();
   const mockSourcingFindUnique = vi.fn();
@@ -144,6 +146,7 @@ const {
     mockSwitchReportUpdate,
     mockOutcomeCreate,
     mockBuyerReportDeliveryCreate,
+    mockBuyerReportDeliveryUpsert,
     mockBuyerReportDeliveryFindFirst,
     mockUserFindUnique,
     tx,
@@ -208,6 +211,7 @@ vi.mock("@tradeos/database", () => ({
     task: { create: vi.fn().mockResolvedValue({ id: "task-1" }) },
     buyerReportDelivery: {
       create: mockBuyerReportDeliveryCreate,
+      upsert: mockBuyerReportDeliveryUpsert,
       findFirst: mockBuyerReportDeliveryFindFirst,
     },
     user: { findUnique: mockUserFindUnique },
@@ -267,10 +271,11 @@ vi.mock("@tradeos/database", () => ({
           findUnique: mockLeadFindUnique,
         },
         task: { create: vi.fn().mockResolvedValue({ id: "task-1" }) },
-        buyerReportDelivery: {
-          create: mockBuyerReportDeliveryCreate,
-          findFirst: mockBuyerReportDeliveryFindFirst,
-        },
+    buyerReportDelivery: {
+      create: mockBuyerReportDeliveryCreate,
+      upsert: mockBuyerReportDeliveryUpsert,
+      findFirst: mockBuyerReportDeliveryFindFirst,
+    },
         user: { findUnique: mockUserFindUnique },
       };
       if (typeof arg === "function") {
@@ -1019,7 +1024,11 @@ describe("sourcing.deliverBuyerReport", () => {
 });
 
 describe("sourcing.assignBuyerReport", () => {
-  it("normalizes assigned buyer email before creating delivery", async () => {
+  beforeEach(() => {
+    mockBuyerReportDeliveryUpsert.mockResolvedValue({ id: "delivery-1" });
+  });
+
+  it("normalizes assigned buyer email before upserting delivery", async () => {
     const result = (await executeAction(
       "sourcing.assignBuyerReport",
       {
@@ -1031,13 +1040,50 @@ describe("sourcing.assignBuyerReport", () => {
     )) as { deliveryId: string };
 
     expect(result.deliveryId).toBe("delivery-1");
-    expect(mockBuyerReportDeliveryCreate).toHaveBeenCalledWith(
+    expect(mockBuyerReportDeliveryUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({
+        where: {
+          organizationId_sourcingRunId_assignedToEmail: {
+            organizationId: "org-1",
+            sourcingRunId: "run-1",
+            assignedToEmail: "buyer@company.com",
+          },
+        },
+        create: expect.objectContaining({
           assignedToEmail: "buyer@company.com",
+        }),
+        update: expect.objectContaining({
+          status: "PENDING",
         }),
       }),
     );
+  });
+
+  it("re-delivers to same email without error (idempotent upsert)", async () => {
+    const first = (await executeAction(
+      "sourcing.assignBuyerReport",
+      {
+        organizationId: "org-1",
+        sourcingRunId: "run-1",
+        assignedToEmail: "buyer@company.com",
+      },
+      context,
+    )) as { deliveryId: string };
+
+    expect(first.deliveryId).toBe("delivery-1");
+
+    const second = (await executeAction(
+      "sourcing.assignBuyerReport",
+      {
+        organizationId: "org-1",
+        sourcingRunId: "run-1",
+        assignedToEmail: "buyer@company.com",
+      },
+      context,
+    )) as { deliveryId: string };
+
+    expect(second.deliveryId).toBe("delivery-1");
+    expect(mockBuyerReportDeliveryUpsert).toHaveBeenCalledTimes(2);
   });
 });
 

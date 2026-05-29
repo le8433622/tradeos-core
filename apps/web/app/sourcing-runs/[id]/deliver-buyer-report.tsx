@@ -29,11 +29,17 @@ export default function DeliverBuyerReport({
           notes: notes || undefined,
         }),
       });
+      const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
         throw new Error(body.error || `Failed: ${res.status}`);
       }
-      setMessage(`Report delivered to ${email}`);
+      if (body.emailSent) {
+        setMessage(`Report delivered to ${email} (email sent)`);
+      } else if (body.emailError) {
+        setMessage(`Report assigned to ${email} — email notification failed: ${body.emailError}`);
+      } else {
+        setMessage(`Report delivered to ${email}`);
+      }
       setEmail("");
       setNotes("");
     } catch (err: unknown) {

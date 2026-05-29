@@ -578,7 +578,7 @@ export const assignBuyerReportAction = registerAction<
 >({
   name: "sourcing.assignBuyerReport",
   description:
-    "Assign a switch decision report to a buyer reviewer by email. Creates a BuyerReportDelivery record.",
+    "Assign a switch decision report to a buyer reviewer by email. Creates or updates a BuyerReportDelivery record.",
   riskLevel: "MEDIUM",
   allowedRoles: DEFAULT_ADMIN_ROLES,
   requiresApprovalForAI: true,
@@ -591,13 +591,27 @@ export const assignBuyerReportAction = registerAction<
     });
     validateRecordBelongsToOrg(run, parsed.organizationId, "SOURCING_RUN");
 
-    const delivery = await prisma.buyerReportDelivery.create({
-      data: {
+    const delivery = await prisma.buyerReportDelivery.upsert({
+      where: {
+        organizationId_sourcingRunId_assignedToEmail: {
+          organizationId: parsed.organizationId,
+          sourcingRunId: parsed.sourcingRunId,
+          assignedToEmail,
+        },
+      },
+      create: {
         organizationId: parsed.organizationId,
         sourcingRunId: parsed.sourcingRunId,
         assignedToEmail,
         assignedById: context.actorUserId,
         notes: parsed.notes,
+      },
+      update: {
+        assignedById: context.actorUserId,
+        notes: parsed.notes ?? undefined,
+        status: "PENDING",
+        deliveredAt: new Date(),
+        viewedAt: null,
       },
       select: { id: true },
     });

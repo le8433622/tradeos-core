@@ -9,6 +9,7 @@ import { z } from "zod";
 import { sendReportDeliveryNotification } from "../../../../../lib/email";
 import { createLogger, getRequestId } from "../../../../../lib/logger";
 import "@tradeos/sourcing-core";
+import "@tradeos/sourcing-core";
 
 const assignSchema = z
   .object({
@@ -67,27 +68,40 @@ export async function POST(request: Request) {
       },
     );
 
-    // Send notification email to buyer
+    let emailSent = false;
+    let emailError: string | null = null;
     const run = await prisma.sourcingRun.findUnique({
       where: { id: body.sourcingRunId as string },
       select: { title: true, organization: { select: { name: true } } },
     });
     if (run) {
       const appUrl = process.env.APP_URL ?? "https://tradeos-core.vercel.app";
-      sendReportDeliveryNotification(
-        assignedToEmail,
-        run.title,
-        run.organization.name,
-        `${appUrl}/buyer/reports/${body.sourcingRunId}`,
-        body.notes as string | undefined,
-      ).catch((err) =>
-        logger.error("[assign] email notification failed", {
-          error: err instanceof Error ? err.message : String(err),
-        }),
-      );
+      try {
+        await sendReportDeliveryNotification(
+          assignedToEmail,
+          run.title,
+          run.organization.name,
+          `${appUrl}/buyer/reports/${body.sourcingRunId}`,
+          body.notes as string | undefined,
+        );
+        emailSent = true;
+      } catch (err) {
+        emailError = err instanceof Error ? err.message : String(err);
+        logger.error("[assign] email notification failed", { error: emailError });
+      }
+    } else {
+      emailError = "RUN_NOT_FOUND";
     }
 
-    return NextResponse.json(result, { status: 200 });
+    const status = emailSent ? 200 : 202;
+    return NextResponse.json(
+      {
+        deliveryId: (result as { deliveryId: string }).deliveryId,
+        emailSent,
+        emailError: emailError ?? undefined,
+      },
+      { status },
+    );
   } catch (error) {
     return apiErrorResponse(request, error);
   }
