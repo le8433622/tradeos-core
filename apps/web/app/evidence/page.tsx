@@ -1,6 +1,7 @@
 import { prisma } from "@tradeos/database";
 import { requirePagePermission } from "../../lib/page-session";
 import DraftCaseBuilder from "../../components/draft-case-builder";
+import EvidenceIntake from "../sourcing-runs/[id]/evidence-intake";
 
 export default async function EvidenceInboxPage() {
   const session = await requirePagePermission("evidence.upload");
@@ -38,13 +39,20 @@ export default async function EvidenceInboxPage() {
       </a>
       <h1>Evidence Inbox</h1>
       <p>
-        Unattached evidence — build a sourcing run draft from parsed evidence.
+        Paste raw trade evidence → parse → save as unattached evidence → build a
+        draft sourcing run.
       </p>
+
+      <EvidenceIntake />
+
+      <h2 style={{ marginTop: 32, fontSize: 18, fontWeight: 600 }}>
+        Unattached Evidence
+      </h2>
 
       {mapped.length === 0 ? (
         <div
           style={{
-            marginTop: 24,
+            marginTop: 12,
             padding: 32,
             textAlign: "center",
             border: "2px dashed #e5e7eb",
@@ -56,8 +64,8 @@ export default async function EvidenceInboxPage() {
             No unattached evidence
           </p>
           <p style={{ fontSize: 13, margin: 0 }}>
-            Use Evidence Intake on a sourcing run detail page to add evidence,
-            or upload evidence that can later become a new case.
+            Use the Evidence Intake form above to paste and parse raw trade
+            evidence, then build a draft case.
           </p>
         </div>
       ) : (

@@ -32,7 +32,7 @@ type FieldState = {
 export default function EvidenceIntake({
   sourcingRunId,
 }: {
-  sourcingRunId: string;
+  sourcingRunId?: string;
 }) {
   const router = useRouter();
   const [text, setText] = useState("");
@@ -167,21 +167,23 @@ export default function EvidenceIntake({
         .filter(Boolean)
         .join("\n");
 
+      const body: Record<string, unknown> = {
+        evidenceType,
+        title: title.trim(),
+        description: `Parsed from manual text. Quality: ${parsed.evidenceQuality} (${parsed.evidenceQualityScore}/100). Missing: ${parsed.missingProofFlags.join(", ") || "none"}`,
+        content,
+        metadata: {
+          parsedEvidence: parsed,
+          rawText: text.trim(),
+          parsedAt: new Date().toISOString(),
+        },
+      };
+      if (sourcingRunId) body.sourcingRunId = sourcingRunId;
+
       const res = await fetch("/api/evidence/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sourcingRunId,
-          evidenceType,
-          title: title.trim(),
-          description: `Parsed from manual text. Quality: ${parsed.evidenceQuality} (${parsed.evidenceQualityScore}/100). Missing: ${parsed.missingProofFlags.join(", ") || "none"}`,
-          content,
-          metadata: {
-            parsedEvidence: parsed,
-            rawText: text.trim(),
-            parsedAt: new Date().toISOString(),
-          },
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const err = await res.json();

@@ -21,33 +21,31 @@ export async function POST(request: Request) {
       metadata,
     } = body;
 
-    if (!sourcingRunId || !evidenceType || !title) {
+    if (!evidenceType || !title) {
       return NextResponse.json(
-        { error: "sourcingRunId, evidenceType, and title are required" },
+        { error: "evidenceType and title are required" },
         { status: 400 },
       );
     }
 
-    const result = await executeAction(
-      "evidence.createItem",
-      {
-        organizationId: session.organizationId,
-        sourcingRunId,
-        relatedType: "SOURCING_RUN",
-        evidenceType,
-        title,
-        description: description ?? "",
-        content: content ?? "",
-        metadata: metadata ?? null,
-      },
-      {
-        actorUserId: session.userId,
-        organizationId: session.organizationId,
-        role: session.role,
-        source: "manual",
-        mfaLevel: session.mfaLevel,
-      },
-    );
+    const input: Record<string, unknown> = {
+      organizationId: session.organizationId,
+      relatedType: "SOURCING_RUN",
+      evidenceType,
+      title,
+      description: description ?? "",
+      content: content ?? "",
+      metadata: metadata ?? null,
+    };
+    if (sourcingRunId) input.sourcingRunId = sourcingRunId;
+
+    const result = await executeAction("evidence.createItem", input, {
+      actorUserId: session.userId,
+      organizationId: session.organizationId,
+      role: session.role,
+      source: "manual",
+      mfaLevel: session.mfaLevel,
+    });
 
     return NextResponse.json(result);
   } catch (error) {
