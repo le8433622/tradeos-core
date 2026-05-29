@@ -1,3 +1,6 @@
+export * from "./types";
+export * from "./adapters";
+
 import { prisma } from "@tradeos/database";
 import {
   DEFAULT_ADMIN_ROLES,
@@ -145,9 +148,7 @@ export const evidenceExportLedgerAction = registerAction<
     });
     const redacted = items.map((item) => ({
       ...item,
-      metadata: item.metadata
-        ? { exists: true, sensitive: true }
-        : undefined,
+      metadata: item.metadata ? { exists: true, sensitive: true } : undefined,
     }));
     return { items: redacted, count: redacted.length };
   },

@@ -158,17 +158,18 @@ Migrations applied:
 
 ## Phase 18 RBAC & Multi-Org Progress
 
-| Item                                      | Status     | Notes                                                                                             |
-| ----------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------- |
-| Workspace Switcher UI                     | ✅ DONE    | `WorkspaceSwitcher` client component in sidebar dropdown. Fetch + switch org.                     |
-| `POST /api/user/switch-org`               | ✅ DONE    | Sets `activeOrganizationId` cookie, validates membership access.                                  |
-| `page-session.ts` reads active org cookie | ✅ DONE    | `requirePageSession` passes `activeOrganizationId` to `resolveSessionFromEmail`.                  |
-| Memberships API returns full session      | ✅ DONE    | Now returns `userId`, `organizationId`, `role`, `permissions`, `email` + `memberships`.           |
-| `usePermission` hook                      | ✅ DONE    | Client-side hook for conditional UI rendering. Caches session data.                               |
-| Dead `requirePageSession` imports removed | ✅ DONE    | 5 detail pages cleaned up.                                                                        |
-| Settings sub-page permission gates        | ✅ DONE    | `settings/billing`, `integrations`, `privacy`, `settings/` root now have `requirePagePermission`. |
-| #130 Commerce API Spike                   | ✅ DONE    | 15 APIs evaluated, doc updated with interface-first corrected direction.                          |
-| Choose Workspace page                     | 🔴 PENDING | Post-login page for multi-org users. Not blocking current workflow.                               |
+| Item                                      | Status     | Notes                                                                                                                                                                                 |
+| ----------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Workspace Switcher UI                     | ✅ DONE    | `WorkspaceSwitcher` client component in sidebar dropdown. Fetch + switch org.                                                                                                         |
+| `POST /api/user/switch-org`               | ✅ DONE    | Sets `activeOrganizationId` cookie, validates membership access.                                                                                                                      |
+| `page-session.ts` reads active org cookie | ✅ DONE    | `requirePageSession` passes `activeOrganizationId` to `resolveSessionFromEmail`.                                                                                                      |
+| Memberships API returns full session      | ✅ DONE    | Now returns `userId`, `organizationId`, `role`, `permissions`, `email` + `memberships`.                                                                                               |
+| `usePermission` hook                      | ✅ DONE    | Client-side hook for conditional UI rendering. Caches session data.                                                                                                                   |
+| Dead `requirePageSession` imports removed | ✅ DONE    | 5 detail pages cleaned up.                                                                                                                                                            |
+| Settings sub-page permission gates        | ✅ DONE    | `settings/billing`, `integrations`, `privacy`, `settings/` root now have `requirePagePermission`.                                                                                     |
+| #130 Commerce API Spike                   | ✅ DONE    | 15 APIs evaluated, doc updated with interface-first corrected direction.                                                                                                              |
+| P0 Evidence Adapter Interface             | ✅ DONE    | `EvidenceAdapter<T>` interface, `ManualTextEvidenceAdapter` (first adapter), `ParsedEvidence` types, 8 missing-proof flags, L0-L5 quality ladder, 31 tests. No provider dependencies. |
+| Choose Workspace page                     | 🔴 PENDING | Post-login page for multi-org users. Not blocking current workflow.                                                                                                                   |
 
 ## #124 External Buyer Case — Staging Rehearsal Results
 
@@ -203,5 +204,6 @@ Migrations applied:
 11. **#122 Enable leaked password protection**: Supabase Dashboard > Auth > Settings > toggle on (or PAT via Management API) — before password onboarding
 12. ~~**Phase 18 — Workspace Switcher + permissions cleanup**~~ ✅ DONE — multi-org switch-org API, WorkspaceSwitcher UI, `usePermission` hook, settings sub-page permission gates, dead import cleanup
 13. **#130 Commerce API Spike** — ✅ DONE — 15 APIs evaluated, corrected to interface-first, documented in `docs/40_COMMERCE_API_SPIKE.md`
-14. **Choose Workspace page** — Build post-login page for users with >1 org
-15. **#124 P0: Run first external buyer pain-solving case** — buyer `earthkingdomuniverse@gmail.com` ✅ signed up via magic link. Full flow rehearsed on staging.
+14. ~~**P0: Evidence Adapter Interface**~~ ✅ DONE — provider-neutral `EvidenceAdapter` interface, `ManualTextEvidenceAdapter`, `ParsedEvidence` types, 8 missing-proof flags, L0-L5 quality, 31 tests pass, typecheck + build + docs:check pass
+15. **Choose Workspace page** — Build post-login page for users with >1 org
+16. **#124 P0: Run first external buyer pain-solving case** — buyer `earthkingdomuniverse@gmail.com` ✅ signed up via magic link. Full flow rehearsed on staging.
