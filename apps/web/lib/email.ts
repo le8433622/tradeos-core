@@ -4,7 +4,7 @@
 //   APP_URL           — used as base for links
 //   EMAIL_FROM        — optional, defaults to TradeOS Core <noreply@tradeos.core>
 
-const FROM = process.env.EMAIL_FROM ?? "TradeOS Core <noreply@tradeos.core>";
+const FROM = process.env.EMAIL_FROM ?? "TradeOS Core <onboarding@resend.dev>";
 const APP_URL = process.env.APP_URL ?? "https://tradeos-core.vercel.app";
 
 function htmlWrapper(body: string): string {
