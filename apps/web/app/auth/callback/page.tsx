@@ -3,9 +3,14 @@
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "../../../lib/supabase-browser";
 
-function getHashParams(): URLSearchParams {
+function getAllParams(): URLSearchParams {
   if (typeof window === "undefined") return new URLSearchParams();
-  return new URLSearchParams(window.location.hash.substring(1));
+  const hash = new URLSearchParams(window.location.hash.substring(1));
+  const query = new URLSearchParams(window.location.search.substring(1));
+  // Merge: query params take precedence over hash params
+  const merged = new URLSearchParams(hash);
+  for (const [k, v] of query) merged.set(k, v);
+  return merged;
 }
 
 function getNextPath(): string {
@@ -25,7 +30,7 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     async function run() {
       const supabase = createSupabaseBrowserClient();
-      const params = getHashParams();
+      const params = getAllParams();
 
       // PKCE flow: Supabase returns a code in the hash
       const code = params.get("code");
