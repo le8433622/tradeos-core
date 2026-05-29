@@ -12,6 +12,7 @@ interface AppSidebarProps {
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/", icon: "▦" },
   { label: "Sourcing Runs", href: "/sourcing-runs", icon: "◎" },
+  { label: "Evidence Inbox", href: "/evidence", icon: "📋" },
   { label: "Leads", href: "/leads", icon: "⊙" },
   { label: "Companies", href: "/companies", icon: "▨" },
   { label: "Products", href: "/products", icon: "◈" },

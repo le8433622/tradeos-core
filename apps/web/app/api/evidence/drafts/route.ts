@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@tradeos/database";
 import { executeAction } from "@tradeos/policy-core";
 import {
   apiErrorResponse,
@@ -29,6 +30,19 @@ export async function POST(request: Request) {
         { error: "title and requirement are required" },
         { status: 400 },
       );
+    }
+
+    if (evidenceItemId) {
+      const evidence = await prisma.evidenceItem.findFirst({
+        where: { id: evidenceItemId, organizationId: session.organizationId },
+        select: { id: true },
+      });
+      if (!evidence) {
+        return NextResponse.json(
+          { error: "EVIDENCE_NOT_FOUND" },
+          { status: 404 },
+        );
+      }
     }
 
     const result = (await executeAction(

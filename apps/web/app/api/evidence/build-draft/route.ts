@@ -84,6 +84,7 @@ export async function GET(request: Request) {
   try {
     const auth = await withApiPermission(request, "evidence.upload");
     if (auth.response) return auth.response;
+    const { session } = auth;
 
     const url = new URL(request.url);
     const evidenceItemId = url.searchParams.get("evidenceItemId");
@@ -95,8 +96,8 @@ export async function GET(request: Request) {
       );
     }
 
-    const evidence = await prisma.evidenceItem.findUnique({
-      where: { id: evidenceItemId },
+    const evidence = await prisma.evidenceItem.findFirst({
+      where: { id: evidenceItemId, organizationId: session.organizationId },
       select: {
         id: true,
         title: true,
