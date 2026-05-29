@@ -26,6 +26,9 @@ export async function POST(request: Request) {
       painFlags,
       dependencyFlags,
       suggestedReason,
+      suggestedNextStep,
+      overrideReason,
+      requiredProof,
     } = body;
 
     if (!title || !requirement) {
@@ -48,6 +51,65 @@ export async function POST(request: Request) {
       }
     }
 
+    // --- Operator review enforcement ---
+
+    if (!suggestedNextStep) {
+      return NextResponse.json(
+        { error: "suggestedNextStep is required" },
+        { status: 400 },
+      );
+    }
+
+    if (
+      suggestedNextStep === "NEEDS_MORE_EVIDENCE" &&
+      !overrideReason?.trim()
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Evidence too weak. Enter override reason explaining why this case should proceed despite weak evidence.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (
+      suggestedNextStep === "NEEDS_SUPPLIER_IDENTITY" &&
+      !overrideReason?.trim()
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Supplier identity is missing. Provide a supplier or enter override reason explaining why to proceed without supplier identity.",
+        },
+        { status: 400 },
+      );
+    }
+
+    // --- Build runInput ---
+
+    const step = suggestedNextStep as string;
+    let reviewState: string | undefined;
+    if (step === "REQUEST_MORE_EVIDENCE") {
+      reviewState = "PROOF_PENDING";
+    } else if (step === "NEEDS_SUPPLIER_IDENTITY" && overrideReason?.trim()) {
+      reviewState = "SUPPLIER_IDENTITY_PENDING";
+    } else if (step === "WAIT") {
+      reviewState = "WAIT";
+    }
+
+    const metadata: Record<string, unknown> = {
+      painCategories: Array.isArray(painFlags) ? painFlags : undefined,
+      dependencyFlags: Array.isArray(dependencyFlags)
+        ? dependencyFlags
+        : undefined,
+      painDetail: suggestedReason || undefined,
+      reviewState: reviewState ?? undefined,
+      overrideReason: overrideReason?.trim() || undefined,
+      requiredProof: Array.isArray(requiredProof) ? requiredProof : undefined,
+      suggestedNextStep: step,
+    };
+
     const runInput: Record<string, unknown> = {
       organizationId: session.organizationId,
       title,
@@ -58,16 +120,8 @@ export async function POST(request: Request) {
       quantity: quantity || undefined,
       budget: budget || undefined,
       currency: currency || undefined,
+      metadata,
     };
-    if (painFlags || dependencyFlags || suggestedReason) {
-      runInput.metadata = {
-        painCategories: Array.isArray(painFlags) ? painFlags : undefined,
-        dependencyFlags: Array.isArray(dependencyFlags)
-          ? dependencyFlags
-          : undefined,
-        painDetail: suggestedReason || undefined,
-      };
-    }
 
     const result = (await executeAction("sourcing.createRun", runInput, {
       actorUserId: session.userId,

@@ -58,6 +58,7 @@ export default function DraftCaseBuilder({
   const [editCurrency, setEditCurrency] = useState("USD");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [overrideReason, setOverrideReason] = useState("");
 
   const unattached = evidenceItems.filter((e) => !e.sourcingRunId);
 
@@ -112,6 +113,9 @@ export default function DraftCaseBuilder({
           painFlags: draft.painFlags,
           dependencyFlags: draft.dependencyFlags,
           suggestedReason: draft.suggestedReason,
+          suggestedNextStep: draft.suggestedNextStep,
+          overrideReason: overrideReason?.trim() || undefined,
+          requiredProof: draft.missingProofFlags,
         }),
       });
       if (!res.ok) {
@@ -246,6 +250,117 @@ export default function DraftCaseBuilder({
               {draft.suggestedNextStep}
             </span>
           </div>
+
+          {/* --- Decision gate --- */}
+          {draft.suggestedNextStep === "CREATE_CASE_DRAFT" && (
+            <div
+              style={{
+                marginBottom: 12,
+                padding: "8px 12px",
+                borderRadius: 8,
+                background: "#ecfdf5",
+                border: "1px solid #a7f3d0",
+                fontSize: 13,
+                color: "#065f46",
+              }}
+            >
+              Evidence quality sufficient. Ready to create sourcing run.
+            </div>
+          )}
+
+          {draft.suggestedNextStep === "NEEDS_MORE_EVIDENCE" && (
+            <div
+              style={{
+                marginBottom: 12,
+                padding: 12,
+                borderRadius: 8,
+                background: "#fef2f2",
+                border: "1px solid #fecaca",
+                fontSize: 13,
+                color: "#991b1b",
+              }}
+            >
+              <strong>Evidence too weak</strong> to create a reliable case. The
+              system recommends collecting more evidence before proceeding.
+            </div>
+          )}
+
+          {draft.suggestedNextStep === "REQUEST_MORE_EVIDENCE" && (
+            <div
+              style={{
+                marginBottom: 12,
+                padding: 12,
+                borderRadius: 8,
+                background: "#fffbeb",
+                border: "1px solid #fde68a",
+                fontSize: 13,
+                color: "#92400e",
+              }}
+            >
+              <strong>Missing critical evidence.</strong> The case can be
+              created as <strong>PROOF_PENDING</strong>. Required proof:
+              <div
+                style={{
+                  marginTop: 4,
+                  display: "flex",
+                  gap: 4,
+                  flexWrap: "wrap",
+                }}
+              >
+                {draft.missingProofFlags.length > 0
+                  ? draft.missingProofFlags.map((f) => (
+                      <span
+                        key={f}
+                        style={{
+                          fontSize: 11,
+                          padding: "2px 6px",
+                          borderRadius: 4,
+                          background: "#fef2f2",
+                          color: "#dc2626",
+                        }}
+                      >
+                        {f}
+                      </span>
+                    ))
+                  : "Additional evidence needed"}
+              </div>
+            </div>
+          )}
+
+          {draft.suggestedNextStep === "NEEDS_SUPPLIER_IDENTITY" && (
+            <div
+              style={{
+                marginBottom: 12,
+                padding: 12,
+                borderRadius: 8,
+                background: "#fef2f2",
+                border: "1px solid #fecaca",
+                fontSize: 13,
+                color: "#991b1b",
+              }}
+            >
+              <strong>Supplier identity missing.</strong> Enter a supplier name
+              in the fields below or provide an override reason to proceed
+              without supplier identity.
+            </div>
+          )}
+
+          {draft.suggestedNextStep === "WAIT" && (
+            <div
+              style={{
+                marginBottom: 12,
+                padding: "8px 12px",
+                borderRadius: 8,
+                background: "#f3f4f6",
+                border: "1px solid #d1d5db",
+                fontSize: 13,
+                color: "#4b5563",
+              }}
+            >
+              Evidence quality is uncertain. The case will be created with{" "}
+              <strong>WAIT</strong> status.
+            </div>
+          )}
 
           {draft.suggestedReason && (
             <div
@@ -546,24 +661,127 @@ export default function DraftCaseBuilder({
             />
           </div>
 
+          {(draft.suggestedNextStep === "NEEDS_MORE_EVIDENCE" ||
+            draft.suggestedNextStep === "NEEDS_SUPPLIER_IDENTITY") && (
+            <div style={{ marginTop: 12 }}>
+              <label
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#991b1b",
+                }}
+              >
+                Override reason (required to proceed)
+              </label>
+              <textarea
+                value={overrideReason}
+                onChange={(e) => setOverrideReason(e.target.value)}
+                placeholder={
+                  draft.suggestedNextStep === "NEEDS_MORE_EVIDENCE"
+                    ? "Why should this case proceed despite weak evidence?"
+                    : "Why should this case proceed without supplier identity?"
+                }
+                rows={2}
+                style={{
+                  width: "100%",
+                  padding: 12,
+                  border: "1px solid #fecaca",
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontFamily: "monospace",
+                  marginTop: 4,
+                  resize: "vertical",
+                }}
+              />
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-            <button
-              onClick={handleCreate}
-              disabled={
-                creating || !editTitle.trim() || !editRequirement.trim()
-              }
-              style={{
-                padding: "10px 24px",
-                background: creating ? "#9ca3af" : "#059669",
-                color: "white",
-                border: "none",
-                borderRadius: 8,
-                fontWeight: 600,
-                cursor: creating ? "default" : "pointer",
-              }}
-            >
-              {creating ? "Creating..." : "Create Sourcing Run"}
-            </button>
+            {(draft.suggestedNextStep === "NEEDS_MORE_EVIDENCE" ||
+              draft.suggestedNextStep === "NEEDS_SUPPLIER_IDENTITY") && (
+              <button
+                onClick={handleCreate}
+                disabled={
+                  creating ||
+                  !editTitle.trim() ||
+                  !editRequirement.trim() ||
+                  !overrideReason.trim()
+                }
+                style={{
+                  padding: "10px 24px",
+                  background:
+                    creating || !overrideReason.trim() ? "#9ca3af" : "#dc2626",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  cursor:
+                    creating || !overrideReason.trim() ? "default" : "pointer",
+                }}
+              >
+                {creating ? "Creating..." : "Override & Create Sourcing Run"}
+              </button>
+            )}
+
+            {draft.suggestedNextStep === "REQUEST_MORE_EVIDENCE" && (
+              <button
+                onClick={handleCreate}
+                disabled={
+                  creating || !editTitle.trim() || !editRequirement.trim()
+                }
+                style={{
+                  padding: "10px 24px",
+                  background: creating ? "#9ca3af" : "#d97706",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  cursor: creating ? "default" : "pointer",
+                }}
+              >
+                {creating ? "Creating..." : "Create as PROOF_PENDING"}
+              </button>
+            )}
+
+            {draft.suggestedNextStep === "WAIT" && (
+              <button
+                onClick={handleCreate}
+                disabled={
+                  creating || !editTitle.trim() || !editRequirement.trim()
+                }
+                style={{
+                  padding: "10px 24px",
+                  background: creating ? "#9ca3af" : "#6b7280",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  cursor: creating ? "default" : "pointer",
+                }}
+              >
+                {creating ? "Creating..." : "Create as WAIT"}
+              </button>
+            )}
+
+            {draft.suggestedNextStep === "CREATE_CASE_DRAFT" && (
+              <button
+                onClick={handleCreate}
+                disabled={
+                  creating || !editTitle.trim() || !editRequirement.trim()
+                }
+                style={{
+                  padding: "10px 24px",
+                  background: creating ? "#9ca3af" : "#059669",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  cursor: creating ? "default" : "pointer",
+                }}
+              >
+                {creating ? "Creating..." : "Create Sourcing Run"}
+              </button>
+            )}
             <button
               onClick={handleDiscard}
               disabled={creating}
