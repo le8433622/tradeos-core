@@ -38,13 +38,13 @@ create_item() {
 }
 
 # Supabase DB — Staging
-create_item "Supabase DB - Staging" "password" "rokrC02ESnw7JWKx" "notes" "postgresql://postgres:rokrC02ESnw7JWKx@db.ulnjanlaehfmxurreibj.supabase.co:5432/postgres"
+create_item "Supabase DB - Staging" "password" "[CHANGE_ME]" "notes" "postgresql://postgres:[CHANGE_ME]@db.ulnjanlaehfmxurreibj.supabase.co:5432/postgres"
 
 # Supabase DB — Production
-create_item "Supabase DB - Production (pooler)" "password" "DQNVA9NPalkhQDPv" "notes" "postgresql://postgres.okkzfmtwrjkfjzyprrwh:DQNVA9NPalkhQDPv@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres"
+create_item "Supabase DB - Production (pooler)" "password" "[CHANGE_ME]" "notes" "postgresql://postgres.okkzfmtwrjkfjzyprrwh:[CHANGE_ME]@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres"
 
 # Supabase DB — Production direct
-create_item "Supabase DB - Production (direct)" "password" "DQNVA9NPalkhQDPv" "notes" "postgresql://postgres:DQNVA9NPalkhQDPv@db.okkzfmtwrjkfjzyprrwh.supabase.co:5432/postgres"
+create_item "Supabase DB - Production (direct)" "password" "[CHANGE_ME]" "notes" "postgresql://postgres:[CHANGE_ME]@db.okkzfmtwrjkfjzyprrwh.supabase.co:5432/postgres"
 
 # Supabase Project
 create_item "Supabase Project" "url" "https://ulnjanlaehfmxurreibj.supabase.co" "publishable key" "sb_publishable_l4cna-BDSGbrrvIObSBmAg_H5egBYE6"

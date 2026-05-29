@@ -42,8 +42,7 @@ DIRECT_URL="$(get 'Supabase DB - Staging' notes)"
 NEXT_PUBLIC_SUPABASE_URL="$(get 'Supabase Project' url)"
 SUPABASE_URL="$(get 'Supabase Project' url)"
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$(get 'Supabase Project' 'publishable key')"
-SUPABASE_PUBLISHABLE_KEY="$(get 'Supabase Project' 'publishable key')"
-SUPABASE_PUBLISHABLE_KEY="$(get 'Supabase Project' 'publishable key')"
+SUPABASE_PUBLISHABLE_KEY="${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}"
 SUPABASE_SERVICE_ROLE_KEY="$(get 'Supabase Service Role Key' password)"
 
 # === Auth ===
