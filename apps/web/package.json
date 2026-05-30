@@ -25,6 +25,7 @@
     "@tradeos/inbox-core": "workspace:*",
     "@tradeos/job-core": "workspace:*",
     "@tradeos/policy-core": "workspace:*",
+    "@tradeos/product-data-core": "workspace:*",
     "@tradeos/sourcing-core": "workspace:*",
     "@tradeos/trade-core": "workspace:*",
     "@tradeos/webhook-core": "workspace:*",
