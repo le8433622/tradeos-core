@@ -49,6 +49,35 @@ customer need
 
 API product listings must not be sent directly to AI as recommendations. Listings must first be normalized into ProductEvidence with evidence quality and missing-proof flags. Buyer-facing recommendations require scenario simulation and explicit proof gaps.
 
+### eBay Browse Adapter — Credential Requirements
+
+Implemented at `packages/product-data-core/src/ebay-adapter.ts` (#131).
+
+| Item                    | Requirement                                                                            |
+| ----------------------- | -------------------------------------------------------------------------------------- |
+| API                     | eBay Browse API (`buy/browse/v1/item_summary/search`)                                  |
+| Auth                    | OAuth Application Access Token (client_credentials grant)                              |
+| Scopes                  | `https://api.ebay.com/oauth/api_scope/buy.browse`                                      |
+| Token endpoint          | `https://api.ebay.com/identity/v1/oauth2/token`                                        |
+| Sandbox token endpoint  | `https://api.sandbox.ebay.com/identity/v1/oauth2/token`                                |
+| Sandbox API             | `https://api.sandbox.ebay.com/buy/browse/v1`                                           |
+| Production API          | `https://api.ebay.com/buy/browse/v1`                                                   |
+| Marketplace header      | `X-EBAY-C-MARKETPLACE-ID: EBAY_US` (default; supports `EBAY_GB`, `EBAY_DE`, `EBAY_AU`) |
+| Required ENV            | `EBAY_OAUTH_TOKEN`                                                                     |
+| Sandbox listings        | Created via eBay Developer Sandbox; sparse by default — use real production for volume |
+| Rate limits             | 5,000 req/day (production); 500 req/day (sandbox)                                      |
+| Config-missing behavior | Adapter returns `CONFIG_REQUIRED` warning; does not crash                              |
+| Raw payload             | Preserved under `ProductCandidate.raw` for audit trace                                 |
+
+**Example OAuth token acquisition (CLI):**
+
+```bash
+curl -X POST https://api.ebay.com/identity/v1/oauth2/token \
+  -H "Authorization: Basic $(echo -n "$APP_ID:$CERT_ID" | base64)" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope/buy.browse"
+```
+
 ---
 
 ## Corrected Direction (Post-Spike)
