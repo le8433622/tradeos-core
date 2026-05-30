@@ -110,6 +110,7 @@ export default function DraftCaseBuilder({
           quantity: editQuantity.trim() || undefined,
           budget: editBudget.trim() || undefined,
           currency: editCurrency || undefined,
+          supplierName: draft.suggestedSupplier || undefined,
           painFlags: draft.painFlags,
           dependencyFlags: draft.dependencyFlags,
           suggestedReason: draft.suggestedReason,

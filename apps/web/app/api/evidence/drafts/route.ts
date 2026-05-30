@@ -23,6 +23,7 @@ export async function POST(request: Request) {
       quantity,
       budget,
       currency,
+      supplierName,
       painFlags,
       dependencyFlags,
       suggestedReason,
@@ -73,8 +74,12 @@ export async function POST(request: Request) {
       );
     }
 
+    const hasSupplierName =
+      typeof supplierName === "string" && supplierName.trim().length > 0;
+
     if (
       suggestedNextStep === "NEEDS_SUPPLIER_IDENTITY" &&
+      !hasSupplierName &&
       !overrideReason?.trim()
     ) {
       return NextResponse.json(
@@ -108,6 +113,7 @@ export async function POST(request: Request) {
       overrideReason: overrideReason?.trim() || undefined,
       requiredProof: Array.isArray(requiredProof) ? requiredProof : undefined,
       suggestedNextStep: step,
+      supplierProvided: hasSupplierName || undefined,
     };
 
     const runInput: Record<string, unknown> = {
