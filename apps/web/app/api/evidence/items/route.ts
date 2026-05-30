@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { executeAction } from "@tradeos/policy-core";
+import "@tradeos/evidence-core";
 import {
   apiErrorResponse,
   withApiPermission,
