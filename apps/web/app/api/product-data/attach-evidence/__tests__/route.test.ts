@@ -282,8 +282,8 @@ describe("POST /api/product-data/attach-evidence", () => {
     const runInput = mockExecuteAction.mock.calls[1][1];
     expect(runInput.title).toBe("Robot CNC sourcing");
     expect(runInput.requirement).toBe("Need 12 robots urgently");
-    expect(runInput.budget).toBe(100_000_000);
-    expect(runInput.quantity).toBe(12);
+    expect(runInput.budget).toBe("100000000");
+    expect(runInput.quantity).toBe("12");
   });
 
   it("creates evidence with seller name in description", async () => {

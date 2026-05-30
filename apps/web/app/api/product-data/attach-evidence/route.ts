@@ -145,20 +145,31 @@ export async function POST(request: Request) {
         organizationId: session.organizationId,
         title: runTitle,
         requirement: runRequirement,
-        quantity: (intentData.quantity as number) ?? undefined,
-        budget: (intentData.budgetMax as number) ?? undefined,
+        quantity:
+          intentData.quantity != null ? String(intentData.quantity) : undefined,
+        budget:
+          intentData.budgetMax != null
+            ? String(intentData.budgetMax)
+            : intentData.budget != null
+              ? String(intentData.budget)
+              : undefined,
         currency:
           (candidate.currency as string) ||
           (intentData.currency as string) ||
           undefined,
         metadata: {
-          productSearchProvider: providerUsed,
-          productSearchIntent: intent,
-          productSearchRecommendation:
-            (recommendation as Record<string, unknown>)?.recommendation ?? null,
-          missingProofFlags:
-            (candidateEvidence as Record<string, unknown>)?.missingProofFlags ??
-            [],
+          evidenceSummary: [
+            `Product search: ${String(intentData.query ?? "")}`,
+            `Provider: ${providerUsed}`,
+            recommendation
+              ? `Recommendation: ${String((recommendation as Record<string, unknown>).recommendation)}`
+              : null,
+            `Selected: ${String(candidate.title)}`,
+          ]
+            .filter(Boolean)
+            .join(" | "),
+          painCategories: (candidateEvidence as Record<string, unknown>)
+            ?.missingProofFlags as string[] | undefined,
         },
       };
 
