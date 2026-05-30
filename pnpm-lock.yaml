@@ -344,9 +344,15 @@ importers:
       '@tradeos/database':
         specifier: workspace:*
         version: link:../database
+      '@tradeos/evidence-core':
+        specifier: workspace:*
+        version: link:../evidence-core
       '@tradeos/policy-core':
         specifier: workspace:*
         version: link:../policy-core
+      '@tradeos/sourcing-core':
+        specifier: workspace:*
+        version: link:../sourcing-core
       '@tradeos/trade-core':
         specifier: workspace:*
         version: link:../trade-core
