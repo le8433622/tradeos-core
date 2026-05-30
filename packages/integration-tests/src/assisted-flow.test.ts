@@ -17,7 +17,7 @@ let user: { id: string };
 describeIntegration("Assisted Flow QA — evidence → pain → draft → gate", () => {
   beforeAll(async () => {
     org = await prisma.organization.create({
-      data: { name: `QA Org ${suffix}` },
+      data: { name: `QA Org ${suffix}`, plan: "ENTERPRISE" },
       select: { id: true },
     });
     user = await prisma.user.create({
@@ -341,7 +341,7 @@ describeIntegration("Assisted Flow QA — evidence → pain → draft → gate",
         },
         ctx({ role: "VIEWER" }),
       ),
-    ).rejects.toThrow("ROLE_NOT_AUTHORIZED");
+    ).rejects.toThrow("ROLE_NOT_ALLOWED");
   });
 
   it("TC8: sourcing.create requires appropriate role", async () => {
@@ -355,6 +355,6 @@ describeIntegration("Assisted Flow QA — evidence → pain → draft → gate",
         },
         ctx({ role: "VIEWER" }),
       ),
-    ).rejects.toThrow("ROLE_NOT_AUTHORIZED");
+    ).rejects.toThrow("ROLE_NOT_ALLOWED");
   });
 });

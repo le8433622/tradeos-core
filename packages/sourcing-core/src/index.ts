@@ -61,6 +61,11 @@ export const createSourcingRunSchema = z
         payerKnown: z.boolean().nullable().optional(),
         payerNameOrRole: z.string().max(256).optional(),
         consequenceOwner: z.string().max(256).optional(),
+        suggestedNextStep: z.string().max(64).optional(),
+        overrideReason: z.string().max(4096).optional(),
+        reviewState: z.string().max(64).optional(),
+        requiredProof: z.array(z.string().max(128)).optional(),
+        supplierProvided: z.boolean().nullable().optional(),
       })
       .strict()
       .optional(),
