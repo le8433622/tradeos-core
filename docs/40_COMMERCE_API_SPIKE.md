@@ -8,6 +8,49 @@
 
 ---
 
+## Product/Supplier Decision Engine Update — 2026-05-30
+
+This document's provider rankings are now subordinate to the product decision engine architecture below.
+
+TradeOS is not building a chatbot, marketplace, checkout flow, or supplier-contact automation. The product-data goal is decision support:
+
+```
+customer need
+→ ProductSearchIntent
+→ ProductDataAdapter
+→ ProductEvidence
+→ Product Scenario Simulator
+→ recommendation with proof gaps and risks
+→ optional SourcingRun
+```
+
+### Current P0 Order
+
+1. Product Data Adapter Interface
+2. MockProductDataAdapter
+3. Product Search Intent Parser
+4. Product Scenario Simulator
+5. eBay Browse Adapter
+6. SerpApi Google Shopping Adapter
+7. Mercado Libre Adapter
+8. B2B supplier APIs after the provider-neutral core is stable
+
+### Provider Direction
+
+| Provider                         | Role                                                                                          | Priority |
+| -------------------------------- | --------------------------------------------------------------------------------------------- | -------- |
+| eBay Browse API                  | Official API with sandbox. Best first real adapter for retail/secondary product benchmarks.   | P0       |
+| SerpApi Google Shopping          | Broad customer-visible market view. Third-party SERP dependency, paid/limited quota.          | P1       |
+| Mercado Libre                    | LatAm regional benchmark and seller listing comparison.                                       | P1       |
+| Amazon PA-API / Creators API     | Not P0. PA-API is moving to Creators API; use later only for retail benchmark/content.        | P2       |
+| Made-in-China / B2B supplier API | Useful later for B2B supplier evidence, but must not be hardcoded into the core architecture. | P2       |
+
+### ProductEvidence Rule
+
+API product listings must not be sent directly to AI as recommendations. Listings must first be normalized into ProductEvidence with evidence quality and missing-proof flags. Buyer-facing recommendations require scenario simulation and explicit proof gaps.
+
+---
+
 ## Corrected Direction (Post-Spike)
 
 TradeOS runs on **Vercel + Supabase + Cloudflare + GitHub**, not AWS. Hardcoding AWS Textract as P0 would create a new platform dependency — exactly the problem TradeOS exists to solve.
