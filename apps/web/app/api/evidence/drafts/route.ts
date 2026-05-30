@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@tradeos/database";
 import { executeAction } from "@tradeos/policy-core";
+import "@tradeos/sourcing-core";
 import {
   apiErrorResponse,
   withApiPermission,
