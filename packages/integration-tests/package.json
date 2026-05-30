@@ -11,7 +11,9 @@
     "@tradeos/policy-core": "workspace:*",
     "@tradeos/crm-core": "workspace:*",
     "@tradeos/trade-core": "workspace:*",
-    "@tradeos/webhook-core": "workspace:*"
+    "@tradeos/webhook-core": "workspace:*",
+    "@tradeos/evidence-core": "workspace:*",
+    "@tradeos/sourcing-core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2",
