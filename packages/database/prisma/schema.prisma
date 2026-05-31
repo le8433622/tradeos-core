@@ -68,6 +68,17 @@ enum QuotationStatus {
   EXPIRED
 }
 
+enum QuoteDraftStatus {
+  DRAFT
+  NEEDS_MORE_COST_DATA
+  WAITING_FOUNDER_APPROVAL
+  APPROVED
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
 enum ActionRiskLevel {
   LOW
   MEDIUM
@@ -196,6 +207,7 @@ model Organization {
   partnerIntroductions   IntroductionRequest[] @relation("PartnerOrg")
   deals                  Deal[]
    sourcingRuns           SourcingRun[]
+   quoteDrafts            QuoteDraft[]
    payments               Payment[]
    immutableAuditEvents   ImmutableAuditEvent[]
 
@@ -807,9 +819,53 @@ model SourcingRun {
   supplierAlternatives SupplierAlternative[]
   switchDecisionReports SwitchDecisionReport[]
   outcomeRecords        OutcomeRecord[]
+  quoteDrafts           QuoteDraft[]
 
   @@index([organizationId, status])
   @@index([leadId])
+}
+
+model QuoteDraft {
+  id                  String           @id @default(cuid())
+  organizationId      String
+  sourcingRunId       String?
+  title               String
+  supplierName        String
+  buyPrice            Decimal
+  currency            String
+  quantity            Decimal?
+  unit                String?
+  shippingCost        Decimal?
+  handlingCost        Decimal?
+  riskBuffer          Decimal?
+  taxOrFee            Decimal?
+  targetMarginPercent Decimal?
+  salePrice           Decimal?
+  grossProfit         Decimal?
+  depositRequired     Boolean          @default(true)
+  depositAmount       Decimal?
+  deliveryEstimate    String?
+  refundTerms         String?
+  quoteExpiresAt      DateTime?
+  riskNotes           String?
+  evidenceIds         Json?
+  metadata            Json?
+  status              QuoteDraftStatus @default(DRAFT)
+  createdBy           String?
+  approvedBy          String?
+  approvedAt          DateTime?
+  sentAt              DateTime?
+  customerAcceptedAt  DateTime?
+  customerRejectedAt  DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sourcingRun  SourcingRun? @relation(fields: [sourcingRunId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([sourcingRunId])
+  @@index([status])
 }
 
 model PurchaseBaseline {

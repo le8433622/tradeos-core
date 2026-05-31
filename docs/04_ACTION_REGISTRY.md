@@ -118,10 +118,15 @@ Irreversible, legal, financial, or security-sensitive action. (None currently re
 | `checkpoint.recordPayment`            | sourcing-core  | HIGH   | OWNER                         | No         | Yes for AI        | Yes            |
 | `handover.create`                     | sourcing-core  | MEDIUM | OWNER, ADMIN, SALES, OPERATOR | Yes        | No                | Yes            |
 | `handover.resolve`                    | sourcing-core  | HIGH   | OWNER, ADMIN                  | No         | Yes for AI        | Yes            |
+| `quote.draft`                         | quote-core     | MEDIUM | OWNER, ADMIN                  | Yes        | No                | Yes            |
+| `quote.approve`                       | quote-core     | HIGH   | OWNER                         | No         | Yes for AI        | Yes            |
+| `quote.markSent`                      | quote-core     | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
+| `quote.customerAccept`                | quote-core     | MEDIUM | OWNER, ADMIN                  | Yes        | No                | Yes            |
+| `quote.customerReject`                | quote-core     | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
 | `plan.checkEntitlement`               | plan-core      | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
 | `plan.getPlan`                        | plan-core      | LOW    | OWNER, ADMIN                  | Yes        | No                | Yes            |
 
-**Total: 61 registered actions**. Source/documentation parity is enforced by `pnpm docs:check`.
+**Total: 66 registered actions**. Source/documentation parity is enforced by `pnpm docs:check`.
 
 ## Always-MFA Actions
 
