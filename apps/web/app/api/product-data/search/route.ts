@@ -29,26 +29,19 @@ function selectAdapter(provider: SearchProvider): {
     return { adapter: new MockProductDataAdapter(), warnings: [] };
   }
 
+  const cfg = {
+    oauthToken: process.env.EBAY_OAUTH_TOKEN,
+    clientId: process.env.EBAY_CLIENT_ID,
+    clientSecret: process.env.EBAY_CLIENT_SECRET,
+    sandbox: process.env.EBAY_SANDBOX === "true",
+  };
+
   if (provider === "ebay") {
-    const token = process.env.EBAY_OAUTH_TOKEN;
-    return {
-      adapter: new EbayBrowseAdapter({
-        oauthToken: token,
-        sandbox: process.env.EBAY_SANDBOX === "true",
-      }),
-      warnings: [],
-    };
+    return { adapter: new EbayBrowseAdapter(cfg), warnings: [] };
   }
 
-  const token = process.env.EBAY_OAUTH_TOKEN;
-  if (token) {
-    return {
-      adapter: new EbayBrowseAdapter({
-        oauthToken: token,
-        sandbox: process.env.EBAY_SANDBOX === "true",
-      }),
-      warnings: [],
-    };
+  if (cfg.oauthToken || (cfg.clientId && cfg.clientSecret)) {
+    return { adapter: new EbayBrowseAdapter(cfg), warnings: [] };
   }
   return {
     adapter: new MockProductDataAdapter(),

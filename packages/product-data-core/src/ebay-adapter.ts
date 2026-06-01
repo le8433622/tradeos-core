@@ -8,6 +8,9 @@ import type {
 
 export type EbayAdapterConfig = {
   oauthToken?: string;
+  clientId?: string;
+  clientSecret?: string;
+  scope?: string;
   marketplaceId?: string;
   sandbox?: boolean;
 };
@@ -120,23 +123,64 @@ function extractSuppliers(candidates: ProductCandidate[]): SupplierCandidate[] {
 }
 
 const DEFAULT_MARKETPLACE_ID = "EBAY_US";
+const DEFAULT_SCOPE = "https://api.ebay.com/oauth/api_scope";
 
 export class EbayBrowseAdapter implements ProductDataAdapter {
   readonly provider = "ebay" as const;
   private config: EbayAdapterConfig;
+  private cachedToken?: string;
 
   constructor(config: EbayAdapterConfig = {}) {
     this.config = config;
+    this.cachedToken = config.oauthToken;
+  }
+
+  private async refreshToken(): Promise<string | null> {
+    const { clientId, clientSecret, scope, sandbox } = this.config;
+    if (!clientId || !clientSecret) return null;
+
+    const tokenUrl = sandbox
+      ? "https://api.sandbox.ebay.com/identity/v1/oauth2/token"
+      : "https://api.ebay.com/identity/v1/oauth2/token";
+
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString(
+      "base64",
+    );
+
+    try {
+      const res = await fetch(tokenUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${basicAuth}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
+        },
+        body: new URLSearchParams({
+          grant_type: "client_credentials",
+          scope: scope ?? DEFAULT_SCOPE,
+        }),
+      });
+
+      if (!res.ok) return null;
+
+      const data = (await res.json()) as { access_token?: string };
+      if (!data.access_token) return null;
+
+      this.cachedToken = data.access_token;
+      return data.access_token;
+    } catch {
+      return null;
+    }
   }
 
   async search(intent: ProductSearchIntent): Promise<ProductSearchResult> {
-    if (!this.config.oauthToken) {
+    if (!this.cachedToken && !this.config.oauthToken) {
       return {
         candidates: [],
         suppliers: [],
         warnings: [
           "CONFIG_REQUIRED: eBay OAuth token not configured. " +
-            "Set EBAY_OAUTH_TOKEN environment variable or pass oauthToken in config.",
+            "Set EBAY_OAUTH_TOKEN or provide clientId/clientSecret for auto-refresh.",
         ],
         missingData: ["CONFIG_REQUIRED"],
         providerMeta: {
@@ -158,57 +202,72 @@ export class EbayBrowseAdapter implements ProductDataAdapter {
       params.set("price_max", String(intent.budgetMax));
     }
 
-    try {
-      const response = await fetch(
-        `${baseUrl}/item_summary/search?${params.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${this.config.oauthToken}`,
-            "X-EBAY-C-MARKETPLACE-ID":
-              this.config.marketplaceId ?? DEFAULT_MARKETPLACE_ID,
-            "Content-Type": "application/json",
+    const doSearch = async (
+      token: string,
+      isRetry: boolean,
+    ): Promise<ProductSearchResult> => {
+      try {
+        const response = await fetch(
+          `${baseUrl}/item_summary/search?${params.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "X-EBAY-C-MARKETPLACE-ID":
+                this.config.marketplaceId ?? DEFAULT_MARKETPLACE_ID,
+              "Content-Type": "application/json",
+            },
           },
-        },
-      );
+        );
 
-      if (!response.ok) {
-        const body = await response.text().catch(() => "");
+        if (response.status === 401 && !isRetry) {
+          const newToken = await this.refreshToken();
+          if (newToken) {
+            return doSearch(newToken, true);
+          }
+        }
+
+        if (!response.ok) {
+          const body = await response.text().catch(() => "");
+          return {
+            candidates: [],
+            suppliers: [],
+            warnings: [
+              `EBAY_API_ERROR: ${response.status} ${response.statusText}${body ? ` — ${body}` : ""}`,
+            ],
+            missingData: ["EBAY_API_ERROR"],
+            providerMeta: {
+              provider: "ebay",
+              httpStatus: response.status,
+            },
+          };
+        }
+
+        const data = (await response.json()) as EbaySearchResponse;
+        const items = data.itemSummaries ?? [];
+        const candidates = normalizeEbayItemSummaries(items);
+        const suppliers = extractSuppliers(candidates);
+
+        return {
+          candidates,
+          suppliers,
+          warnings: data.warnings ?? [],
+          missingData: candidates.length === 0 ? ["NO_RESULTS"] : [],
+          providerMeta: { provider: "ebay", total: data.total },
+        };
+      } catch (error) {
         return {
           candidates: [],
           suppliers: [],
           warnings: [
-            `EBAY_API_ERROR: ${response.status} ${response.statusText}${body ? ` — ${body}` : ""}`,
+            `EBAY_NETWORK_ERROR: ${error instanceof Error ? error.message : String(error)}`,
           ],
-          missingData: ["EBAY_API_ERROR"],
-          providerMeta: {
-            provider: "ebay",
-            httpStatus: response.status,
-          },
+          missingData: ["EBAY_NETWORK_ERROR"],
+          providerMeta: { provider: "ebay", error: String(error) },
         };
       }
+    };
 
-      const data = (await response.json()) as EbaySearchResponse;
-      const items = data.itemSummaries ?? [];
-      const candidates = normalizeEbayItemSummaries(items);
-      const suppliers = extractSuppliers(candidates);
-
-      return {
-        candidates,
-        suppliers,
-        warnings: data.warnings ?? [],
-        missingData: candidates.length === 0 ? ["NO_RESULTS"] : [],
-        providerMeta: { provider: "ebay", total: data.total },
-      };
-    } catch (error) {
-      return {
-        candidates: [],
-        suppliers: [],
-        warnings: [
-          `EBAY_NETWORK_ERROR: ${error instanceof Error ? error.message : String(error)}`,
-        ],
-        missingData: ["EBAY_NETWORK_ERROR"],
-        providerMeta: { provider: "ebay", error: String(error) },
-      };
-    }
+    const token = this.cachedToken ?? this.config.oauthToken!;
+    return doSearch(token, false);
   }
 }

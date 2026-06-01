@@ -21,3 +21,4 @@ e2e/.auth/
 # Supabase CLI temp files
 supabase/.temp/
 **/supabase/.temp/
+.env*

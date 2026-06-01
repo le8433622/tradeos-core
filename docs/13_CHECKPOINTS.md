@@ -239,3 +239,6 @@ Migrations applied:
     - Commercial value signal (would buyer pay?)
     - Lesson learned documented
     - Comment + close #124
+25. ~~**P0: Quote & Margin Engine**~~ ✅ DONE — commit `de62430` (CI ✅). 31 tests (16 package + 6 draft route + 9 [id] route). 5 actions registered (`quote.draft`, `quote.approve`, `quote.markSent`, `quote.customerAccept`, `quote.customerReject`).
+26. **Fix: QuoteDraft migration missing on production** — ✅ DONE — `20260601_add_quote_draft_v2` migration applied. Root cause: model added to `schema.prisma` at `de62430` without corresponding migration. Production smoke test: POST/GET all PASSED.
+27. **eBay Sandbox Integration** — ✅ DONE — Sandbox credentials added to Vercel env (`EBAY_OAUTH_TOKEN`, `EBAY_SANDBOX=true`). `provider=ebay` hits Browse API. `provider=auto` auto-detects token → eBay. Sandbox returns 0 results (expected — no listings in sandbox). ⏳ Real eBay production credentials needed for real data.
