@@ -10,16 +10,19 @@ This document is the single source of truth for every rule discovered through co
 
 Before editing ANY code, the agent MUST read in this exact order:
 
-1. `RULES.md` — this file, EVERY time (failure of this rule = CRITICAL)
-2. `agent.md` — execution workflow
-3. `AGENTS.md` — repository charter
-4. `docs/13_CHECKPOINTS.md` — current status, known blockers, residual risks
-5. The owning package or route being changed — read the ENTIRE file
-6. Existing tests for the owning package — read ALL test files
-7. `docs/04_ACTION_REGISTRY.md` — if touching action registrations or adding new actions
-8. `docs/06_SECURITY_AND_TENANCY.md` — if touching auth, webhook, tenant, or security
-9. `docs/10_DEPLOYMENT_RUNBOOK.md` — if touching deployment, env vars, or CI
-10. `docs/28_PRODUCTION_10_10_TASK_PLAN.md` — if this task is part of the production-readiness plan
+1. `FOUNDER_THINKING.md` — product soul source of truth (failure of this rule = HIGH)
+2. `HUMAN_NATURE_AXIOMS.md` — 10,000-year human-behavior axiom layer (failure of this rule = HIGH for product/workflow changes)
+3. `RULES.md` — this file, EVERY time (failure of this rule = CRITICAL)
+4. `agent.md` — execution workflow
+5. `AGENTS.md` — repository charter
+6. `PRODUCT_SOUL.md`, `HUMAN_NATURE_DATA_MODEL.md`, `DECISION_FRAMEWORK.md`, and `SOUL_REVIEW_CHECKLIST.md` — if touching product behavior or workflows
+7. `docs/13_CHECKPOINTS.md` — current status, known blockers, residual risks
+8. The owning package or route being changed — read the ENTIRE file
+9. Existing tests for the owning package — read ALL test files
+10. `docs/04_ACTION_REGISTRY.md` — if touching action registrations or adding new actions
+11. `docs/06_SECURITY_AND_TENANCY.md` — if touching auth, webhook, tenant, or security
+12. `docs/10_DEPLOYMENT_RUNBOOK.md` — if touching deployment, env vars, or CI
+13. `docs/28_PRODUCTION_10_10_TASK_PLAN.md` — if this task is part of the production-readiness plan
 
 If ANY item is skipped, the agent MUST state which item and why before making changes. Silent skipping is a CRITICAL rule violation.
 
@@ -112,6 +115,34 @@ Every behavioral change requires a corresponding doc update in the same turn:
 - Task plan change → update `docs/12_TASK_PLAN.md` or `docs/28_PRODUCTION_10_10_TASK_PLAN.md`
 
 The `pnpm docs:check` CI gate MUST pass before merge. If the gate would fail due to this change, fix the gate or update the doc.
+
+### 0.9 Founder Thinking gate — no product-soul bypass
+
+Before adding or changing any product workflow, the agent MUST answer the Implementation Integrity Check from `FOUNDER_THINKING.md`:
+
+1. Buyer pain
+2. Payer
+3. Payment trigger
+4. AI/operator action
+5. Evidence produced
+6. Human approval boundary
+7. Risk reduced
+8. Acceptance criteria
+9. What should not be built yet
+
+If any item is unclear, the agent MUST choose the smallest manual-first implementation that can produce evidence and paid proof, or explicitly defer the feature.
+
+Forbidden product drift:
+
+- generic CRM, ERP, marketplace, chatbot, or dashboard features without direct buyer loss reduction;
+- automation before manual workflow truth;
+- AI recommendations without evidence, risk, uncertainty, or alternatives;
+- bypassing approval boundaries for money, legal commitment, final order, reputation, or irreversible action;
+- platform dependency without manual or alternate-source fallback.
+
+Every important workflow SHOULD include six parts: goal, loss, AI work, evidence, human approval, and paid unit.
+
+Human-nature priors are valid for scenario design when assumptions are explicit. Production data is required for market facts, supplier facts, reliability facts, legal claims, and paid-proof validation.
 
 ---
 

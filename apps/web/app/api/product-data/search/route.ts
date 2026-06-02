@@ -5,10 +5,12 @@ import {
   parseProductSearchIntent,
   productCandidateToEvidence,
   simulateProductScenarios,
+  rankCandidates,
   type ProductDataAdapter,
   type ProductSearchIntent,
 } from "@tradeos/product-data-core";
 import { apiErrorResponse, withApiSession } from "../../../../lib/api-errors";
+import { resolveEbayConfig } from "../../../../lib/oauth-ebay-adapter";
 import type { UserRole } from "@tradeos/database";
 
 type SearchProvider = "auto" | "ebay" | "mock";
@@ -21,31 +23,29 @@ type SearchBody = {
 
 const ALLOWED_ROLES: UserRole[] = ["OWNER", "ADMIN", "OPERATOR"];
 
-function selectAdapter(provider: SearchProvider): {
+async function selectAdapter(
+  provider: SearchProvider,
+  organizationId?: string,
+): Promise<{
   adapter: ProductDataAdapter;
   warnings: string[];
-} {
+}> {
   if (provider === "mock") {
     return { adapter: new MockProductDataAdapter(), warnings: [] };
   }
 
-  const cfg = {
-    oauthToken: process.env.EBAY_OAUTH_TOKEN,
-    clientId: process.env.EBAY_CLIENT_ID,
-    clientSecret: process.env.EBAY_CLIENT_SECRET,
-    sandbox: process.env.EBAY_SANDBOX === "true",
-  };
+  const cfg = await resolveEbayConfig(organizationId);
 
   if (provider === "ebay") {
     return { adapter: new EbayBrowseAdapter(cfg), warnings: [] };
   }
 
-  if (cfg.oauthToken || (cfg.clientId && cfg.clientSecret)) {
+  if (cfg.oauthToken) {
     return { adapter: new EbayBrowseAdapter(cfg), warnings: [] };
   }
   return {
     adapter: new MockProductDataAdapter(),
-    warnings: ["EBAY_OAUTH_TOKEN not configured. Falling back to mock data."],
+    warnings: ["eBay token not configured. Falling back to mock data."],
   };
 }
 
@@ -62,8 +62,9 @@ export async function POST(request: Request) {
     }
 
     const intent = parseProductSearchIntent(text, body.intent);
-    const { adapter, warnings: adapterWarnings } = selectAdapter(
+    const { adapter, warnings: adapterWarnings } = await selectAdapter(
       body.provider ?? "auto",
+      auth.session.organizationId,
     );
 
     const result = await adapter.search(intent);
@@ -76,13 +77,32 @@ export async function POST(request: Request) {
       result.suppliers,
     );
 
+    const ranking = rankCandidates(result.candidates, intent);
+
     return NextResponse.json({
       intent,
       providerUsed: adapter.provider,
       candidates: result.candidates,
       evidence,
       simulation,
-      warnings: [...adapterWarnings, ...result.warnings],
+      ranking: {
+        scored: ranking.ranked.map((c) => ({
+          externalId: c.externalId,
+          relevanceScore: c.relevanceScore,
+          axisScores: c.axisScores,
+          summary: c.summary,
+          valueLabel: c.valueLabel,
+        })),
+        topPick: ranking.topPick?.externalId ?? null,
+        bestPrice: ranking.bestPrice?.externalId ?? null,
+        premiumPick: ranking.premiumPick?.externalId ?? null,
+        marketInsights: ranking.marketInsights,
+      },
+      warnings: [
+        ...adapterWarnings,
+        ...result.warnings,
+        ...ranking.marketInsights.warnings,
+      ],
       missingData: result.missingData,
     });
   } catch (error) {

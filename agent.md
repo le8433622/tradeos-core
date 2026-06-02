@@ -1,6 +1,6 @@
 # TradeOS Agent Operating Manual — Production 10/10 Edition
 
-This is the detailed execution contract for product agents and coding agents working on TradeOS. `AGENTS.md` contains the short repository charter. `RULES.md` is the hard-rule file. This file defines the operating workflow.
+This is the detailed execution contract for product agents and coding agents working on TradeOS. `FOUNDER_THINKING.md` is the product soul source of truth. `AGENTS.md` contains the repository charter. `RULES.md` is the hard-rule file. This file defines the operating workflow.
 
 ---
 
@@ -9,6 +9,13 @@ This is the detailed execution contract for product agents and coding agents wor
 ### 0.1 Mission
 
 Build TradeOS as a production-grade AI operating system for international trade teams. The product must make trade relationships measurable, auditable, and executable before it becomes a marketplace.
+
+Core doctrine:
+
+AI does the labor. Human approves the commitment. Evidence proves the work. Cashflow validates the product.
+Human nature is the invariant behavioral dataset.
+
+If a task does not create buyer value, evidence, human control, or cashflow, choose the smallest manual-first path or defer.
 
 ### 0.2 Quality Objective
 
@@ -54,6 +61,8 @@ Use when creating plans, contracts, roadmaps, ADRs, runbooks, or updating checkp
 Rules:
 
 - Read the actual source code and verify doc claims against reality
+- Preserve `FOUNDER_THINKING.md` as the product soul source of truth
+- Ensure docs do not drift into generic CRM, ERP, marketplace, chatbot, or dashboard framing
 - `pnpm docs:check` must pass after changes
 - Do NOT overclaim — match docs to code, not code to docs
 - Verify with: `pnpm docs:check && review diff`
@@ -107,12 +116,15 @@ Every implementation task MUST follow this loop. Do NOT skip steps because the b
 
 Before ANY code change:
 
-1. Read `RULES.md` — complete file, every time
-2. Read `AGENTS.md`
-3. Read `agent.md`
-4. Read `docs/13_CHECKPOINTS.md` — current status, known blockers
-5. Identify the task from the task plan
-6. Read the task acceptance criteria
+1. Read `FOUNDER_THINKING.md` — product soul source of truth
+2. Read `HUMAN_NATURE_AXIOMS.md` — human-behavior axiom layer
+3. Read `RULES.md` — complete file, every time
+4. Read `AGENTS.md`
+5. Read `agent.md`
+6. Read `PRODUCT_SOUL.md`, `HUMAN_NATURE_DATA_MODEL.md`, `DECISION_FRAMEWORK.md`, and `SOUL_REVIEW_CHECKLIST.md` for product-value gates
+7. Read `docs/13_CHECKPOINTS.md` — current status, known blockers
+8. Identify the task from the task plan
+9. Read the task acceptance criteria
 
 If the task is part of the production-readiness plan, also read:
 
@@ -139,6 +151,18 @@ Write down internally (or output if asked):
 3. **Which boundary owns it?** — UI, API route, package action, policy-core, auth, database, worker, webhook, docs
 4. **Which previous rule or review finding does this relate to?** — search RULES.md for related rules
 5. **What verification would prove it's fixed?** — specific test assertion or curl command
+
+Also run the Implementation Integrity Check for product or workflow changes:
+
+1. Buyer pain:
+2. Payer:
+3. Payment trigger:
+4. AI/operator action:
+5. Evidence produced:
+6. Human approval boundary:
+7. Risk reduced:
+8. Acceptance criteria:
+9. What should not be built yet:
 
 ### Step 3: Search For Sibling Bugs
 

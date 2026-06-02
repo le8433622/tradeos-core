@@ -124,6 +124,10 @@ enum IntegrationStatus {
   DISABLED
 }
 
+enum OAuthProvider {
+  EBAY
+}
+
 enum JobType {
   PROCESS_WEBHOOK_EVENT
   ARCHIVE_WEBHOOK_PAYLOADS
@@ -209,7 +213,8 @@ model Organization {
    sourcingRuns           SourcingRun[]
    quoteDrafts            QuoteDraft[]
    payments               Payment[]
-   immutableAuditEvents   ImmutableAuditEvent[]
+    immutableAuditEvents   ImmutableAuditEvent[]
+    oauthTokens            ExternalOAuthToken[]
 
    @@index([plan])
 }
@@ -536,6 +541,25 @@ model WebhookIntegration {
 
   @@unique([channel, providerAccountId])
   @@index([organizationId])
+}
+
+model ExternalOAuthToken {
+  id               String        @id @default(cuid())
+  organizationId   String
+  provider         OAuthProvider
+  scope            String
+  accessToken      String
+  refreshToken     String?
+  expiresAt        DateTime?
+  providerUserId   String?
+  providerUsername String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, provider])
+  @@map("external_oauth_tokens")
 }
 
 model Job {

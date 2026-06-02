@@ -11,6 +11,13 @@ type Integration = {
   rotatedAt: string | null;
 };
 
+type EbayStatus = {
+  connected: boolean;
+  providerUsername?: string | null;
+  scopes?: string;
+  expiresAt?: string | null;
+};
+
 const CHANNELS = ["ZALO", "WHATSAPP", "EMAIL", "INBOX"] as const;
 
 export default function IntegrationsSettingsForm() {
@@ -24,6 +31,8 @@ export default function IntegrationsSettingsForm() {
   const [rotatingId, setRotatingId] = useState<string | null>(null);
   const [rotateSecret, setRotateSecret] = useState("");
   const [saving, setSaving] = useState(false);
+  const [ebayStatus, setEbayStatus] = useState<EbayStatus | null>(null);
+  const [ebayLoading, setEbayLoading] = useState(true);
 
   const loadIntegrations = async () => {
     try {
@@ -37,8 +46,23 @@ export default function IntegrationsSettingsForm() {
     }
   };
 
+  const loadEbayStatus = async () => {
+    try {
+      const res = await fetch("/api/integrations/ebay/status");
+      if (res.ok) {
+        const data = await res.json();
+        setEbayStatus(data);
+      }
+    } catch {
+      // ignore — eBay not configured
+    } finally {
+      setEbayLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadIntegrations();
+    loadEbayStatus();
   }, []);
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -159,6 +183,87 @@ export default function IntegrationsSettingsForm() {
           {showForm ? "Cancel" : "+ Add Integration"}
         </button>
       </div>
+
+      {!ebayLoading && (
+        <div
+          style={{
+            border: "1px solid #e5e7eb",
+            borderRadius: 12,
+            padding: 20,
+            marginBottom: 24,
+            maxWidth: 480,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <strong>eBay</strong>
+              {ebayStatus?.connected ? (
+                <p
+                  style={{ margin: "4px 0 0", fontSize: 13, color: "#6b7280" }}
+                >
+                  Connected as {ebayStatus.providerUsername ?? "eBay user"}
+                  {ebayStatus.scopes && ` · ${ebayStatus.scopes}`}
+                </p>
+              ) : (
+                <p
+                  style={{ margin: "4px 0 0", fontSize: 13, color: "#6b7280" }}
+                >
+                  Not connected
+                </p>
+              )}
+            </div>
+            {ebayStatus?.connected ? (
+              <button
+                onClick={async () => {
+                  if (
+                    !confirm(
+                      "Disconnect eBay? This will remove access to your eBay data.",
+                    )
+                  )
+                    return;
+                  await fetch("/api/integrations/ebay/disconnect", {
+                    method: "DELETE",
+                  });
+                  setEbayStatus({ connected: false });
+                }}
+                style={{
+                  padding: "6px 14px",
+                  border: "1px solid #dc2626",
+                  borderRadius: 6,
+                  fontSize: 13,
+                  background: "white",
+                  color: "#dc2626",
+                  cursor: "pointer",
+                }}
+              >
+                Disconnect
+              </button>
+            ) : (
+              <a
+                href="/api/integrations/ebay/auth"
+                style={{
+                  padding: "6px 14px",
+                  border: "none",
+                  borderRadius: 6,
+                  fontSize: 13,
+                  background: "#111827",
+                  color: "white",
+                  cursor: "pointer",
+                  textDecoration: "none",
+                }}
+              >
+                Connect
+              </a>
+            )}
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <form

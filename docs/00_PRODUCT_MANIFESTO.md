@@ -1,8 +1,22 @@
 # TradeOS Product Manifesto
 
+Founder source of truth: root `FOUNDER_THINKING.md`.
+Human-nature axiom layer: root `HUMAN_NATURE_AXIOMS.md`.
+
+Core doctrine:
+
+AI does the labor. Human approves the commitment. Evidence proves the work. Cashflow validates the product.
+Human nature is the invariant behavioral dataset.
+
+This manifesto must be read through that doctrine. TradeOS is not built to look intelligent. It is built to create accountable economic value.
+
 ## North Star
 
 TradeOS turns international trade relationships into measurable, auditable, executable workflows.
+
+Every workflow must reduce a real buyer loss, preserve evidence, and keep humans in control of commitment.
+
+Sandbox scenarios are valid for human-behavior design when they model stable drives honestly: wanting gain, fearing loss, confusion, pride/status pressure, doubt, distrust, urgency, and desire for control. Production data is still required for exact market facts, supplier facts, reliability, legal claims, and paid proof.
 
 ## Product Thesis
 
@@ -10,9 +24,11 @@ International trade teams do not first need another marketplace. They need a rel
 
 TradeOS should win by becoming the system of record and system of action for trade relationships before expanding into marketplace matching.
 
+The product starts from buyer pain, not from provider activity, AI novelty, dashboard ideas, or marketplace imagination.
+
 ## Core Promise
 
-No valuable trade opportunity should be missed. Every inbound message should become one or more of these objects:
+No valuable trade opportunity should be missed. Every meaningful action should become evidence. Every inbound message should become one or more of these objects:
 
 - a conversation
 - a message
@@ -22,6 +38,24 @@ No valuable trade opportunity should be missed. Every inbound message should bec
 - an approval request
 - a partner suggestion
 - an insight for reporting
+- an evidence item
+- a human approval checkpoint when risk requires it
+
+## Founder Integrity Gate
+
+Before building any new feature, answer:
+
+1. What buyer loss does this reduce?
+2. Who pays?
+3. When do they naturally pay?
+4. What work does AI actually perform?
+5. What evidence is produced?
+6. Where does human approval happen?
+7. What risk is reduced?
+8. How does this connect to cashflow?
+9. What should not be built yet?
+
+If these cannot be answered, defer or choose the smallest manual-first implementation that can produce evidence and paid proof.
 
 ## Target Users
 
@@ -104,14 +138,29 @@ TradeOS is not yet:
 
 ## Product Principles
 
-1. Manual workflow is the source of truth.
-2. AI assists, drafts, extracts, summarizes, and suggests.
-3. Humans approve risky actions.
-4. Every tenant owns its data boundary.
-5. Every important mutation is auditable.
-6. Marketplace comes after private workflow data proves repeated demand.
-7. Trust is more important than automation speed.
-8. Reporting must show measurable trade value every week.
+1. Buyer value comes first.
+2. Manual workflow is the source of truth.
+3. AI performs real labor, not vague chat.
+4. Humans approve commitments involving money, legal exposure, reputation, or irreversible action.
+5. Every meaningful workflow produces evidence.
+6. Every tenant owns its data boundary.
+7. Every important mutation is auditable.
+8. Marketplace comes after private workflow data proves repeated demand.
+9. Trust is more important than automation speed.
+10. Reporting must show measurable trade value every week.
+
+## Six-Part Workflow Contract
+
+Every important workflow should include:
+
+1. Goal - what the user wants to achieve.
+2. Loss - what the user avoids losing.
+3. AI work - what labor AI performs.
+4. Evidence - what proof is stored.
+5. Human approval - what commitment human approves.
+6. Paid unit - what delivered-work unit can be charged.
+
+If one part is missing, the workflow is not mature enough for broad automation.
 
 ## MVP Wedge
 
@@ -125,6 +174,8 @@ The MVP must improve:
 - quotation drafting
 - association visibility
 - auditability
+- evidence-backed buyer decisions
+- paid proof for completed work
 
 The MVP must not spend core build time on:
 
@@ -133,6 +184,8 @@ The MVP must not spend core build time on:
 - payments
 - complex public matching
 - broad social features
+- dashboard polish that does not improve decisions
+- automation before manual workflow truth
 
 ## Marketplace Gate
 

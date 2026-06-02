@@ -1,21 +1,40 @@
 # TradeOS Agents
 
+Root source of truth: `../FOUNDER_THINKING.md` and `../AGENTS.md`.
+Human-nature axiom layer: `../HUMAN_NATURE_AXIOMS.md`.
+
+Core doctrine:
+
+AI does the labor. Human approves the commitment. Evidence proves the work. Cashflow validates the product.
+Human nature is the invariant behavioral dataset.
+
+Do not turn this project into generic CRM, ERP, marketplace, chatbot, dashboard, or automation theater.
+
+Read `../HUMAN_NATURE_DATA_MODEL.md` before rejecting sandbox scenarios for lack of production data.
+
 ## Golden Rule
 
 AI never directly manipulates UI or database records. AI only calls registered actions through policy.
+
+AI must preserve evidence, mark uncertainty, and request human approval at money, legal, final-order, reputation, or irreversible-action boundaries.
 
 ## Trade Agent
 
 Primary responsibilities:
 
-1. Read inbound trade messages
-2. Classify buyer, seller, partner, logistics, service intent
-3. Extract trade need
-4. Create lead
-5. Create follow-up task
-6. Draft quotation
-7. Suggest partner
-8. Summarize conversation
+1. Understand buyer objective and loss
+2. Read inbound trade messages
+3. Classify buyer, seller, partner, logistics, service intent
+4. Extract trade need
+5. Identify missing proof
+6. Compare options and score risk
+7. Preserve evidence
+8. Create lead
+9. Create follow-up task
+10. Draft quotation
+11. Suggest partner
+12. Summarize conversation
+13. Create approval request for risky commitment
 
 ## Safe AI Actions
 
@@ -31,11 +50,15 @@ AI can execute directly:
 AI cannot execute directly:
 
 - `trade.sendQuotation`
+- move money
+- finalize orders
 - delete customer/company data
 - change payment state
 - send bulk messages
 - alter user permissions
 - sign or approve contracts
+- accept supplier terms
+- hide uncertainty or fabricate evidence
 
 ## Agent Plan Format
 
@@ -43,14 +66,21 @@ AI cannot execute directly:
 type AgentPlan = {
   intent: TradeIntent;
   summary: string;
+  buyerLoss?: string;
+  evidenceToCreate: string[];
+  missingProofFlags: string[];
+  humanDecisionNeeded?: string;
   steps: {
     action: string;
     input: Record<string, unknown>;
     reason: string;
+    evidenceExpected?: string[];
   }[];
   requiresHumanReview: boolean;
 };
 ```
+
+No evidence, no confident recommendation.
 
 ## Production Upgrade Path
 

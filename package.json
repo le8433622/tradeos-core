@@ -40,6 +40,8 @@
     ]
   },
   "dependencies": {
+    "openai": "^6.41.0",
+    "puppeteer": "^25.1.0",
     "zod": "^3.24.4"
   }
 }
