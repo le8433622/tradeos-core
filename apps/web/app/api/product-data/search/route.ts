@@ -45,7 +45,7 @@ async function selectAdapter(
   }
   return {
     adapter: new MockProductDataAdapter(),
-    warnings: ["eBay token not configured. Falling back to mock data."],
+    warnings: ["EBAY_OAUTH_TOKEN not configured. Falling back to mock data."],
   };
 }
 
