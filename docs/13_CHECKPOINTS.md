@@ -229,7 +229,7 @@ Migrations applied:
 19. ~~**P0: Assisted Flow QA**~~ ✅ DONE — 11 integration tests covering all 5 gate scenarios, cross-tenant isolation, permission checks
 20. **Fix `createSourcingRunSchema` metadata keys** — ✅ DONE — added `suggestedNextStep`, `overrideReason`, `reviewState`, `requiredProof`, `supplierProvided` to `packages/sourcing-core/src/index.ts` Zod schema
 21. **Resolve staging DB drift** — ✅ DONE — Rebuilt staging `ulnjanlaehfmxurreibj` schema (DROP SCHEMA public CASCADE + db push), seeded org/user/permissions, 20/20 integration tests pass, live walkthrough verified all 3 TC cases.
-22. **Choose Workspace page** — 🟡 IMPLEMENTED IN DRAFT PR #133; CI Final Gate PASS (run 43741408393). Authenticated multi-org E2E remains pending because E2E_RUN_ENABLED is not enabled. No merge or deployment.
+22. **Choose Workspace page** — 🟡 IMPLEMENTED IN DRAFT PR #133; CI Final Gate PASS on commit `5672621` (run 43741661468). Follow-up hardening centralizes same-origin `next` validation and adds open-redirect regression tests; CI for the latest security fix and authenticated multi-org E2E remain pending. No merge or deployment.
 23. ~~**P0 Product Data API foundation**~~ ✅ DONE — `packages/product-data-core` with adapter interface, mock provider, intent parser, ProductEvidence converter, scenario simulator, and 13 tests covering 10+ buyer scenarios. Follow-up: eBay Browse API adapter (#131).
 24. **#124 P0: Complete buyer validation loop on production** — Signed up ✅. Production assisted case created ✅ (SourcingRun `cmprvd2550001la04j0b2afog`, DRAFT, NEEDS_MORE_EVIDENCE). **Issue remains open — missing:**
     - Buyer login production via magic link
