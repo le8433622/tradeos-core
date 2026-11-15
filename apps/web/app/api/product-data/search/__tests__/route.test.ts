@@ -11,6 +11,12 @@ vi.mock("../../../../../lib/api-errors", () => ({
   ),
 }));
 
+vi.mock("../../../../../lib/oauth-store", () => ({
+  getOAuthToken: vi.fn().mockResolvedValue(null),
+  upsertOAuthToken: vi.fn(),
+}));
+
+
 const { POST } = await import("../route");
 
 function makeRequest(body: Record<string, unknown>): Request {
