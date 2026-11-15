@@ -5,6 +5,20 @@ import { createSupabaseBrowserClient } from "../../lib/supabase-browser";
 
 type Mode = "magic-link" | "password";
 
+function getChooseWorkspaceUrl(nextPath: string): string {
+  const chooseUrl = new URL("/choose-workspace", window.location.origin);
+  if (
+    nextPath !== "/" &&
+    nextPath !== "/choose-workspace" &&
+    !nextPath.startsWith("/choose-workspace/") &&
+    !nextPath.startsWith("/choose-workspace?") &&
+    !nextPath.startsWith("/choose-workspace#")
+  ) {
+    chooseUrl.searchParams.set("next", nextPath);
+  }
+  return chooseUrl.toString();
+}
+
 export default function LoginPage() {
   const [mode, setMode] = useState<Mode>("magic-link");
   const [email, setEmail] = useState("");
@@ -57,7 +71,7 @@ export default function LoginPage() {
     if (err) {
       setError(err.message);
     } else {
-      window.location.href = nextPath;
+      window.location.href = getChooseWorkspaceUrl(nextPath);
     }
   }
 
