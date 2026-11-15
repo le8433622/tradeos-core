@@ -8,7 +8,13 @@ import {
 } from "@tradeos/auth";
 import { createSupabaseServerClient } from "./supabase-server";
 
-export async function requirePageSession() {
+type RequirePageSessionOptions = {
+  ignoreActiveOrganization?: boolean;
+};
+
+export async function requirePageSession(
+  options: RequirePageSessionOptions = {},
+) {
   const supabase = await createSupabaseServerClient();
   const { data: userData } = await supabase.auth.getUser();
   const { data: sessionData } = await supabase.auth.getSession();
@@ -18,7 +24,9 @@ export async function requirePageSession() {
     const mfaLevel = accessToken ? getSessionAal(accessToken) : "aal1";
 
     const cookieStore = await cookies();
-    const activeOrganizationId = cookieStore.get("activeOrganizationId")?.value;
+    const activeOrganizationId = options.ignoreActiveOrganization
+      ? undefined
+      : cookieStore.get("activeOrganizationId")?.value;
 
     try {
       return await resolveSessionFromEmail(
