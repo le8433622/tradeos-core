@@ -229,7 +229,7 @@ Migrations applied:
 19. ~~**P0: Assisted Flow QA**~~ ✅ DONE — 11 integration tests covering all 5 gate scenarios, cross-tenant isolation, permission checks
 20. **Fix `createSourcingRunSchema` metadata keys** — ✅ DONE — added `suggestedNextStep`, `overrideReason`, `reviewState`, `requiredProof`, `supplierProvided` to `packages/sourcing-core/src/index.ts` Zod schema
 21. **Resolve staging DB drift** — ✅ DONE — Rebuilt staging `ulnjanlaehfmxurreibj` schema (DROP SCHEMA public CASCADE + db push), seeded org/user/permissions, 20/20 integration tests pass, live walkthrough verified all 3 TC cases.
-22. **Choose Workspace page** — Build post-login page for users with >1 org
+22. **Choose Workspace page** — 🟡 IMPLEMENTED IN DRAFT PR #133; awaiting CI and authenticated multi-org E2E verification. No merge or deployment yet.
 23. ~~**P0 Product Data API foundation**~~ ✅ DONE — `packages/product-data-core` with adapter interface, mock provider, intent parser, ProductEvidence converter, scenario simulator, and 13 tests covering 10+ buyer scenarios. Follow-up: eBay Browse API adapter (#131).
 24. **#124 P0: Complete buyer validation loop on production** — Signed up ✅. Production assisted case created ✅ (SourcingRun `cmprvd2550001la04j0b2afog`, DRAFT, NEEDS_MORE_EVIDENCE). **Issue remains open — missing:**
     - Buyer login production via magic link
