@@ -1,27 +1,11 @@
 import { redirect } from "next/navigation";
 import { requirePageSession } from "../../lib/page-session";
 import { ChooseWorkspaceList } from "./choose-workspace-list";
+import { getSafeInternalPath } from "../../lib/safe-next-path";
 
 type SearchParams = {
   next?: string | string[];
 };
-
-function getSafeNextPath(raw: string | string[] | undefined): string {
-  if (
-    typeof raw !== "string" ||
-    !raw.startsWith("/") ||
-    raw.startsWith("//") ||
-    raw.startsWith("/\\") ||
-    raw === "/choose-workspace" ||
-    raw.startsWith("/choose-workspace/") ||
-    raw.startsWith("/choose-workspace?") ||
-    raw.startsWith("/choose-workspace#")
-  ) {
-    return "/";
-  }
-
-  return raw;
-}
 
 export default async function ChooseWorkspacePage({
   searchParams,
@@ -29,7 +13,7 @@ export default async function ChooseWorkspacePage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
-  const nextPath = getSafeNextPath(params.next);
+  const nextPath = getSafeInternalPath(params.next);
   const session = await requirePageSession({ ignoreActiveOrganization: true });
   const memberships = session.memberships ?? [];
 
