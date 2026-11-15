@@ -2,19 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "../../lib/supabase-browser";
+import {
+  getSafeInternalPath,
+  isWorkspaceChooserPath,
+} from "../../lib/safe-next-path";
 
 type Mode = "magic-link" | "password";
 
 function getChooseWorkspaceUrl(nextPath: string): string {
+  const safeNextPath = getSafeInternalPath(nextPath);
   const chooseUrl = new URL("/choose-workspace", window.location.origin);
-  if (
-    nextPath !== "/" &&
-    nextPath !== "/choose-workspace" &&
-    !nextPath.startsWith("/choose-workspace/") &&
-    !nextPath.startsWith("/choose-workspace?") &&
-    !nextPath.startsWith("/choose-workspace#")
-  ) {
-    chooseUrl.searchParams.set("next", nextPath);
+  if (safeNextPath !== "/" && !isWorkspaceChooserPath(safeNextPath)) {
+    chooseUrl.searchParams.set("next", safeNextPath);
   }
   return chooseUrl.toString();
 }
@@ -30,9 +29,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     const next = new URLSearchParams(window.location.search).get("next");
-    if (next?.startsWith("/") && !next.startsWith("//")) {
-      setNextPath(next);
-    }
+    setNextPath(getSafeInternalPath(next));
   }, []);
 
   async function handleMagicLink(e: React.FormEvent) {
