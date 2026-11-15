@@ -2,6 +2,21 @@ const INTERNAL_URL_BASE = "https://tradeos.internal";
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
 const ENCODED_PATH_SEPARATOR = /%(?:2f|5c)/i;
 
+function hasEncodedPathSeparator(value: string): boolean {
+  let candidate = value;
+  for (let depth = 0; depth < 4; depth += 1) {
+    if (ENCODED_PATH_SEPARATOR.test(candidate)) return true;
+    try {
+      const decoded = decodeURIComponent(candidate);
+      if (decoded === candidate) return false;
+      candidate = decoded;
+    } catch {
+      return false;
+    }
+  }
+  return ENCODED_PATH_SEPARATOR.test(candidate);
+}
+
 /**
  * Accepts only same-origin absolute-path references.
  *
@@ -21,7 +36,7 @@ export function getSafeInternalPath(
     raw.startsWith("//") ||
     raw.includes("\\") ||
     CONTROL_CHARACTERS.test(raw) ||
-    ENCODED_PATH_SEPARATOR.test(raw)
+    hasEncodedPathSeparator(raw)
   ) {
     return fallback;
   }
