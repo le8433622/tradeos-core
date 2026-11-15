@@ -20,9 +20,11 @@ describe("getSafeInternalPath", () => {
     expect(getSafeInternalPath("/\\evil.example")).toBe("/");
   });
 
-  it("rejects encoded forward and backward path separators", () => {
+  it("rejects encoded and multiply encoded path separators", () => {
     expect(getSafeInternalPath("/%2f%2fevil.example")).toBe("/");
     expect(getSafeInternalPath("/%5c%5cevil.example")).toBe("/");
+    expect(getSafeInternalPath("/%252f%252fevil.example")).toBe("/");
+    expect(getSafeInternalPath("/%255c%255cevil.example")).toBe("/");
   });
 
   it("rejects absolute external URLs and paths without a leading slash", () => {
