@@ -226,11 +226,15 @@ export function PermissionGate({
 
 ### C1. Login Flow
 
-Sau login, nếu user có >1 org:
+Sau login, nếu user có hơn một ACTIVE organization membership:
 
-1. Hiển thị màn hình "Choose workspace"
-2. Chọn 1 org → set `activeOrganizationId` trong session/localStorage
-3. Redirect đến dashboard của org đó
+1. Magic-link callback và password sign-in chuyển đến `/choose-workspace`, đồng thời giữ `next` path nội bộ nếu có.
+2. Server page đọc danh sách membership từ `OrganizationMember` mà không tin cookie tổ chức đang được chọn trước đó.
+3. Nếu chỉ có 0 hoặc 1 membership, người dùng bỏ qua màn hình chọn workspace và tiếp tục luồng hiện tại.
+4. Khi người dùng chọn workspace, client gọi `POST /api/user/switch-org`. API xác minh membership ACTIVE rồi đặt cookie `activeOrganizationId` dạng HttpOnly, SameSite=Lax.
+5. Sau khi API xác nhận thành công, trình duyệt mở `next` path nội bộ đã được kiểm tra; mặc định là dashboard.
+
+Không đặt organization ID từ client vào localStorage làm nguồn xác thực. Server session và API membership check luôn là nguồn quyết định quyền truy cập.
 
 ### C2. Switcher UI
 
