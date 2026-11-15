@@ -234,6 +234,8 @@ Sau login, nếu user có hơn một ACTIVE organization membership:
 4. Khi người dùng chọn workspace, client gọi `POST /api/user/switch-org`. API xác minh membership ACTIVE rồi đặt cookie `activeOrganizationId` dạng HttpOnly, SameSite=Lax.
 5. Sau khi API xác nhận thành công, trình duyệt mở `next` path nội bộ đã được kiểm tra; mặc định là dashboard.
 
+Mọi luồng redirect phải dùng `getSafeInternalPath` từ `apps/web/lib/safe-next-path.ts`. Hàm này chỉ chấp nhận same-origin absolute paths, từ chối protocol-relative URLs, backslash, encoded slash/backslash, control characters và giá trị quá dài. Không dùng regex `startsWith('/')` làm kiểm tra redirect duy nhất.
+
 Không đặt organization ID từ client vào localStorage làm nguồn xác thực. Server session và API membership check luôn là nguồn quyết định quyền truy cập.
 
 ### C2. Switcher UI
