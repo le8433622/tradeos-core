@@ -10,6 +10,7 @@ const AUTH_PATHS = [
   "/auth",
   "/onboarding",
   "/invite",
+  "/choose-workspace",
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
