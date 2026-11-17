@@ -3,7 +3,7 @@
 **Snapshot:** 18 November 2026 — consolidated campaign state  
 **Repository branch:** `campaign/vdi-dre-unmiss-juba-2026-11-17`  
 **Scope:** non-lethal, civilian-grade supplies, facilities, AV, data storage, calibration services and logistics only  
-**Execution state:** 15 distinct product/service supplier prospects contacted (8 initial leads plus 7 additional category-specific prospects); 3 supplier follow-up/update messages sent; 7 distinct logistics providers contacted through 8 email attempts (5 attempts across four original forwarders, including one bounced UNDO address and one alternate-address retry, plus 3 Juba destination-partner inquiries). No new responses to the campaign-specific outreach were found in the latest inbox search; no supplier/contractor has passed documentary qualification. No EOI submitted; no spend, purchase order, contract, invoice or collected revenue; no production deployment.
+**Execution state:** 15 distinct product/service supplier prospects contacted (8 initial candidates plus 7 additional category-specific prospects); 7 distinct logistics providers contacted through 8 email attempts (5 attempts across four original forwarders, including one bounced UNDO address and one alternate-address retry, plus 3 Juba destination-partner inquiries); 2 administrative clarification emails sent to UNMISS; multiple targeted supplier follow-ups sent. No new response or qualification has been confirmed in the latest inbox checks. No EOI submitted; no spend, purchase order, contract, invoice or collected revenue; no production deployment.
 
 ## 1. Commercial objective
 
@@ -592,3 +592,57 @@ A Gmail inbox search performed before the five updates found no inbound replies 
 3. For Care and EcoWipes, check each of the four required UNSPSC codes in the supplier's own UNGM account; product-category descriptions alone are insufficient.
 4. Do not submit any EOI on behalf of a supplier. A supplier's authorized signatory must submit and retain proof.
 5. Record no VDI revenue unless a legally eligible contracting entity signs the engagement, issues a valid invoice/accounting record and receives funds under the agreed terms.
+
+
+## 19. Addendum — verified deadlines and follow-up record (18 November 2026)
+
+### 19.1 Deadline and supplier eligibility control
+
+The following official UNMISS PDFs establish exact 16:00 Juba local time cutoffs:
+- Various Category of Items — 25 November 2026 at 16:00 (GMT+2), covering engineering items such as welding rods and solder wire and packaging items such as kraft corrugated cardboard boxes and fiberboard boxes. The EOI must name the specific item, UNGM registration number and company contacts. It can be submitted through UNGM; the PDF also lists email contacts for submission difficulties and allows hand delivery.
+- Fire Extinguishers — 23 November 2026 at 16:00 (GMT+2), UNSPSC 46191601, DAP UNMISS Logistics Base, Juba, Incoterms 2020.
+- Cleaning Materials — 23 November 2026 at 16:00 (GMT+2), required UNSPSC 47131604, 52121700, 47131502 and 10191509, DAP Juba, Incoterms 2010. The PDF recommends Basic registrants upgrade to Level 1.
+- Media Storage Devices — 20 November 2026 at 16:00 (GMT+2), UNSPSC 43201800.
+
+Each 16:00 Juba cutoff above is 21:00 Vietnam time (UTC+7) on the same date. The public UNGM page timestamps of 23:59 GMT-4 are later and are not used in place of the explicit PDF deadline.
+
+Official PDF sources:
+- Various Category: https://unmiss.unmissions.org/sites/default/files/2026-11/engineering_-_package_materials_-_local.pdf
+- Fire Extinguishers: https://unmiss.unmissions.org/sites/default/files/2026-11/reoi_for_supply_and_delivery_of_fire_extinguishers_to_unmiss.pdf
+- Cleaning Materials: https://unmiss.unmissions.org/sites/default/files/2026-11/reoi-_cleaning_materials.pdf
+- Media Storage: https://unmiss.unmissions.org/sites/default/files/2026-10/cover_memo_reoi-_supply_of_media_storage_devices_sgd.pdf
+
+PDF screenshot calls in this pass returned HTTP 403 or were unsupported for indexed PDF search-result content; no screenshot-based visual review is claimed.
+
+### 19.2 Targeted supplier messages sent
+
+Five messages were sent to existing supplier prospects to pass on exact PDF requirements and obtain decision-grade qualification evidence:
+
+| Candidate | EOI | Message ID | Outstanding gate |
+|---|---|---|---|
+| Kim Tin Group | Various Category + separate Engineering Supplies EOIUNMISS24900 | 1a1ea9381db18b64 | Confirm exact welding/brazing rod or solder-wire lines, UNGM ID, SKU evidence and own-submission intention |
+| BMA Vietnam Industries | Various Category + separate Packaging EOIUNMISS24899 | 1a1ea9398b71d4a6 | Confirm actual packaging lines, dimensions/material, UNGM ID and own-submission intention |
+| VinaFoam | Fire Extinguishers EOIUNMISS24885 | 1a1ea93b2cd1b0df | Confirm exact extinguisher/blanket models, certificates/SDS and UNGM ID with UNSPSC 46191601 |
+| Care Vietnam | Cleaning Materials EOIUNMISS24886 | 1a1ea93be8165884 | Confirm UNGM ID and all four required UNSPSC codes plus exact cleaning SKUs/SDS/TDS |
+| EcoWipes Vietnam | Cleaning Materials EOIUNMISS24886 | 1a1ea93d1ee64cd4 | Confirm UNGM ID and all four required UNSPSC codes plus exact wipes/nonwoven SKUs/SDS/TDS |
+
+These are non-binding capability and readiness inquiries. They neither appoint a supplier nor authorize submission on a supplier's behalf.
+
+### 19.3 Direct clarification requests to UNMISS
+
+- Household Appliances EOIUNMISS24890: message ID 1a1ea919078742db; asking whether the words “Table Lamb” and “Cultery Set” on the UNGM HTML listing are intended and asking for the operative Juba closing time.
+- Engineering Supplies EOIUNMISS24900 and Packaging Materials EOIUNMISS24899: message ID 1a1ea91a30f7fa21; asking for operative Juba closing times where the PDFs or timestamps were incomplete or inaccessible.
+
+No response from UNMISS had been found in the last inbox check. No confidential solicitation information was requested.
+
+### 19.4 Reconciled campaign inventory
+
+- Distinct product/service supplier prospects contacted: 15.
+- Distinct logistics providers contacted: 7.
+- Logistics email attempts: 8 (four initial forwarding/provider inquiries plus one alternate-address retry for UNDO, plus three Juba destination-partner inquiries).
+- UNMISS administrative clarification messages: 2.
+- New replies confirmed after most recent outreach: 0 at last check.
+- Supplier or logistics qualifications completed: 0.
+- EOI submissions, purchase orders, contracts, invoices or collected VDI revenue: 0.
+
+The absence of an email bounce does not confirm receipt, review or interest. Do not describe a prospect as qualified unless its documentary evidence has been checked.
