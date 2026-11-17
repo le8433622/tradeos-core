@@ -425,3 +425,46 @@ No EOI was submitted, no vendor representation was made, and no spend or commerc
 - For EOIUNMISS24883, proceed only if the provider documents that the required scale types/ranges are within its calibration scope, that the relevant authorization is recognized by the applicable national authorities, and that service delivery is viable in both South Sudan and Entebbe. Local authorized partner may be essential.
 - Do not issue a formal quote or take a success fee until the contracting party, customer, deliverables, liability, fee disclosure and payment terms are documented.
 - No vendor is VERIFIED_FOR_NOTICE solely because its website or an email describes a product/service category.
+
+
+
+## 15. Addendum — Juba destination-partner screening (18 November 2026)
+
+### 15.1 Local partner evidence
+
+Three Juba-based logistics/cargo operators were identified from their own public websites and sent non-binding capability inquiries. This separates Vietnam-origin forwarding from South Sudan destination handling.
+
+| Candidate | Publicly described service scope | Public contact | Gmail message ID | Status |
+|---|---|---|---|---|
+| Warehousing Logistics Company (WLC) | Juba warehousing, equipment access and integrated logistics; public site claims ISO 9001:2015 certification | info@wlc-ssd.com | 1a1ea8b2f95053f0 | Inquiry sent; local licence, site access, insurance and rates unverified |
+| LTA-Juba | Customs-document preparation/coordination, freight, warehousing, last-mile delivery and distribution | corp@lta-juba.com; sales@lta-juba.com | 1a1ea8b3e5e6ff2c | Inquiry sent; must establish whether own or subcontracted customs broker is licensed |
+| Solution Quick Services (SQS) | Airport cargo acceptance/processing, storage, tracking and customs coordination at Juba International Airport | sqs@sqsjuba.com | 1a1ea8b49138a2f0 | Inquiry sent; airport authorization and onward UNMISS delivery capability unverified |
+
+Source pages:
+- WLC: https://www.wlc-ssd.com/
+- LTA-Juba freight and clearance: https://www.lta-juba.com/services/freight-clearance
+- SQS cargo operations: https://sqsjuba.com/cargo/
+
+These public descriptions are not evidence of customs-broker licensing, airport/operator authorization, UNMISS site access, security vetting, insurance, prior UN deliveries, or appointment as a consignee/importer. Each claim requires current documents and, where relevant, a reference that can be independently checked.
+
+### 15.2 Scope of destination-partner inquiries
+
+Each inquiry requested:
+1. Legal entity registration, tax details, authorized signatory and current business/service licences.
+2. Whether customs clearance is done under the candidate's own authorization or by a named third-party licensed broker.
+3. Whether the candidate can actually arrange delivery into UNMISS Logistics Base, and whether it has current site access/authorization or verifiable delivery references.
+4. Insurance, vehicle/equipment capacity, tracking and signed proof-of-delivery process.
+5. Separate rates for clearance, terminal/border handling, storage, transport, handling and final-site delivery.
+6. Importer-of-record assumptions, customs/tax documentation and required shipment details.
+7. References in South Sudan involving UN agencies, INGOs or international corporate cargo, subject to client permission.
+
+The inquiry does not appoint any company, grant a mandate to import/clear goods, authorize custody of cargo, approve an expense, or establish a contractual relationship. DAP seller obligations must be separated from import clearance, duties/taxes and unloading unless expressly reallocated in the contract. No DAP quotation can be reliable until consignee/importer, SKU, quantity, package dimensions/weight and delivery-site procedures are known.
+
+### 15.3 Current logistics qualification state
+
+- Existing Vietnam-origin forwarding inquiry attempts: 5 across four forwarders, with one initial bounce and one retry.
+- Additional Juba destination/handling inquiries sent in this update: 3.
+- Destination partners with verified customs licence, insurance, UNMISS access, current route quotation and completed service reference: 0.
+- Freight quote, booking, cargo custody, expense or service contract: 0.
+
+Do not use a generic statement such as "local logistics available" in a bid or customer quote until the licensed customs broker, importer-of-record and UNMISS access route are documented.
