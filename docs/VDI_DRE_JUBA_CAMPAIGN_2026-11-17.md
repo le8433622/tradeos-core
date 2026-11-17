@@ -373,7 +373,7 @@ Official references:
 
 The UNGM web pages display 20 November 2026 23:59 GMT-4, but the corresponding official notice text states 16:00 Juba local time (GMT+2). These are not equivalent. The 16:00 Juba time is earlier and has been used conservatively. Do not rely on any third-party tender aggregator's timestamp.
 
-The PDF endpoints returned access errors during this pass; text evidence was obtained from the official UNGM HTML pages and indexed official notice text. No PDF screenshot inspection is claimed.
+The Audio-Visual Devices PDF was successfully opened and confirms the deadline as Friday 20 November 2026 at 16:00 Juba local time (GMT+2), equivalent to 21:00 Vietnam time. The Media Storage Devices and Weighing Scales PDF endpoints returned HTTP 403 during this pass; for those notices, the deadline and requirements were taken from the accessible official UNGM HTML text. No screenshot-based visual inspection is claimed.
 
 ### 14.2 Supplier capability inquiry emails sent — 18 November 2026
 
