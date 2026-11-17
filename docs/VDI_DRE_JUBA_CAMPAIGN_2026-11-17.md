@@ -3,7 +3,7 @@
 **Snapshot:** 17 November 2026  
 **Repository branch:** `campaign/vdi-dre-unmiss-juba-2026-11-17`  
 **Scope:** non-lethal, civilian-grade logistics and facilities supplies only  
-**Execution state:** four supplier capability inquiries sent on 17 November 2026; responses and qualifications pending; no EOI submitted; no spend, purchase order, contract, or production deployment made.
+**Execution state:** five supplier capability inquiries sent on 17 November 2026; responses and qualifications pending; no EOI submitted; no spend, purchase order, contract, or production deployment made.
 
 ## 1. Commercial objective
 
@@ -54,7 +54,7 @@ The UNMISS bids page was checked on 17 November 2026. The page lists the opportu
 
 ## 3. Supplier prospect list — public-source leads, not approved suppliers
 
-These remain research leads, not approved suppliers. Four companies have received capability inquiries; identity/KYC is incomplete, UNGM status is unknown, and no product has been accepted against an UNMISS specification.
+These remain research leads, not approved suppliers. Five companies have received capability inquiries; identity/KYC is incomplete, UNGM status is unknown, and no product has been accepted against an UNMISS specification.
 
 | Workstream | Candidate | Public evidence of fit | Fit status | Mandatory checks before outreach |
 |---|---|---|---|---|
