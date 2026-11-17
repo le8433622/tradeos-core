@@ -255,7 +255,8 @@ A product-level follow-up was sent to VinaFoam in the existing thread on 18 Nove
 | Bee Logistics | Vietnam origin / forwarding | haiphong.office@beelogistics.com | `1a1ea7ac144d3d2a` | Sent; reply pending |
 | Dolphin Sea Air Services | Vietnam origin / forwarding | info@dolphinseaair.com | `1a1ea7ac88fe2ac9` | Sent; reply pending |
 | National Carrier Logistics Ltd | Juba destination / inland delivery | info@nationalcarrierlogistics.com | `1a1ea7ad04ec5250` | Sent; reply pending |
-| UNDO Freight Services | Juba destination / inland delivery | info@undofreight-ss.com | `1a1ea7ad99fd5459` | Bounced: SMTP 550 No Such User |\n| UNDO Freight Services (alternate published contact) | Juba destination / inland delivery | undofreightservices@gmail.com | `1a1ea7fb00ad9716` | Sent; reply pending |
+| UNDO Freight Services | Juba destination / inland delivery | info@undofreight-ss.com | `1a1ea7ad99fd5459` | Bounced: SMTP 550 No Such User |
+| UNDO Freight Services (alternate published contact) | Juba destination / inland delivery | undofreightservices@gmail.com | `1a1ea7fb00ad9716` | Sent; reply pending |
 
 All messages are non-binding capability inquiries. No purchase order, booking, bid, price commitment, contract or expenditure was made. Gmail inbox search on 18 November found no new replies to the BMA, Kim Tin, Care, EcoWipes, Bee Logistics, Dolphin Sea Air or National Carrier inquiries. The old VinaFoam reply remains a preliminary supplier statement only.
 
