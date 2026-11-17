@@ -3,7 +3,7 @@
 **Snapshot:** 18 November 2026  
 **Repository branch:** `campaign/vdi-dre-unmiss-juba-2026-11-17`  
 **Scope:** non-lethal, civilian-grade logistics and facilities supplies only  
-**Execution state:** five supplier capability inquiries and four logistics capability inquiries sent; one follow-up sent in the existing VinaFoam thread. Replies/qualifications for the new inquiries are pending. No EOI submitted; no spend, purchase order, contract, or production deployment made.
+**Execution state:** eight supplier capability inquiries and five logistics capability inquiry attempts sent; one VinaFoam follow-up sent. One UNDO email to the published info@ address bounced; a retry was sent to the alternate address published on the company's website. New replies/qualifications are pending. No EOI submitted; no spend, purchase order, contract, or production deployment made.
 
 ## 1. Commercial objective
 
@@ -25,7 +25,7 @@ The UNMISS bids page, UNGM notices and available REOI PDFs were rechecked on 18 
 |---|---:|---|---|---|
 | Supply and delivery of Cleaning Materials | 23 Nov 2026, 16:00 Juba | DAP UNMISS Logistics Base, Juba; Incoterms 2010 | UNGM registration for UNSPSC 47131604, 52121700, 47131502, 10191509; company contacts | PDF reviewed |
 | Supply and Delivery of Fire Extinguishers | 23 Nov 2026, 16:00 Juba | DAP UNMISS Logistics Base, Juba; Incoterms 2020 | UNGM registration for UNSPSC 46191601; company contacts | PDF reviewed |
-| Supply and Delivery of Household Appliances | 24 Nov 2026 | UNMISS Logistics Base, Juba (listing description) | Detailed PDF/specification not retrieved; do not infer line items or codes | Listing only — hold |
+| Supply and Delivery of Household Appliances (EOIUNMISS24890) | 24 Nov 2026; UNGM displays 23:59 GMT-4 | DAP UNMISS Logistics Base, Juba; Incoterms 2020 | UNGM ID, company legal name, address, telephone and email required in EOI form | UNGM notice reviewed; linked PDF inaccessible in this pass |
 | Supply and Delivery of Various Category of Items (engineering + packaging) | 25 Nov 2026, 16:00 Juba | DAP UNMISS Logistics Base, Juba; Incoterms 2020 | Name the exact category/line item, UNGM registration number and company contacts | PDF reviewed |
 | Supply and Delivery of Packaging Materials (EOIUNMISS24899) | 25 Nov 2026; PDF gives date only; UNGM page displays 23:59 GMT-4 | DAP UNMISS Logistics Base, Juba; Incoterms 2020 | UNGM registration and company contacts; UNSPSC 24120000 and 24140000 | Separate EOI/PDF reviewed |
 
@@ -57,13 +57,17 @@ The UNMISS bids page, UNGM notices and available REOI PDFs were rechecked on 18 
 - EOI response is through UNGM notice 322237. Assistance contacts: kibukamusoke@un.org, copying cecilia.ssidam...etey1@un.org and ngonyo@un.org.
 - This is a separate notice that overlaps with, but is not the same as, the broader engineering/packaging REOI above.
 
-**Household Appliances**
-- The official UNMISS bids page lists the title and a 24 November 2026 closing date.
-- The detailed PDF was not retrieved in this research pass. Keep as WATCH / NOT READY until the PDF, line items, UNSPSC, terms and submission instructions are verified.
+**Household Appliances — EOIUNMISS24890**
+- The UNGM notice describes: steam iron, electric range, electronic insect killer, "Table Lamb" (spelling as displayed on the listing; confirm whether the PDF specifies table lamp), kitchen pot set and cutlery set.
+- Delivery: DAP UNMISS Logistics Base, Juba, Incoterms 2020.
+- The UNMISS bids page shows a 24 November 2026 closing date. The UNGM notice displays 24 November 2026 at 23:59 GMT-4 (equivalent to 25 November 2026 at 10:59 Vietnam time). The linked detailed PDF could not be fetched (HTTP 403), so do not assume an unverified Juba-local hour; check the live UNGM form and official PDF immediately before action.
+- UNGM page says the company should be registered or start registration immediately and must include UNGM ID plus company name, address, telephone and email in the EOI form. The linked PDF could not be inspected visually or textually in this pass; do not assume any extra UNSPSC codes or technical specifications.
+- The notice is an EOI, not a solicitation. UNMISS says it may change/cancel the requirement and EOI submission does not guarantee invitation to a later solicitation.
+- VDI must not invent a BOQ or quantity. The current work is product fit, vendor eligibility and readiness only.
 
 ## 3. Supplier prospect list — public-source leads, not approved suppliers
 
-These remain research leads, not approved suppliers. Five companies have received capability inquiries; identity/KYC is incomplete, UNGM status is unknown, and no product has been accepted against an UNMISS specification.
+These remain research leads, not approved suppliers. Eight supplier capability inquiries have been sent across the current campaign workstreams; identity/KYC is incomplete for most leads, UNGM status is unknown, and no product has been accepted against an UNMISS specification.
 
 | Workstream | Candidate | Public evidence of fit | Fit status | Mandatory checks before outreach |
 |---|---|---|---|---|
@@ -74,11 +78,19 @@ These remain research leads, not approved suppliers. Five companies have receive
 | Cleaning | EcoWipes Vietnam | Public company profile describes wet wipes, antibacterial wipes and export/private-label supply | Partial fit for wipes only | Current catalogue, industrial wipe grades, chemical composition/SDS, packaging, product origin, certificates, UNGM ID and export capability |
 | Cleaning chemicals | Care Vietnam | Public company page describes supply/distribution of industrial cleaning chemicals and imported brands | Distributor lead for selected chemicals only | Manufacturer authorizations, SDS, labels/language, dangerous-goods classification, country of origin, brand acceptance, UNGM ID and export rights |
 
+| Insect-control appliances | Foshan Sengwin Technology Co., Ltd. (China) | Existing email thread identifies Sengwin as a manufacturer of electric insect killers; company website describes more than 12 years' development and CE/CB/RoHS/GS/UL/SASO claims | Strong product-category lead for electronic insect killer; model and certification not independently verified | Exact indoor household model, voltage/frequency, rated power, coverage, mechanism, model-specific certificates, legal entity, UNGM ID, MOQ, packaging and export terms |
+| Household appliances / cookware | Elmich / Elmich Housewares (Vietnam) | ASEMConnect profile lists steam irons, induction/infrared cookers, cookware sets, knife sets and kitchen utensils; Elmich's official site identifies its legal company and Vietnam factory | Strong category coverage for cookware and selected home appliances; manufacturer vs distributor varies by SKU | Exact legal supplier entity for EOI, manufacturer-of-record per SKU, current models, electrical standards, origin, certificates, UNGM ID, MOQ and DAP capability |
+| Household appliances / distribution | Tiross Vietnam | ASEMConnect profile lists steam irons, table lamps, stainless-steel pot sets and small appliances; profile says household electrical products are sourced from Tiross factory and distributed wholesale/retail | Potential distributor/source for selected lines; not assumed to be manufacturer or exporter | Legal exporter, actual manufacturer, model/SKU, origin, electrical standards, certificates, UNGM ID, MOQ and export capability |
+| Garment steamers — hold | Zhejiang Huaguang Electric Appliance Group (China) | Existing email states 45-day lead time, 1,000-piece MOQ for garment steamers, 500 for coffee machines, 30% deposit / 70% before shipment and 1-year warranty | Not yet matched: garment steamer is not assumed equivalent to the EOI's steam iron | Confirm an actual steam-iron model before adding to the opportunity; confirm contracting legal entity, model data, MOQ, origin, certificates and UNGM ID |
+
 **No supplier is marked VERIFIED.** A product-page match does not prove compliance with the UNMISS requirement, export eligibility, UNGM registration, manufacturer authorization or delivery capability.
 
 ### Existing VinaFoam correspondence — preliminary supplier signal
 
 A prior VinaFoam thread contains a reply from Nam Luu (International Business Admin) dated 13 November 2026. VinaFoam self-reported an export range including powder, foam, CO2 and water-based extinguishers; stated that extinguisher products have ISO / QCVN or TCVN 7026 / EN 3 test reports; stated a production capacity of 3,200–3,500 extinguishers per day; and said it can quote FOB Hai Phong or CIF Tunis. On 16 November, VinaFoam said it would check the UNMISS and UNIDO project requirements. A follow-up asking for a category-by-category go/no-go was sent on 18 November in that existing thread.
+
+On 16 November, VinaFoam also confirmed in writing that it could supply all four product categories named in the Fire Extinguishers EOI, but said it could not establish technical compliance or commercial feasibility without detailed requirements and quantities. VDI reviewed the official EOI and replied on 18 November that no detailed specifications or quantities are disclosed at the EOI stage and that no further planned-solicitation details are made available before the solicitation documents are issued. The reply requested VinaFoam's UNGM ID/registration level and confirmation it intends to submit directly as supplier. Gmail follow-up ID: `1a1ea7e9b19591de`.
+
 
 These are supplier statements, not independently verified facts. No model-level certificate, test report, UNGM registration ID, current stock confirmation, or DAP Juba quotation has been received in the accessible correspondence. The supplier asked about VDI's legal entity status; VDI has already disclosed that it is not yet a separately incorporated legal entity. Any fee-bearing agreement requires an eligible contracting party and valid tax/invoicing route to be established first. VinaFoam remains a prospect, not a qualified bidder.
 
@@ -101,6 +113,10 @@ A supplier may move from `PROSPECT` to `VERIFIED_FOR_NOTICE` only after the assi
 Never represent a self-declaration or web page as an independent verification.
 
 
+
+### Logistics capability screening — updated outcome
+
+Four initial inquiries were sent on 18 November 2026. The first message to `info@undofreight-ss.com` bounced with SMTP 550 No Such User. UNDO's public contact page also lists `undofreightservices@gmail.com` and `juba@undofreight-ss.com`; a retry was sent to the alternate Gmail address. No quote, licence copy, insurance evidence, site-access confirmation or route commitment has been received from any forwarder.
 
 ### Logistics capability screening — four inquiries sent
 
@@ -196,8 +212,8 @@ All future application mutations must go through registered actions, tenant-scop
 
 ## 10. Immediate operator queue
 
-- [ ] Retrieve/confirm the detailed Household Appliances PDF and all exact line items.
-- [ ] Track replies to the five supplier and four logistics inquiries; retrieve complete threads before classifying responses.
+- [ ] Obtain the linked Household Appliances PDF through an accessible official channel and reconcile its item wording/deadline against UNGM; the current listing spelling includes “Table Lamb”, which needs confirmation.
+- [ ] Track replies to the eight supplier and five logistics delivery attempts; retrieve complete threads before classifying responses.
 - [ ] Obtain model-level certificates, SDS, UNGM status, country-of-origin documents, stock/lead time and export references from relevant suppliers.
 - [ ] Request final freight quotes only after obtaining exact SKUs, quantities, package dimensions, gross weight, palletization and dangerous-goods classification.
 - [ ] Confirm DAP importer-of-record, import clearance, duty/tax handling, unloading and UNMISS site-access procedures with the buyer/consignee.
@@ -221,6 +237,17 @@ All future application mutations must go through registered actions, tenant-scop
 
 A product-level follow-up was sent to VinaFoam in the existing thread on 18 November 2026, asking for go/no-go and evidence for ABC 6 kg, foam, clean-agent and fire blanket categories. Gmail message ID: `1a1ea7a13ee1227d`. VinaFoam has not yet provided model-level proof in the accessible thread.
 
+### Household-appliance supplier inquiries sent 18 November 2026
+
+| Candidate | Recipient | EOI category | Gmail message ID | Status |
+|---|---|---|---|---|
+| Foshan Sengwin Technology Co., Ltd. | sales03@sengwin.com | Electronic insect killer | `1a1ea7f41ed936fa` | Sent; supplier has earlier self-reported manufacturing range and MOQ; model/certificate proof pending |
+| Elmich | info@elmich.vn | Steam iron, electric cooking appliances, cookware and cutlery | `1a1ea7f4806eee80` | Sent; response pending |
+| Tiross Vietnam | tirossvn.office@gmail.com | Steam iron, table lamp, household appliances and cookware | `1a1ea7f5280b9557` | Sent; response pending |
+
+**Other prior supplier signal:** Zhejiang Huaguang Electric Appliance Group previously stated a 1,000-piece MOQ for garment steamers, 500 for coffee machines, 45-day lead time, 30% deposit / 70% before shipment and one-year warranty. This is a supplier statement from an earlier general inquiry, not a quote for the UNMISS EOI. A garment steamer is not assumed to satisfy “steam iron”; exact product fit remains pending. Thread: `1a1e6d007f8e8dae`.
+
+
 ### Logistics capability inquiries sent 18 November 2026
 
 | Provider | Role | Recipient | Gmail message ID | Status |
@@ -228,19 +255,28 @@ A product-level follow-up was sent to VinaFoam in the existing thread on 18 Nove
 | Bee Logistics | Vietnam origin / forwarding | haiphong.office@beelogistics.com | `1a1ea7ac144d3d2a` | Sent; reply pending |
 | Dolphin Sea Air Services | Vietnam origin / forwarding | info@dolphinseaair.com | `1a1ea7ac88fe2ac9` | Sent; reply pending |
 | National Carrier Logistics Ltd | Juba destination / inland delivery | info@nationalcarrierlogistics.com | `1a1ea7ad04ec5250` | Sent; reply pending |
-| UNDO Freight Services | Juba destination / inland delivery | info@undofreight-ss.com | `1a1ea7ad99fd5459` | Sent; reply pending |
+| UNDO Freight Services | Juba destination / inland delivery | info@undofreight-ss.com | `1a1ea7ad99fd5459` | Bounced: SMTP 550 No Such User |\n| UNDO Freight Services (alternate published contact) | Juba destination / inland delivery | undofreightservices@gmail.com | `1a1ea7fb00ad9716` | Sent; reply pending |
 
-All messages are non-binding capability inquiries. No purchase order, booking, bid, price commitment, contract or expenditure was made.
+All messages are non-binding capability inquiries. No purchase order, booking, bid, price commitment, contract or expenditure was made. Gmail inbox search on 18 November found no new replies to the BMA, Kim Tin, Care, EcoWipes, Bee Logistics, Dolphin Sea Air or National Carrier inquiries. The old VinaFoam reply remains a preliminary supplier statement only.
 
 ## 12. Source register
 
 ### Official UNMISS sources
 - [UNMISS Bids](https://unmiss.unmissions.org/en/bids) — current listing shows the broad Various Category notice, Household Appliances, Cleaning Materials and Fire Extinguishers.
+- [UNGM Household Appliances EOIUNMISS24890](https://www.ungm.org/Public/Notice/322045) — product categories and deadline display for the household-appliances notice.
+- [UNMISS Fire Extinguishers EOIUNMISS24885](https://www.ungm.org/Public/Notice/321856) — public description; use the earlier 16:00 Juba deadline stated in the PDF.
+- [UNMISS Cleaning Materials EOIUNMISS24886](https://www.ungm.org/Public/Notice/321858) — public description; use the 16:00 Juba deadline stated in the PDF.
 - [UNGM Packaging Materials EOIUNMISS24899](https://www.ungm.org/Public/Notice/322237) — separate packaging-only notice with UNSPSC 24120000 and 24140000.
 - [Packaging Materials EOI 24899 PDF](https://www.un.org/Depts/ptd/sites/www.un.org.Depts.ptd/files/pdf/eoi24899.pdf) — separate notice, closing date 25 November 2026.
 - [Cleaning Materials REOI PDF](https://unmiss.unmissions.org/sites/default/files/2026-11/reoi-_cleaning_materials.pdf)
 - [Fire Extinguishers REOI PDF](https://unmiss.unmissions.org/sites/default/files/2026-11/reoi_for_supply_and_delivery_of_fire_extinguishers_to_unmiss.pdf)
 - [Various Engineering / Packaging Items REOI PDF](https://unmiss.unmissions.org/sites/default/files/2026-11/engineering_-_package_materials_-_local.pdf)
+
+### Household-appliance supplier sources
+- [Foshan Sengwin Technology](https://www.sengwin.com/) — electric insect-killer manufacturer, public model range and claimed certifications.
+- [Elmich official company site](https://elmich.vn/) and [Elmich Housewares manufacturing site](https://elmichhousewares.com.vn/) — cookware and home-appliance sourcing.
+- [ASEMConnect profile for Tiross Vietnam](https://asemconnectvietnam.gov.vn/Business.aspx?Biz_id=21416&ID1=2&ZID1=127) — public product/category profile and contact details.
+- [ASEMConnect profile for Elmich](https://asemconnectvietnam.gov.vn/Business.aspx?Biz_id=21413&ID1=2&ZID1=7) — public product/category profile.
 
 ### Logistics-source leads
 - [Bee Logistics contacts](https://beelogistics.com/contact/contact)
@@ -259,8 +295,8 @@ All messages are non-binding capability inquiries. No purchase order, booking, b
 - [Care Vietnam industrial cleaning chemicals](https://www.carevietnam.vn/en/providing-industrial-cleaning-chemicals)
 
 ### Research limitations
-- UNMISS page and relevant PDFs were readable through search/open results; screenshot retrieval for the PDFs failed with HTTP 403, so the available extracted text was used and no visual screenshot check is claimed.
-- Household Appliances listing title/date is visible on UNMISS Bids, but its detailed PDF and specification remain unverified.
-- No supplier reply to the new 17 November capability inquiries and no response to the 18 November logistics inquiries had been retrieved at this snapshot. The older VinaFoam thread contains self-reported capacity/product claims and an acknowledgment that the company was checking the opportunities.
+- UNMISS page and relevant PDFs were readable through search/open results; screenshot retrieval for the PDFs failed with HTTP 403, so no visual screenshot verification is claimed. The Household Appliances UNGM HTML page was accessible, but its linked PDF was not.
+- Household Appliances product categories are based on the UNGM listing text. It spells “Table Lamb”; verify the PDF before interpreting this as “Table Lamp”. Its UNGM page displays 24 November 2026 at 23:59 GMT-4, while the UNMISS Bids page lists the closing date as 24 November; use the live UNGM deadline and check the official form at submission.
+- No replies to the new supplier or logistics capability inquiries had been retrieved at this snapshot. The older VinaFoam thread contains self-reported product/capacity claims and a response that it can supply all four extinguisher categories in general, while requesting detailed specs/quantities; VDI clarified that those details are not released at the EOI stage. Sengwin's earlier general supplier thread contains self-reported 13-year manufacturing history, model categories, MOQ range and certification claims; these remain unverified.
 - No VDI-controlled supplier qualification, logistics quote, UNGM ID verification, current certificate verification, EOI submission, purchase order, contract or collected revenue has been established.
 - TradeOS documentation only was updated on a feature branch. No production code/database was changed. This document is an execution pack, not evidence of supplier qualification, UNMISS endorsement, an award, a contract, or collected revenue.
