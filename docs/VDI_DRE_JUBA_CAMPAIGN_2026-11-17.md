@@ -317,9 +317,9 @@ This addendum supersedes earlier notes where it clarifies current source access 
 - This is a separate UNGM opportunity from UNMISS's broader “Various Category of Items” REOI, whose UNMISS PDF states a different deadline of 25 November 2026 at 16:00 Juba. Do not combine their reference numbers or closing times.
 - No quantity, BOQ or final specification is published in the accessible UNGM description. Do not prepare a binding quotation or invent quantity assumptions at EOI stage.
 
-### 13.2 Household Appliances PDF now reviewed
+### 13.2 Household Appliances — evidence limitation and clarification required
 
-The official PDF for [EOIUNMISS24890](https://www.un.org/Depts/ptd/sites/www.un.org.Depts.ptd/files/pdf/eoi24890.pdf) is now text-accessible. It confirms the date of EOI closure as 24 November 2026, DAP Juba, Incoterms 2020, UNSPSC 52140000 and 52150000, and that the vendor must complete UNGM registration before the closing date. The PDF itself spells the requested items **“Table Lamb”** and **“Cultery Set”**; keep these exact transcriptions in the evidence log and ask UNMISS for clarification rather than silently assuming “Table Lamp” or another intended item. UNGM displays 24 November 2026 at 23:59 GMT-4; the PDF lists the date but does not state an hour. The linked UN PDF screenshot endpoint returned HTTP 403, so no screenshot-based visual verification is claimed.
+The official PDF link for [EOIUNMISS24890](https://www.un.org/Depts/ptd/sites/www.un.org.Depts.ptd/files/pdf/eoi24890.pdf) returned HTTP 403 in this review and could not be read or screenshot-verified. The accessible [UNGM listing 322045](https://www.ungm.org/Public/Notice/322045) identifies DAP UNMISS Logistics Base, Juba, Incoterms 2020 and lists the requested items as **“Steam Iron”, “Electric Range”, “Electronic Insect Killer”, “Table Lamb”, “Kitchen Pot Set”, and “Cultery Set”**. It records 24 November 2026 at 23:59 GMT-4, which converts to 25 November 2026 at 05:59 Juba (GMT+2) and 10:59 Vietnam (UTC+7) if that timestamp is authoritative. Do not attribute the unusual item wording to the PDF; it is from the accessible UNGM HTML listing. VDI has asked UNMISS to confirm the intended item names and operative local closing time. The vendor must provide its UNGM ID and company contact details in the EOI form; completed UNGM registration is necessary, with Level 1 recommended.
 
 ### 13.3 Inbox and response check — 18 November 2026
 
@@ -531,3 +531,23 @@ The internal offer draft and sample Tender Fit Check now exist in the campaign b
 3. Obtain Juba destination-partner licence, insurance and site-access proof before including any local delivery claim in a cost model.
 4. Use the sample report for internal quality review only until the contracting-entity gate is cleared.
 5. No further bulk outreach until existing leads produce usable evidence or a new official notice demonstrates a specific fit.
+
+
+## 17. Addendum — direct clarification requests to UNMISS (18 November 2026)
+
+VDI sent two administrative, non-binding clarification emails to the public contacts listed on the relevant UNGM/EOI notices. VDI explicitly stated it is an independent B2B sourcing/procurement-intelligence project, not an incorporated standalone legal entity, not a bidding vendor, not an UNMISS agent and not representing a supplier. No confidential solicitation information or unpublished BOQ was requested.
+
+| Notice | Questions | To / CC | Gmail message ID | Status |
+|---|---|---|---|---|
+| EOIUNMISS24890 — Household Appliances / UNGM 322045 | Confirm whether “Table Lamb” and “Cultery Set” in the accessible UNGM listing are the intended item descriptions or typographical errors; confirm operative closing date/time in Juba local time (GMT+2), because UNGM shows 24 Nov 2026 23:59 GMT-4 and the linked PDF returns HTTP 403 from this review environment | To: kibukamusoke@un.org, cecilia.sessiodametey1@un.org; CC: boy@un.org, kitengeaziza@un.org, ngonyo@un.org | 1a1ea919078742db | Sent; response pending |
+| EOIUNMISS24900 — Engineering Supplies / UNGM 322238 and EOIUNMISS24899 — Packaging Materials / UNGM 322237 | Confirm operative Juba local closing date/time for each notice. For EOIUNMISS24900, UNGM shows 25 Nov 2026 23:59 GMT-4 while PDF is inaccessible (HTTP 403). For EOIUNMISS24899, official PDF says 25 Nov 2026 but does not state an hour, while UNGM shows 25 Nov 2026 23:59 GMT-4 | To: kibukamusoke@un.org, cecilia.sessiodametey1@un.org, ngonyo@un.org | 1a1ea91a30f7fa21 | Sent; response pending |
+
+Sources:
+- [Household Appliances UNGM listing](https://www.ungm.org/Public/Notice/322045)
+- [Engineering Supplies UNGM listing](https://www.ungm.org/Public/Notice/322238)
+- [Packaging Materials official PDF](https://www.un.org/Depts/ptd/sites/www.un.org.Depts.ptd/files/pdf/eoi24899.pdf)
+- [Packaging Materials UNGM listing](https://www.ungm.org/Public/Notice/322237)
+
+The accessible Packaging Materials PDF states the closing date as 25 November 2026, but no closing hour appears in the PDF text. It also states that the vendor's UNGM registration process must be completed before the EOI closing date and that no further details of the planned solicitation will be made available before the solicitation documents are issued. Do not infer a Juba closing hour from the GMT-4 page timestamp; await UNMISS clarification or use the earliest clearly evidenced time if the vendor must make a conservative operational decision.
+
+No EOI submission, fee, purchase order, contract, customer money or representation of UNMISS endorsement is involved in these administrative clarification emails.
