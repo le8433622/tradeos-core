@@ -159,3 +159,13 @@ VDI is not currently an incorporated standalone legal entity. This report does n
 **HOLD:** No supplier is yet confirmed compliant, UNGM-registered, accurate, or able to deliver the complete 10-room requirement.
 
 Do not assume 10-room scalability from a 5+ room public claim; do not infer UNGM eligibility; do not invent accuracy, price, contract value or an award.
+
+
+## 9. Administrative deadline clarification request
+On 18 November 2026, VDI sent a non-representative administrative clarification email to the public ESCAP procurement contact, asking for the operative closing date/time in Bangkok local time because the response form gives the date only while UNGM displays 25 November 2026 at 23:59 GMT-4.
+
+- Recipient: ngamcharoensukthavorn@un.org
+- Gmail message ID: 1a1ea98efb7664ee
+- Status: Sent; reply pending.
+
+VDI stated it is not responding as a vendor, does not represent a supplier, and is not requesting non-public technical/procurement information. Until clarified, vendors should complete and submit during Bangkok business hours on 25 November and retain proof of email submission.
