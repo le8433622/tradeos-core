@@ -26,7 +26,8 @@ The UNMISS bids page, UNGM notices and available REOI PDFs were rechecked on 18 
 | Supply and delivery of Cleaning Materials | 23 Nov 2026, 16:00 Juba | DAP UNMISS Logistics Base, Juba; Incoterms 2010 | UNGM registration for UNSPSC 47131604, 52121700, 47131502, 10191509; company contacts | PDF reviewed |
 | Supply and Delivery of Fire Extinguishers | 23 Nov 2026, 16:00 Juba | DAP UNMISS Logistics Base, Juba; Incoterms 2020 | UNGM registration for UNSPSC 46191601; company contacts | PDF reviewed |
 | Supply and Delivery of Household Appliances | 24 Nov 2026 | UNMISS Logistics Base, Juba (listing description) | Detailed PDF/specification not retrieved; do not infer line items or codes | Listing only — hold |
-| Supply and Delivery of Various Category of Items (engineering + packaging) | 25 Nov 2026, 16:00 Juba | DAP UNMISS Logistics Base, Juba; Incoterms 2020 | Name the exact category/line item, UNGM registration number and company contacts | PDF reviewed |\n| Supply and Delivery of Packaging Materials (EOIUNMISS24899) | 25 Nov 2026; PDF gives date only; UNGM page displays 23:59 GMT-4 | DAP UNMISS Logistics Base, Juba; Incoterms 2020 | UNGM registration and company contacts; UNSPSC 24120000 and 24140000 | Separate EOI/PDF reviewed |
+| Supply and Delivery of Various Category of Items (engineering + packaging) | 25 Nov 2026, 16:00 Juba | DAP UNMISS Logistics Base, Juba; Incoterms 2020 | Name the exact category/line item, UNGM registration number and company contacts | PDF reviewed |
+| Supply and Delivery of Packaging Materials (EOIUNMISS24899) | 25 Nov 2026; PDF gives date only; UNGM page displays 23:59 GMT-4 | DAP UNMISS Logistics Base, Juba; Incoterms 2020 | UNGM registration and company contacts; UNSPSC 24120000 and 24140000 | Separate EOI/PDF reviewed |
 
 ### Notice-level details
 
