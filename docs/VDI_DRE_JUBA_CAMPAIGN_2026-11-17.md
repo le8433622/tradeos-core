@@ -468,3 +468,66 @@ The inquiry does not appoint any company, grant a mandate to import/clear goods,
 - Freight quote, booking, cargo custody, expense or service contract: 0.
 
 Do not use a generic statement such as "local logistics available" in a bid or customer quote until the licensed customs broker, importer-of-record and UNMISS access route are documented.
+
+
+## 16. Addendum — 20 November deadline and sample report (18 November 2026)
+
+### 16.1 Deadline control — critical notices
+
+The current official UNMISS Bids page continues to list the following notices with 20 November 2026 closing dates:
+- EOIUNMISS24873 — Audio Visual Devices.
+- EOIUNMISS24858 — Media Storage Devices.
+- EOIUNMISS24883 — Installation, Calibration and Maintenance Services for Weighing Scales.
+
+For Audio Visual and Media Storage, the official PDFs explicitly state Friday 20 November 2026 at 16:00 Juba time (GMT+2), equivalent to Friday 20 November 2026 at 21:00 Vietnam time (UTC+7). UNGM displays 23:59 GMT-4 on the same date; that timestamp is later than the PDF deadline. The campaign uses the earlier PDF deadline as the operative risk-control cutoff unless UNMISS confirms otherwise in writing.
+
+Sources:
+- [UNMISS Bids](https://unmiss.unmissions.org/en/bids)
+- [Audio Visual Devices official PDF](https://unmiss.unmissions.org/sites/default/files/2026-11/cover_memo_reoi_supply_and_delivery_of_audio_visual_devices_to_unmiss.pdf)
+- [Audio Visual Devices UNGM notice 321471](https://www.ungm.org/Public/Notice/321471)
+- [Media Storage official PDF](https://unmiss.unmissions.org/sites/default/files/2026-10/cover_memo_reoi-_supply_of_media_storage_devices_sgd.pdf)
+- [Media Storage UNGM notice 320621](https://www.ungm.org/Public/Notice/320621)
+- [Weighing Scales UNGM notice 321642](https://www.ungm.org/Public/Notice/321642)
+
+The Weighing Scales UNGM description confirms an initial three-year period with two possible one-year extensions, but does not specify the equipment inventory, service cadence or exact technical scope in its accessible text. Do not price or qualify a provider without the solicitation's full scope and proof of relevant calibration/legal-metrology authorization for both South Sudan and Uganda.
+
+### 16.2 Supplier inbox and deliverability check — 18 November 2026
+
+A Gmail search for responses received after the latest outreach found:
+- No inbound response from the seven newly contacted AV, media-storage and calibration prospects.
+- No inbound response from the three newly contacted Juba destination logistics providers.
+- No new response from the earlier suppliers, Vietnam-origin forwarders or Juba local forwarder leads.
+- No new delivery-status notification/bounce was found in the searched period.
+
+The latest outreach is therefore still pending; absence of a bounce is not proof of receipt, review or interest.
+
+### 16.3 Sample commercial deliverable created
+
+Created a public-source sample report:
+- [VDI Sample Tender Fit Check — EOIUNMISS24873](https://github.com/le8433622/tradeos-core/blob/campaign/vdi-dre-unmiss-juba-2026-11-17/docs/samples/VDI_SAMPLE_TENDER_FIT_CHECK_EOIUNMISS24873.md)
+
+The report includes:
+- Notice facts and official-source register.
+- Deadline/time-zone reconciliation.
+- Requirement-to-evidence matrix.
+- EOI eligibility / UNGM readiness checklist.
+- Supplier evidence gates and risk register.
+- Explicit limits on product fit, pricing, delivery terms and award predictions.
+
+The sample conclusion is **HOLD**, because the public notice does not contain BOQ or product-level technical specifications. The report does not classify ProAVL, Danmon or TCA as qualified suppliers. It is an internal sample, not a paid offer, invoice, EOI or submission.
+
+### 16.4 Commercial release status
+
+The internal offer draft and sample Tender Fit Check now exist in the campaign branch. The legal contracting gate remains unresolved because VDI is not incorporated as a standalone legal entity. Until a legally eligible contracting entity, signatory authority, tax/invoicing path and written customer scope are established:
+- Do not issue an offer/invoice under VDI's name.
+- Do not collect fees or success commissions.
+- Do not represent the sample as a completed paid engagement.
+- Record no revenue until supported by contract, invoice/accounting records and actual collection/recognition evidence.
+
+### 16.5 Next execution gate
+
+1. Prioritize supplier response and UNGM ID verification for AV and Media Storage before 20 November 2026, 16:00 Juba.
+2. Treat Weighing Scales as HOLD until full specifications, calibration scope and local authorization/partner proof become available.
+3. Obtain Juba destination-partner licence, insurance and site-access proof before including any local delivery claim in a cost model.
+4. Use the sample report for internal quality review only until the contracting-entity gate is cleared.
+5. No further bulk outreach until existing leads produce usable evidence or a new official notice demonstrates a specific fit.
