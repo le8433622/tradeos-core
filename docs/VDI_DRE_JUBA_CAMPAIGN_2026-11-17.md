@@ -355,3 +355,73 @@ Both messages are non-binding capability checks. They do not state a purchase fo
 3. Keep the separate 16:00 Juba deadline for the broader UNMISS “Various Category” REOI distinct from UNGM's later display for EOIUNMISS24900 and EOIUNMISS24899.
 4. Do not obtain a binding freight quote until item dimensions, packing, quantity, weight, dangerous-goods status (if applicable), consignee/importer and delivery-site procedure are known.
 5. Before VDI offers or invoices a paid sourcing service, identify the eligible contracting legal entity and approve the fee, deliverables and any disclosed success/coordination fee in writing.
+
+
+## 14. Addendum — adjacent UNMISS opportunity sourcing (18 November 2026)
+
+### 14.1 Additional public opportunities with the earlier 20 November deadline
+
+Three further UNMISS opportunities were reviewed:
+- **EOIUNMISS24873 — Audio Visual Devices**; UNSPSC 52161600. The official UNGM page states a closing time of Friday 20 November 2026 at 16:00 Juba (GMT+2), equivalent to 21:00 Vietnam time. The public notice does not expose a detailed BOQ or technical specification. The related UNGM page displays a later 23:59 GMT-4 timestamp; use the earlier PDF time unless UNMISS clarifies.
+- **EOIUNMISS24858 — Media Storage Devices**; UNSPSC 43201800. The public notice also states Friday 20 November 2026 at 16:00 Juba (GMT+2), 21:00 Vietnam time. The accessible notice requires vendor UNGM registration under the specified UNSPSC code and company contact details. The official page does not provide a detailed item-level BOQ in its accessible text.
+- **EOIUNMISS24883 — Installation, Calibration and Maintenance Services for Weighing Scales** at UNMISS locations in South Sudan and the Regional Support Centre in Entebbe, Uganda. The stated service term is an initial three years, with two possible one-year extensions. The public notice does not disclose the detailed equipment inventory, service schedule or full technical criteria in the accessible HTML.
+
+Official references:
+- [Audio Visual Devices — UNGM 321471](https://www.ungm.org/Public/Notice/321471)
+- [Media Storage Devices — UNGM 320621](https://www.ungm.org/Public/Notice/320621)
+- [Weighing Scales Services — UNGM 321642](https://www.ungm.org/Public/Notice/321642)
+
+The UNGM web pages display 20 November 2026 23:59 GMT-4, but the corresponding official notice text states 16:00 Juba local time (GMT+2). These are not equivalent. The 16:00 Juba time is earlier and has been used conservatively. Do not rely on any third-party tender aggregator's timestamp.
+
+The PDF endpoints returned access errors during this pass; text evidence was obtained from the official UNGM HTML pages and indexed official notice text. No PDF screenshot inspection is claimed.
+
+### 14.2 Supplier capability inquiry emails sent — 18 November 2026
+
+Seven additional non-binding inquiries were sent using official/public company contact channels:
+
+| Candidate | Public contact | EOI / capability area | Gmail message ID | Qualification status |
+|---|---|---|---|---|
+| ProAVL Vietnam | info@proavl-vn.com | EOIUNMISS24873 — professional AV | 1a1ea88b7739090a | Prospect; evidence and reply pending |
+| Danmon Asia Ltd | info@danmonasia.com | EOIUNMISS24873 — broadcast / professional AV | 1a1ea88c10a8e270 | Prospect; evidence and reply pending |
+| TCA — Trung Chính Audio | kd@tca.vn | EOIUNMISS24873 — professional AV | 1a1ea88ca75c8a70 | Prospect; evidence and reply pending |
+| PACO Technology / INDATA | info@pacotech.vn | EOIUNMISS24858 — media storage | 1a1ea88d427a767d | Prospect; enterprise-supply capability and UNGM evidence pending |
+| VDO JSC | info@vdo.vn | EOIUNMISS24858 — enterprise storage | 1a1ea88df050c86a | Prospect; product/SKU and UNGM evidence pending |
+| XTREND Distribution JSC | mail@xtrend.vn | EOIUNMISS24858 — SSD / media storage | 1a1ea88ed01bbb08 | Prospect; product/SKU and UNGM evidence pending |
+| Micro Precision Calibration Vietnam | vn-contact@microprecision.com | EOIUNMISS24883 — weighing-scale calibration and maintenance | 1a1ea88fdaa70951 | Prospect; accreditation-scope and territorial authorization evidence pending |
+
+For AV and media storage, the notice-level classification is known, but full product line specifications and quantities were not available in the accessible official notice. Do not assume any prospect has a product match before receiving exact SKU/datasheet confirmation.
+
+Micro Precision's website describes calibration services for weighing instruments/scales and states its laboratories are accredited to ISO/IEC 17025:2017 by ANAB. This public statement is not, by itself, proof that every required weighing-scale range is within its current accredited scope or that its certificates satisfy the legal-metrology and local-authority requirements for South Sudan and Uganda. The inquiry specifically requests the live scope, competent-person evidence and local authorization / partnership details. Do not qualify it before documentary review.
+
+### 14.3 New supplier sourcing sources
+
+- ProAVL official contact and distribution profile: https://proavl-vn.com/lien-he/ ; https://proavl-vn.com/en/about-us/
+- Danmon Asia official contact: https://danmonasia.com/vi/lien-he/
+- TCA official contact: https://tca.vn/lien-he/
+- PACO / INDATA legal entity and contact: https://pacotech.vn/lien-he/ ; https://indata.vn/gioi-thieu/
+- VDO official contact: https://dis.vdo.com.vn/vi/lien-he
+- XTREND official contact and SSD product category: https://xtrend.vn/lien-he/ ; https://xtrend.vn/ssd-bo-nho-ngoai/
+- Micro Precision Calibration Vietnam scope and contact information: https://microprecision.vn/en/ ; https://microprecision.vn/en/lien-he
+- Bureau of Accreditation entry for LMS force calibration laboratory (VILAS 1299): https://www.boa.gov.vn/en/lms-force-calibration-laboratory. This is a different laboratory/legal entity and is not evidence of Micro Precision's accreditation.
+
+### 14.4 Inbox and campaign status after new outreach
+
+A Gmail check on 18 November 2026 found no inbound responses after the recent outreach from the previously contacted supplier and logistics addresses. The seven new inquiries above have just been sent; replies and deliverability remain pending.
+
+Current count:
+- Original supplier capability inquiries: 8.
+- Additional targeted supplier inquiry/update messages: 10 (3 earlier supplier follow-ups plus 7 new category-specific inquiries; the VinaFoam follow-up is a thread reply).
+- Logistics inquiry attempts: 5 across four forwarders, with one initial UNDO address bounce and one retry to its published alternate address.
+- Verified supplier/contractor qualifications for the above new opportunities: 0.
+- EOI submissions by VDI or by any supplier through VDI: 0.
+- Contract, PO, invoice or cash collected by VDI from this campaign: 0.
+
+No EOI was submitted, no vendor representation was made, and no spend or commercial commitment was incurred. Every supplier must decide and submit through its own eligible legal entity and UNGM account.
+
+### 14.5 Immediate response-driven decision rule
+
+- For EOIUNMISS24873, proceed only with an AV company that provides current brand authorization, exact product evidence, UNGM ID, warranty, export references and a feasible Juba delivery path.
+- For EOIUNMISS24858, require exact storage SKUs, datasheets, genuine-source proof, warranty, stock/lead time, UNGM ID and an export/DAP feasibility statement.
+- For EOIUNMISS24883, proceed only if the provider documents that the required scale types/ranges are within its calibration scope, that the relevant authorization is recognized by the applicable national authorities, and that service delivery is viable in both South Sudan and Entebbe. Local authorized partner may be essential.
+- Do not issue a formal quote or take a success fee until the contracting party, customer, deliverables, liability, fee disclosure and payment terms are documented.
+- No vendor is VERIFIED_FOR_NOTICE solely because its website or an email describes a product/service category.
