@@ -1,9 +1,9 @@
 # VDI-DRE Campaign Pack — UNMISS Juba Supply Network
 
-**Snapshot:** 18 November 2026  
+**Snapshot:** 18 November 2026 — consolidated campaign state  
 **Repository branch:** `campaign/vdi-dre-unmiss-juba-2026-11-17`  
-**Scope:** non-lethal, civilian-grade logistics and facilities supplies only  
-**Execution state:** eight supplier capability inquiries and five logistics capability inquiry attempts sent; one VinaFoam follow-up sent. One UNDO email to the published info@ address bounced; a retry was sent to the alternate address published on the company's website. New replies/qualifications are pending. No EOI submitted; no spend, purchase order, contract, or production deployment made.
+**Scope:** non-lethal, civilian-grade supplies, facilities, AV, data storage, calibration services and logistics only  
+**Execution state:** 15 distinct product/service supplier prospects contacted (8 initial leads plus 7 additional category-specific prospects); 3 supplier follow-up/update messages sent; 7 distinct logistics providers contacted through 8 email attempts (5 attempts across four original forwarders, including one bounced UNDO address and one alternate-address retry, plus 3 Juba destination-partner inquiries). No new responses to the campaign-specific outreach were found in the latest inbox search; no supplier/contractor has passed documentary qualification. No EOI submitted; no spend, purchase order, contract, invoice or collected revenue; no production deployment.
 
 ## 1. Commercial objective
 
