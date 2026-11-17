@@ -301,3 +301,57 @@ All messages are non-binding capability inquiries. No purchase order, booking, b
 - No replies to the new supplier or logistics capability inquiries had been retrieved at this snapshot. The older VinaFoam thread contains self-reported product/capacity claims and a response that it can supply all four extinguisher categories in general, while requesting detailed specs/quantities; VDI clarified that those details are not released at the EOI stage. Sengwin's earlier general supplier thread contains self-reported 13-year manufacturing history, model categories, MOQ range and certification claims; these remain unverified.
 - No VDI-controlled supplier qualification, logistics quote, UNGM ID verification, current certificate verification, EOI submission, purchase order, contract or collected revenue has been established.
 - TradeOS documentation only was updated on a feature branch. No production code/database was changed. This document is an execution pack, not evidence of supplier qualification, UNMISS endorsement, an award, a contract, or collected revenue.
+
+
+## 13. Addendum — verification and execution update (18 November 2026)
+
+This addendum supersedes earlier notes where it clarifies current source access and notice-level distinctions.
+
+### 13.1 Separate Engineering Supplies EOI — EOIUNMISS24900
+
+- Official UNGM notice: [EOIUNMISS24900 / Notice 322238](https://www.ungm.org/Public/Notice/322238).
+- Delivery: DAP UNMISS Logistics Base, Juba, South Sudan (Incoterms 2020).
+- UNGM lists brazing/welding rods, solder wire, alkaline and lithium batteries, adhesives, paint spray, primer, insulating tape, tie cables, climbing rope, pulley-related items, O-ring kits, glue sticks, blind rivets, and silicone/polyurethane sealants.
+- UNGM currently displays the closing time as **25 November 2026, 23:59 GMT-4**. If that UNGM timestamp is authoritative, it converts to **26 November 2026, 05:59 Juba (GMT+2)** and **26 November 2026, 10:59 Vietnam (UTC+7)**. The linked EOI PDF returned HTTP 403 in this review, so the document's own closing-hour wording could not be checked; supplier must verify the live UNGM form and any updated notice before submitting.
+- UNGM shows Basic registration level and requests the UNGM ID plus company legal name, address, telephone and email. Treat completed UNGM registration under the correct legal entity as a prerequisite; see the UN procurement vendor guidance.
+- This is a separate UNGM opportunity from UNMISS's broader “Various Category of Items” REOI, whose UNMISS PDF states a different deadline of 25 November 2026 at 16:00 Juba. Do not combine their reference numbers or closing times.
+- No quantity, BOQ or final specification is published in the accessible UNGM description. Do not prepare a binding quotation or invent quantity assumptions at EOI stage.
+
+### 13.2 Household Appliances PDF now reviewed
+
+The official PDF for [EOIUNMISS24890](https://www.un.org/Depts/ptd/sites/www.un.org.Depts.ptd/files/pdf/eoi24890.pdf) is now text-accessible. It confirms the date of EOI closure as 24 November 2026, DAP Juba, Incoterms 2020, UNSPSC 52140000 and 52150000, and that the vendor must complete UNGM registration before the closing date. The PDF itself spells the requested items **“Table Lamb”** and **“Cultery Set”**; keep these exact transcriptions in the evidence log and ask UNMISS for clarification rather than silently assuming “Table Lamp” or another intended item. UNGM displays 24 November 2026 at 23:59 GMT-4; the PDF lists the date but does not state an hour. The linked UN PDF screenshot endpoint returned HTTP 403, so no screenshot-based visual verification is claimed.
+
+### 13.3 Inbox and response check — 18 November 2026
+
+A fresh Gmail search was run for inbound messages after 17 November from the suppliers and forwarders contacted for this campaign:
+- No new inbound response was found from VinaFoam, BMA, Kim Tin, Care Vietnam, EcoWipes, Elmich or Tiross after the last outreach.
+- No new inbound response was found from Bee Logistics, Dolphin Sea Air, National Carrier Logistics or UNDO Freight Services.
+- The Sengwin inbound message dated 17 November 2026 belongs to the earlier general supplier conversation, predates the new UNMISS-specific outreach and remains a self-reported capability statement, not a completed qualification.
+- VinaFoam's latest accessible inbound response remains 16 November 2026. It has not yet supplied item-level certificates, UNGM ID evidence, model-specific fit or DAP Juba costs.
+
+### 13.4 Targeted supplier follow-ups sent — 18 November 2026
+
+| Supplier | Notice | Message ID | Scope |
+|---|---|---|---|
+| Kim Tin Group | EOIUNMISS24900 / UNGM 322238 | 1a1ea840f05a7660 | Asked for separate product-level confirmation for brazing rods, welding rods and solder wire, legal entity/UNGM ID, datasheets, origin, certificates, MOQ, stock/capacity and DAP feasibility. |
+| BMA Vietnam Industries | EOIUNMISS24899 / UNGM 322237 | 1a1ea841d80d9e7b | Asked for line-by-line confirmation across boxes, strapping equipment/materials, films, pallets, edge protectors and cartons, plus UNGM ID, origin, capacity and DAP feasibility. |
+
+Both messages are non-binding capability checks. They do not state a purchase forecast, award, price commitment or PO. No EOI has been submitted by VDI or on behalf of a supplier.
+
+### 13.5 Current evidence state
+
+- Supplier capability inquiries originally sent: 8.
+- Supplier follow-ups now sent: 3 total (one VinaFoam follow-up plus the two targeted updates above).
+- Logistics inquiry attempts: 5 across 4 forwarders; the first UNDO message bounced and was retried to a published alternate address.
+- New supplier responses since the 18 November check: 0.
+- Verified UNGM supplier accounts, product certificates, item-level quotes, DAP Juba freight quotes and UNMISS site-delivery approvals: 0.
+- EOI submissions, POs, contracts, invoices or cash collected by VDI from this campaign: 0.
+- This remains a prospecting and tender-intelligence exercise. Do not call any prospect a verified supplier, do not call an EOI a contract, and do not record pipeline GMV as VDI revenue.
+
+### 13.6 Next decisions
+
+1. Wait for documentary replies from Kim Tin and BMA; map each claim to the exact line item before assigning VERIFIED_FOR_NOTICE.
+2. Ask every interested supplier to verify its own UNGM registration and operative closing deadline in its account.
+3. Keep the separate 16:00 Juba deadline for the broader UNMISS “Various Category” REOI distinct from UNGM's later display for EOIUNMISS24900 and EOIUNMISS24899.
+4. Do not obtain a binding freight quote until item dimensions, packing, quantity, weight, dangerous-goods status (if applicable), consignee/importer and delivery-site procedure are known.
+5. Before VDI offers or invoices a paid sourcing service, identify the eligible contracting legal entity and approve the fee, deliverables and any disclosed success/coordination fee in writing.
