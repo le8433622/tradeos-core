@@ -551,3 +551,44 @@ Sources:
 The accessible Packaging Materials PDF states the closing date as 25 November 2026, but no closing hour appears in the PDF text. It also states that the vendor's UNGM registration process must be completed before the EOI closing date and that no further details of the planned solicitation will be made available before the solicitation documents are issued. Do not infer a Juba closing hour from the GMT-4 page timestamp; await UNMISS clarification or use the earliest clearly evidenced time if the vendor must make a conservative operational decision.
 
 No EOI submission, fee, purchase order, contract, customer money or representation of UNMISS endorsement is involved in these administrative clarification emails.
+
+
+## 18. Addendum — deadline-confirmed supplier follow-ups (18 November 2026)
+
+### 18.1 Confirmed PDF requirements and submission routes
+
+The official UNMISS PDF for the broader **Various Category of Items** REOI is now accessible in text form. It expressly separates Engineering Supplies and Packaging Materials, requires the vendor to name the specific line item, provide its UNGM registration number and company contacts, and states a deadline of **25 November 2026 at 16:00 Juba time (GMT+2)**. It permits submission through the UNGM link and gives an email fallback / support route to the named procurement contacts. The EOI may also be hand-delivered to the UNMISS Procurement Section in Juba. This broader REOI is not the same notice as EOIUNMISS24900 or EOIUNMISS24899. Source: https://unmiss.unmissions.org/sites/default/files/2026-11/engineering_-_package_materials_-_local.pdf
+
+The official Fire Extinguishers PDF confirms **23 November 2026 at 16:00 Juba time (GMT+2)**, DAP UNMISS Logistics Base, Juba, Incoterms 2020 and UNSPSC 46191601. It requires the supplier's UNGM registration number and company contacts; it is an EOI, not a solicitation. Source: https://unmiss.unmissions.org/sites/default/files/2026-11/reoi_for_supply_and_delivery_of_fire_extinguishers_to_unmiss.pdf
+
+The official Cleaning Materials PDF confirms **23 November 2026 at 16:00 Juba time (GMT+2)**, DAP UNMISS Logistics Base, Juba, Incoterms 2010 and required UNGM UNSPSC codes **47131604, 52121700, 47131502 and 10191509**. It requires a UNGM registration number and company contacts; the PDF recommends Basic-level registrants upgrade to Level 1. It lists email submission addresses and an UNGM route. Source: https://unmiss.unmissions.org/sites/default/files/2026-11/reoi-_cleaning_materials.pdf
+
+The Media Storage Devices PDF is also text-indexed and confirms **20 November 2026 at 16:00 Juba time (GMT+2)**, equivalent to 21:00 Vietnam time, and required UNSPSC 43201800. Source: https://unmiss.unmissions.org/sites/default/files/2026-10/cover_memo_reoi-_supply_of_media_storage_devices_sgd.pdf
+
+For these PDF-backed notices, use the stated 16:00 Juba deadline as the risk-control cutoff even where the UNGM HTML displays 23:59 GMT-4. The screenshot endpoint failed to retrieve the PDFs in this pass (HTTP 403 or unsupported content type); no screenshot-based visual verification is claimed.
+
+### 18.2 Supplier updates sent — 18 November 2026
+
+Five targeted, non-binding supplier updates were sent with exact PDF deadlines and UNGM/product-registration conditions:
+
+| Supplier | Notice(s) clarified | Gmail message ID | Evidence requested |
+|---|---|---|---|
+| Kim Tin Group | Broad Various Category REOI (welding rod / solder wire) and separate EOIUNMISS24900 (Engineering Supplies) | `1a1ea9381db18b64` | Exact line fit, manufacturer/distributor status, SKU/datasheet, certificates, origin, UNGM ID and whether it will submit its own EOI |
+| BMA Vietnam Industries | Broad Various Category REOI (corrugated/fiberboard boxes) and separate EOIUNMISS24899 (Packaging Materials) | `1a1ea9398b71d4a6` | Item-by-item fit, dimensions/material/specification, legal entity, UNGM ID, origin, MOQ/capacity and submission intention |
+| VinaFoam | EOIUNMISS24885 Fire Extinguishers | `1a1ea93b2cd1b0df` | Model-level proof for ABC 6kg, foam, clean agent and blanket; certificates/SDS; UNGM ID and UNSPSC 46191601; own-submission intention |
+| Care Vietnam | EOIUNMISS24886 Cleaning Materials | `1a1ea93be8165884` | UNGM ID and all four specified UNSPSC codes; exact SKUs, SDS/TDS, origin, capacity and own-submission intention |
+| EcoWipes Vietnam | EOIUNMISS24886 Cleaning Materials | `1a1ea93d1ee64cd4` | UNGM ID and all four specified UNSPSC codes; exact wipes/nonwoven SKUs, SDS/TDS, origin, capacity and own-submission intention |
+
+These updates do not forecast demand, promise award, request a binding quote, appoint a supplier, or authorize EOI submission on another party's behalf. Each supplier remains responsible for its own eligibility and submission under the correct legal entity and UNGM account.
+
+### 18.3 Current response state
+
+A Gmail inbox search performed before the five updates found no inbound replies from UNMISS contacts or from the contacted suppliers/logistics providers after the prior outreach. The five supplier updates above have just been sent; no response, acceptance or delivery/read receipt is claimed. No new delivery-status notification was found in the searched period.
+
+### 18.4 Decision controls
+
+1. For Kim Tin and BMA, require the supplier to identify which of the two separate notices it is considering; capture distinct notice references and submission receipts.
+2. For VinaFoam, do not progress on broad category claims alone; exact models, current certificates and UNGM evidence are still required.
+3. For Care and EcoWipes, check each of the four required UNSPSC codes in the supplier's own UNGM account; product-category descriptions alone are insufficient.
+4. Do not submit any EOI on behalf of a supplier. A supplier's authorized signatory must submit and retain proof.
+5. Record no VDI revenue unless a legally eligible contracting entity signs the engagement, issues a valid invoice/accounting record and receives funds under the agreed terms.
